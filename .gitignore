@@ -1,0 +1,5 @@
+# nothing to build — keep it clean
+.DS_Store
+node_modules/
+*.log
+.env

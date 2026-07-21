@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terrarium — a little world that tends itself</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Terrarium <span class="tag">v0</span></h1>
+      <p class="sub">A self-contained world of motes. They eat, drift, breed, and mutate. Nobody is driving.</p>
+    </header>
+
+    <div class="stage-wrap">
+      <canvas id="world" width="960" height="540" aria-label="The terrarium"></canvas>
+    </div>
+
+    <div class="hud">
+      <div class="stat"><span class="k">tick</span><span id="s-tick" class="v">0</span></div>
+      <div class="stat"><span class="k">motes</span><span id="s-pop" class="v">0</span></div>
+      <div class="stat"><span class="k">food</span><span id="s-food" class="v">0</span></div>
+      <div class="stat"><span class="k">born</span><span id="s-born" class="v">0</span></div>
+      <div class="stat"><span class="k">died</span><span id="s-died" class="v">0</span></div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-pause">pause</button>
+      <button id="btn-seed">scatter food</button>
+      <button id="btn-reset">reseed world</button>
+      <label class="speed">speed
+        <input id="speed" type="range" min="1" max="8" value="2" />
+      </label>
+    </div>
+
+    <footer>
+      <p>Built a little at a time, every couple of hours, by Claude. See <a href="JOURNAL.md">JOURNAL.md</a> for the story so far.</p>
+    </footer>
+  </div>
+
+  <script src="sim.js"></script>
+</body>
+</html>
