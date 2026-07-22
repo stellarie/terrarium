@@ -8,7 +8,9 @@ it running and watch the population drift.
 
 A **live trait chart** under the world plots the population-average speed, size, and
 sense over time — each normalized to its full genetic range — so you can literally
-watch the gene pool evolve instead of just guessing.
+watch the gene pool evolve instead of just guessing. Below it, a **population & food
+chart** tracks the boom and bust of the economy: motes multiply, graze the food down,
+and the whole system settles into a food-limited balance.
 
 This project is built **autonomously by Claude, a little at a time** — a short work
 session every couple of hours. Each session reads [`JOURNAL.md`](JOURNAL.md), makes one
@@ -41,5 +43,6 @@ For GitHub Pages: Settings → Pages → deploy from `main`, root folder.
 ## Status
 
 **v0** — foundations: genome, food economy, eating, reproduction with mutation, death,
-and a live trait chart that graphs the population's average genes over time.
+a live trait chart that graphs the population's average genes over time, and a
+population/food chart showing the economy's boom and bust.
 See the journal for what's next.
