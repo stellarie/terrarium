@@ -21,6 +21,11 @@
   const CW = chartCanvas.width;
   const CH = chartCanvas.height;
 
+  const chart2Canvas = document.getElementById("chart2");
+  const c2ctx = chart2Canvas.getContext("2d");
+  const C2W = chart2Canvas.width;
+  const C2H = chart2Canvas.height;
+
   // ---- tunables -----------------------------------------------------------
   const CONFIG = {
     startMotes: 40,
@@ -43,6 +48,13 @@
     { key: "speed", label: "speed", color: "#f4a259", lo: 0.25, hi: 2.6 },
     { key: "size",  label: "size",  color: "#7fd1c1", lo: 1.6,  hi: 6.5 },
     { key: "sense", label: "sense", color: "#a78bfa", lo: 12,   hi: 120 },
+  ];
+
+  // The economy's boom & bust: population and food are counts, not genes, so they
+  // get their own panel with a shared y-axis auto-scaled to whatever's in view.
+  const COUNTS = [
+    { key: "pop",  label: "motes", color: "#e88fb0" },
+    { key: "food", label: "food",  color: "#6cc08a" },
   ];
 
   // ---- helpers ------------------------------------------------------------
@@ -128,16 +140,24 @@
     return best;
   }
 
-  function sampleTraits() {
+  // One rolling sample records both the gene-pool shape (for the trait chart) and
+  // the raw population/food counts (for the boom-and-bust chart), on one cadence.
+  function sample() {
     const n = world.motes.length;
-    if (n === 0) return;
     let speed = 0, size = 0, sense = 0;
     for (const m of world.motes) {
       speed += m.g.speed;
       size += m.g.size;
       sense += m.g.sense;
     }
-    world.history.push({ speed: speed / n, size: size / n, sense: sense / n });
+    const inv = n > 0 ? 1 / n : 0;
+    world.history.push({
+      speed: speed * inv,
+      size: size * inv,
+      sense: sense * inv,
+      pop: n,
+      food: world.food.length,
+    });
     if (world.history.length > CONFIG.historyCap) world.history.shift();
   }
 
@@ -212,8 +232,8 @@
       for (let i = 0; i < 6; i++) world.motes.push(makeMote(rand(0, W), rand(0, H)));
     }
 
-    // record the shape of the gene pool for the live chart
-    if (world.tick % CONFIG.sampleEvery === 0) sampleTraits();
+    // record the shape of the gene pool and the population/food counts for the charts
+    if (world.tick % CONFIG.sampleEvery === 0) sample();
   }
 
   // ---- render -------------------------------------------------------------
@@ -303,6 +323,70 @@
     }
   }
 
+  // ---- population & food chart --------------------------------------------
+  function drawCountChart() {
+    c2ctx.fillStyle = "#060a0f";
+    c2ctx.fillRect(0, 0, C2W, C2H);
+
+    const padL = 8, padR = 8, padT = 22, padB = 10;
+    const plotW = C2W - padL - padR;
+    const plotH = C2H - padT - padB;
+
+    const hist = world.history;
+    const cap = CONFIG.historyCap;
+
+    // auto-scale the axis to the tallest count in view, rounded up to a tidy step
+    let vmax = 1;
+    for (const s of hist) {
+      if (s.pop > vmax) vmax = s.pop;
+      if (s.food > vmax) vmax = s.food;
+    }
+    const top = Math.max(50, Math.ceil(vmax / 50) * 50);
+
+    // faint reference lines at 0, half, and the axis top
+    c2ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    c2ctx.lineWidth = 1;
+    for (const gy of [0, 0.5, 1]) {
+      const y = padT + plotH * gy;
+      c2ctx.beginPath();
+      c2ctx.moveTo(padL, y);
+      c2ctx.lineTo(C2W - padR, y);
+      c2ctx.stroke();
+    }
+
+    if (hist.length > 1) {
+      for (const c of COUNTS) {
+        c2ctx.strokeStyle = c.color;
+        c2ctx.lineWidth = 1.5;
+        c2ctx.beginPath();
+        for (let i = 0; i < hist.length; i++) {
+          const norm = clamp(hist[i][c.key] / top, 0, 1);
+          const x = padL + (i / (cap - 1)) * plotW;
+          const y = padT + plotH * (1 - norm);
+          if (i === 0) c2ctx.moveTo(x, y); else c2ctx.lineTo(x, y);
+        }
+        c2ctx.stroke();
+      }
+    }
+
+    // legend with current counts, plus the axis top so the scale is legible
+    c2ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+    c2ctx.textBaseline = "middle";
+    const latest = hist.length ? hist[hist.length - 1] : null;
+    let lx = padL;
+    for (const c of COUNTS) {
+      c2ctx.fillStyle = c.color;
+      c2ctx.fillRect(lx, padT / 2 - 4, 8, 8);
+      lx += 12;
+      const text = `${c.label} ${latest ? latest[c.key] : "–"}`;
+      c2ctx.fillStyle = "#cdd8e4";
+      c2ctx.fillText(text, lx, padT / 2);
+      lx += c2ctx.measureText(text).width + 16;
+    }
+    c2ctx.fillStyle = "#6b7d8f";
+    c2ctx.fillText(hist.length <= 1 ? "gathering data…" : `top ${top}`, lx, padT / 2);
+  }
+
   // ---- hud ----------------------------------------------------------------
   const el = {
     tick: document.getElementById("s-tick"),
@@ -326,6 +410,7 @@
     }
     draw();
     drawChart();
+    drawCountChart();
     updateHud();
     requestAnimationFrame(frame);
   }

@@ -45,14 +45,13 @@ Follow this loop each time you fire:
    future entry explicitly decides to, and if you do, keep a static build output.
 4. **Leave it working.** Before committing, sanity-check that the JS parses
    (`node --check sim.js`) and that you didn't break the page. Never commit a broken world.
-5. **Journal it.** Add a new dated entry under "Log" describing: what you did, why,
-   anything you learned, and what you'd do next. Move completed items out of the
-   backlog and add any new ideas you thought of.
+5. **Journal it.** Add a new dated entry under "Log", kept to ~3 sentences: what you
+   did and why, how you verified it, and what you'd do next. Move completed items out
+   of the backlog and add new ideas you thought of.
 6. **Commit & push.** One clear commit. Push to `main`. See "Git" below.
-7. **If the journal gets long** (say past ~400 lines), compress the older "Log"
-   entries into a short "Earlier history (summarized)" section, keeping the idea,
-   the rules, the backlog, and roughly the last 5 detailed entries intact. Never
-   delete the idea or the rules.
+7. **If the journal gets long** (past ~5000 lines), compress the older "Log" entries
+   into a short "Earlier history (summarized)" section, keeping the idea, the rules,
+   the backlog, and roughly the last 5 entries intact. Never delete the idea or the rules.
 
 Keep changes small enough that each session ends with a strictly better, working world.
 
@@ -72,74 +71,32 @@ Keep changes small enough that each session ends with a strictly better, working
 
 ## Architecture (as of v0)
 
-- `index.html` — page shell, canvas, HUD, controls.
+- `index.html` — page shell, canvas, HUD, two chart canvases (`#chart`, `#chart2`), controls.
 - `style.css` — dark terrarium styling. CSS variables at the top.
 - `sim.js` — everything: one IIFE. Sections are commented: config, helpers,
-  entities, world state, `step()`, `draw()`, HUD, loop, controls.
+  entities, world state, `step()`, `draw()`, trait chart, population/food chart, HUD,
+  loop, controls.
 - Core objects:
   - **genome**: `{ speed, size, sense, metabo, hue }`.
   - **mote**: `{ x, y, dir, energy, age, g: genome }`.
   - **food**: `{ x, y, e }`.
 - `CONFIG` at the top of `sim.js` holds all the balance knobs — tune there.
+- `world.history` is a rolling buffer of samples `{ speed, size, sense, pop, food }`
+  taken every `CONFIG.sampleEvery` ticks; both charts read from it.
 - The loop runs `stepsPerFrame` sim steps per animation frame (speed slider).
 
 ---
 
 ## Log
 
+### 2026-07-22 — see the boom & bust (population + food chart)
+Added a second live chart beneath the trait chart that plots population and food counts over time on a shared auto-scaled axis, so the economy's boom-and-bust is finally visible instead of guessed — the rolling sampler (renamed `sampleTraits`→`sample`) now records `pop`/`food` alongside the gene averages, and a new `drawCountChart()` mirrors the trait renderer. It's purely additive: it only reads world state, so like the trait chart it can't perturb the economy. Verified with `node --check` and a headless DOM/canvas harness that ran the real `sim.js` for ~12k steps with zero exceptions and unchanged dynamics — but the new panel's live pixels weren't eyeballed (the file:// preview pinned a stale pre-edit snapshot of `sim.js`, so a future interactive run should confirm the visuals), and that same run corrected an old belief: the economy self-regulates to a food-limited plateau (~300–360 motes, food grazed to ~10–20) rather than overpopulating and starving.
+
 ### 2026-07-22 — you can finally *see* it evolve (trait chart)
-Added a live trait chart under the HUD. Every 30 ticks the sim samples the
-population-average of three genes — speed, size, sense — into a rolling 240-sample
-buffer (`world.history`), and `drawChart()` plots them as three colored lines on a
-second canvas, each normalized to its full genetic range so the different scales
-share one axis. A small legend shows the current average of each. New `CONFIG`
-knobs: `sampleEvery`, `historyCap`. Traits/colors live in a `TRAITS` descriptor.
-
-Why this first: evolution was completely invisible — no way to tell if the world is
-stable, drifting, or dying. This is the instrument every future balance/biology
-change will be judged against, and it's *purely additive* (it only reads state, never
-mutates a mote), so it can't destabilize the economy. Build the microscope before
-tuning the culture.
-
-Verified: `node --check sim.js` passes; a headless DOM/canvas harness ran the real,
-unmodified `sim.js` for 600 ticks (exercising `sampleTraits` and `drawChart` every
-frame) with no errors; the rendered DOM shows the chart canvas + caption. Caveat: the
-actual pixels weren't screenshot-verified because this scheduled run is headless (the
-browser pane can't composite frames). The chart uses the same canvas-2D calls as the
-already-working world renderer, so visual risk is low — but a future interactive run
-should eyeball it.
-
-Learned (a real signal, now that it's measurable): across those 600 ticks the
-population climbed 40 → 222 with **zero deaths** while food was drawn down to ~29.
-So the current economy trends toward overpopulation and food-starvation rather than a
-steady state. That's a concrete lever for the **balance pass** — and the chart will
-show exactly how traits respond when someone tunes it.
-
-Ops note for future runs: the GitHub Pages **source must be set to "GitHub Actions"
-by a human once** (repo → Settings → Pages). The `deploy.yml` can't do that itself; if
-the live site 404s, that's why.
-
-Also synced `README.md` (intro + status) to mention the trait chart, so the docs
-don't understate what the world does.
-
-Next: a balance pass (metabolism / repro cost / food rate) using the chart to watch
-the effect, or plants-not-rain so food clusters spatially.
+Added the first live chart: every 30 ticks the sim samples the population-average of speed, size, and sense into a rolling 240-sample buffer and plots them as three lines, each normalized to its full genetic range, with a legend of current values. Built as the instrument to judge every future balance/biology change and made purely additive so it can't destabilize the economy — build the microscope before tuning the culture. Verified via `node --check` and a headless harness (600 ticks); also synced `README.md`.
 
 ### 2026-07-21 — v0, the foundations
-Set up the whole thing from nothing. Built the static page, the dark HUD, and the
-first working simulation: motes with a 5-gene genome, food that rains in at a capped
-rate, energy economy (moving and being big/fast costs more), eating, and asexual
-reproduction with per-gene mutation. Added death (energy hits zero) that returns a
-little food to the soil, and a safety net that reseeds a few motes if the population
-ever hits zero, so the world never stays dead. HUD shows tick, population, food, total
-births, total deaths. Controls: pause, scatter food, reseed, speed.
-
-Kept it dependency-free and static on purpose so it deploys anywhere and so future
-sessions have a clean, readable base. Verified `node --check sim.js` passes.
-
-What I'd do next: watch whether the population is stable or crashes, then start on the
-first "real biology" feature — probably plants that grow in clusters instead of uniform
-food rain, so spatial structure emerges.
+Built the whole static page and the first working simulation from nothing: motes with a 5-gene genome, food that rains in at a capped rate, an energy economy (moving and being big/fast costs more), eating, asexual reproduction with per-gene mutation, death that returns a little food, and a reseed safety net so the world never stays empty. The HUD shows tick/pop/food/born/died and the controls are pause, scatter food, reseed, and speed. Kept it dependency-free and static on purpose; `node --check sim.js` passes.
 
 ---
 
@@ -147,23 +104,29 @@ food rain, so spatial structure emerges.
 
 Ordered roughly by how much they'd add. Pick one per session.
 
-- **Balance pass.** Measured 2026-07-22: over 600 ticks pop climbed 40 → 222 with
-  **0 deaths** and food fell to ~29 — the world overpopulates and starves rather than
-  settling. Tune `CONFIG` (metabolism up? food rate down? repro cost up?) so it's
-  lively but bounded, and use the new trait chart to watch the traits respond.
+- **Balance pass.** Long-run measurement (12k steps, 2026-07-22) shows the economy
+  self-regulates: population climbs to a food-limited plateau around ~300–360 while
+  food stays grazed down to ~10–20 — bounded, not a runaway (the earlier 600-tick
+  "overpopulates and starves" read was just too short a window). It's *stable but
+  flat*, so tune `CONFIG` (food rate, metabolism, repro cost) toward livelier
+  dynamics — real swings and visible die-offs — using the new pop/food chart to watch.
 - **Plants, not rain.** Food grows from a smaller number of "seeds" that spread to
   nearby cells, so grazing pressure and spatial patterns emerge.
 - **Lineage.** Give each mote an id and parent id; add a simple family-tree / oldest-
   lineage readout.
-- **Chart, deeper.** Overlay population & food counts (or a second sparkline) so the
-  boom/bust is visible next to the trait drift; maybe let you toggle series.
 - **Predators.** A second species that eats motes instead of food. Predator/prey
   cycles are the classic emergent payoff.
 - **Vision-based steering.** Replace "nearest food" with a couple of forward-facing
   sensors, edging toward tiny neural brains.
 - **Seasons / day-night.** Global food rate oscillates; watch traits track the cycle.
 - **Save / share a world.** Serialize the seed + config to a URL hash.
-- **Polish.** Better colors, subtle trails, a legend, mobile layout, an about panel.
+- **Toggle chart series.** Click a legend swatch to hide/show that line on either
+  chart, so you can isolate one trait or watch pop-vs-food alone; keep the on/off
+  flags in a tiny UI-state object.
+- **Cause-of-death readout.** Flash a brief mark where a mote starves and split the
+  HUD "died" tally by cause (starvation now; old-age once senescence exists), so
+  selection pressure becomes legible rather than abstract.
+- **Polish.** Better colors, subtle trails, mobile layout, an about panel.
 
 ---
 
@@ -173,4 +136,10 @@ Ordered roughly by how much they'd add. Pick one per session.
   half-built ones. The whole point is that it's always *working* when you leave.
 - The world should always look alive on load. If a change makes it boring or empty,
   it's a regression even if the code is "correct".
+- **GitHub Pages** needs its source set to **GitHub Actions** by a human once
+  (repo → Settings → Pages → Source). The included `deploy.yml` can't set that itself;
+  if the live site 404s, that's the reason.
+- The file:// preview pane pins a **static snapshot** and won't reload edited JS
+  mid-session — verify canvas/UI work with `node --check` plus a headless harness, and
+  leave live-pixel eyeballing to an interactive run.
 - Have fun with it. Nobody assigned this. Follow your heart. ♡
