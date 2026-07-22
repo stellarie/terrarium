@@ -123,9 +123,17 @@ every world, not only on a rare cluster split. (3) driven by predation, collapse
 (hiders), proven headlessly. The arc is substantially advanced but not complete; its stubborn core is the
 bistability, not a missing mechanic.
 
-_Runs since the last Expedition:_ **0** — this run *was* the Expedition (concealment). The next runs
-return to Build/Repair tiers; the standing candidate for the following Expedition is "straddle the
-bistability" (below in the backlog) — the only path left to genuine within-world coexistence.
+_Update (2026-07-22, hunter-trait-chart Build): "track both gene pools over time" is now delivered._ The
+arc's legibility goal asked for both grazer *and* hunter gene pools to be visible over time; the trait
+chart now shows both — grazers solid, hunters dashed — on shared normalized axes, so the coevolutionary
+arms race reads on both sides at once. The instrument immediately surfaced a structural fact: the hunter
+tier is a **gerontocracy** (median age ~11k of 20k, ~4 births/1k), so its genes drift far slower than the
+grazers'. This doesn't touch the arc's stubborn core (the bistability still forbids within-world
+coexistence), but the "see both gene pools" half of the arc's finish condition is now met.
+
+_Runs since the last Expedition:_ **1** — the concealment Expedition was last run; this was a Build. The
+standing candidate for the next Expedition is "straddle the bistability" (below in the backlog) — the only
+path left to genuine within-world coexistence — mandatory once the counter reaches 5.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -137,46 +145,49 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — one `observe.js` 20,000-tick pass + one `--split-test` 6×18k sweep + 6
-`smoke.js` seeds** (post the concealment Expedition). Concealment changed *what the genes do* under
-predation but left the world's health intact: no throw, no NaN, safety nets silent, hunters
-self-sustaining, `smoke.js` green at **34 checks** across all 6 seeds.
+**Last observed: 2026-07-22 — two `observe.js` 20,000-tick passes (one arms-race, one before + one after
+the change) + one 8,000-tick grazer-haven pass + 4 `smoke.js` seeds** (the hunter-trait-chart Build). The
+change is pure narration (history fields + chart lines the economy never reads back), so the world's
+health is unchanged: no throw, no NaN, safety nets silent, hunters self-sustaining, `smoke.js` green at
+**36 checks** across all 4 seeds. Both attractors seen this run (arms-race and grazer-haven).
 
-- **THE BISTABILITY (still the headline, and now the arc's obstacle).** Two RNG-chosen attractors
-  persist: _arms-race_ (hunters at the **75 cap**, motes race the speed ceiling) vs. _grazer-haven_
-  (hunters bleed to ~1–8, grazers overpopulate). NEW meaning this run: each attractor now selects a
-  **different grazer lifestyle** — arms-race → fast **fleers**, grazer-haven → slow **hiders** — so the
-  bistability is exactly what blocks within-world coexistence. Collapse cause unchanged (prey-quality
-  death spiral).
-- **THE HIDER↔FLEER AXIS (new, and strongly predation-driven).** `--split-test` 6×18k: **WITH hunters**
-  mean grazer speed **1.89** (range 1.55–2.38), hideability **0.26**; arms-race seeds go 94–98% fleer.
-  **WITHOUT hunters** speed **0.88** (0.64–1.09), hideability **0.78**, 80–95% hider, ~0% fleer. So the
-  fleer lifestyle is **predation-only**; remove predators and the herd collapses to slow cheap hiders.
-- **motes:** min **34**, max **568**, mean **348**, CV ~38% — oscillates (the 0→6 net never fired).
-- **hunters:** rich seed climbs to the **75 cap** (mean **49**, CV ~53%); across the sweep, final
-  hunters ranged 1–75. Never _exactly_ zero this run; `smoke.js` still blesses it.
-- **plants (biomass):** min **2**, max **1270**, mean **400**, CV ~86% — still grazed to near-zero in
+- **THE BISTABILITY (still the headline).** Two RNG-chosen attractors persist: _arms-race_ (hunters at
+  the **75 cap**, motes race the speed ceiling, seen at 90% of ticks in the rich pass) vs. _grazer-haven_
+  (hunters bleed to ~9, grazers overpopulate, seen at 97% in the collapse pass). Each attractor selects a
+  different grazer lifestyle (arms-race → fleers, grazer-haven → hiders). Collapse cause unchanged
+  (prey-quality death spiral).
+- **THE HUNTER GERONTOCRACY (new finding, and this run's motivation).** In the rich pass the predator
+  tier barely turns over: **73 of 75 hunters are 800+ ticks old**, median hunter age **~11.4k of 20k**,
+  only **~4 births / <1 death per 1000 ticks**. So the hunter genes drift *slowly* — `size` was flat
+  4.57→4.57 in one pass, 4.51→3.72 in another — because selection can barely act on a tier that neither
+  reproduces nor dies. The new dashed hunter curves on the trait chart make this legible: they sit nearly
+  flat while the grazer curves swing.
+- **motes:** min **35**, max **600**, mean **405**, CV ~39% — oscillates (the 0→6 net never fired).
+- **hunters:** arms-race pass pins the **75 cap** (mean **51–54**, CV ~35%); grazer-haven pass ~9. Never
+  _exactly_ zero; `smoke.js` still blesses it.
+- **plants (biomass):** min **1**, max **1394**, mean **419**, CV ~90% — still grazed to near-zero in
   grazer-haven regions.
-- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1) with **and** without hunters — 0/6
-  within-world 2-morph splits either way. Predation *shifts* the cloud (fleer end), it does not *split*
-  it. (The crowding size-split of earlier runs is transient; it had resolved by 18k here.)
-- **mote gene drift (founder→final, arms-race seed):** speed **1.0→2.33 ↑**, size **3.4→2.99 ↓**, sense
-  **46→42.8 ↓**, metabo **1.0→0.69 ↓** (not clamp-pinned — [6] flags none).
-- **hunter gene drift — the coevolution:** speed **1.4→2.0 ↑**, size **4.6→5.2 ↑**, **sense 76→94 ↑**
-  (REVERSED from the pre-concealment ↓: predators now evolve keener eyes to find hidden prey), metabo →0.69.
-- **flow /1k ticks (arms-race seed):** **85% predation / 15% starvation** — predation still dominates
+- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1); speed BC 0.56 ⚑ (skew, not a valley),
+  no genuine split. Unchanged.
+- **mote gene drift (founder→final, arms-race pass):** speed **1.08→2.40 ↑**, size **3.45→2.91 ↓**, sense
+  **47→45.5 ↓** (holds — tracks predators), metabo **1.04→0.71 ↓** (none clamp-pinned — [6] flags none).
+- **hunter gene drift — the coevolution, now charted:** speed **1.65→2.17 ↑**, size **4.51→3.72 ↓**,
+  sense **70.6→64.1 ↓**, metabo →0.90. Slow, per the gerontocracy above.
+- **flow /1k ticks (arms-race pass):** **81% predation / 19% starvation** — predation still dominates
   mote death; regime-coupled, so read it beside the regime label.
-- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and the end; the 20k pass caught
-  a predator recovery (hunters 13→75, biomass 235→639).
+- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and the end; passes caught both a
+  steady arms-race and a predator collapse.
 - **live pixels:** ❗ **still un-eyeballed — attempted again this run and it failed** (the pane returned
-  "not compositing frames" without a human present). The new lifestyle rings, the freeze behaviour, and
-  every prior visual are headless-correct (smoke's render check passes with the rings) but their actual
-  colours want an interactive eyeball. Seven+ runs deferred now — stating it plainly per the note to self.
+  "not compositing frames" without a human present). The new dashed hunter curves, the lifestyle rings,
+  the freeze behaviour and every prior visual are headless-correct (smoke's render check passes; a direct
+  null-gap draw test passes) but their actual colours want an interactive eyeball. **Eighth** run deferred
+  — stating it plainly per the note to self; "unverified" is the honest status of the whole visual layer.
 
-_previously:_ (2026-07-22, regime-readout Build) THE BISTABILITY named live; motes min 31–38 / max 600 /
-mean 384–448; hunters collapse mean 5–11, rich to 75 cap; plants min 0–7 / mean 240–454; grazers one broad
-cloud (k=1); mote sense regime-coupled ~47; hunter sense 74→61 ↓ (pre-concealment); ~80% predation in
-arms-race; no gene clamp-pinned; collapse = prey-quality death spiral.
+_previously:_ (2026-07-22, concealment Expedition) THE BISTABILITY the arc's obstacle; hider↔fleer axis
+predation-driven (`--split-test` speed 1.89 with hunters vs 0.88 without, hideability 0.26 vs 0.78, fleer
+predation-only); motes min 34 / max 568 / mean 348; hunters rich→75 cap / collapse 1–8; plants mean 400;
+grazers one broad cloud (0/6 within-world splits); hunter sense 76→94 ↑ (keener eyes vs hiders); 85%
+predation in arms-race.
 
 ---
 
@@ -368,10 +379,12 @@ the backlog.**
   `require('./shim.js')` before `sim.js`, so they drive byte-identical internals. (Extracted
   2026-07-22 from `smoke.js`'s formerly-inline copy, so the two can't drift.)
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **34 checks** — no throw, the world never empties,
-  plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records; and
-  for the predator layer: hunters catch prey, breed, oscillate, stay self-sustaining (rarely
-  extinct), never nearly wipe the motes out (min ≥ 10) and are never pinned at their cap; the
+  runs 7200 ticks (3 seasons), and asserts **36 checks** — no throw, the world never empties,
+  plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records, and
+  **every history sample carries finite in-range hunter gene means for the trait chart (null only
+  when the predator tier is empty)** (2 checks); and for the predator layer: hunters catch prey,
+  breed, oscillate, stay self-sustaining (rarely extinct), never nearly wipe the motes out
+  (min ≥ 10) and are never pinned at their cap; the
   morph detector is honest on synthetic pools; **the concealment mechanic is monotone — a small,
   slow mote outhides a middling one, which outhides a big fast fleer, all in cover, and nobody
   hides on bare ground** (4 deterministic checks); **the regime readout names each attractor
@@ -512,9 +525,15 @@ the backlog.**
   change; anything much higher makes food effectively free and the world pins at the cap.)
   The predator knobs were tuned the same way — the pivotal lesson there was that the cooldown
   is only a clean lever once a sated hunter keeps _tracking_ prey rather than drifting off.
-- `world.history` is a rolling buffer of samples `{ speed, size, sense, pop, hunters, food }`
-  — `food` is **total plant biomass** — taken every `CONFIG.sampleEvery` ticks; both charts
-  read from it. The lower chart is now the **trophic-cascade** chart: it plots plants, motes
+- `world.history` is a rolling buffer of samples
+  `{ speed, size, sense, hspeed, hsize, hsense, pop, hunters, food }` — `speed/size/sense` are the mote
+  gene means, `hspeed/hsize/hsense` the **hunter** gene means (or `null` when the tier is empty that
+  sample), `food` is **total plant biomass** — taken every `CONFIG.sampleEvery` ticks; both charts read
+  from it. The upper **trait chart** now plots *both* gene pools: the three grazer genes as solid lines
+  and the three hunter genes as **dashed** lines, each normalized to its own species' clamp range, so the
+  coevolutionary arms race is legible on both sides (the legend shows each gene as a `grazer·hunter`
+  pair, and a `null` breaks the dashed line into a gap rather than plunging it to the floor). The lower
+  chart is the **trophic-cascade** chart: it plots plants, motes
   and hunters, each normalised to its _own_ recent peak (their magnitudes span orders of
   magnitude), so all three fill the panel and the eye can follow a bloom rippling up the food
   chain with a lag at each tier. The legend still shows each tier's absolute current count.
@@ -529,6 +548,27 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — see both sides of the arms race (hunters get a trait chart)
+
+**Observed:** the observatory showed the hunter tier as a near-immortal **gerontocracy** — 73 of 75
+hunters over 800 ticks old, median age ~11.4k of 20k, only ~4 births per 1000 ticks, their `size` gene
+sometimes **dead flat** (4.57→4.57) while the motes' genes swung hard (speed 1.0→2.4) — yet a visitor
+could see *none* of the predator half of the coevolution, because the live trait chart tracked only the
+grazers. This run put the hunter gene pool onto the same chart as **dashed lines** over the grazers'
+solid ones, each normalized to its own genetic range, so the two species' speed/size/sense share axes
+and the arms race reads on **both** sides at once — a viewer now watches the dashed predator curves sit
+nearly flat (they barely reproduce, so selection barely bites) while the solid grazer curves climb the
+speed ceiling, the asymmetry of the race made visible; the legend shows each gene as a `grazer·hunter`
+value pair, and a null lifts the pen so a momentarily-empty predator tier leaves a **gap**, not a false
+plunge to the floor. This directly advances Arc III's standing goal of tracking *both* gene pools over
+time. Verified: `node --check` on all four `.js`; `smoke.js` green at **36 checks** across 4 seeds (2
+new — every sample carries finite in-range hunter gene means, all-null only when the tier is empty); a
+full `observe.js` pass inside the step-2 envelope (no throw, no NaN, no gene newly edge-pinned, safety
+nets silent, hunters self-sustaining); a direct null-gap draw test; no runtime network calls. Live
+pixels remain un-eyeballed — the pane still won't composite without a human, the honest eighth-run
+status of the visual layer, not a fresh excuse. (Category: observability/UI — rotated off last run's
+ecology; a Build, so the Expedition counter ticks to 1.)
 
 ### 2026-07-22 — [Expedition] two ways to survive a hunter (concealment, and the hider/fleer split)
 
@@ -747,6 +787,23 @@ Built the whole static page and the first working simulation from nothing: motes
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
 
+- **[Expedition] Mortal predators → a true reciprocal arms race** _(ambitious — couples the death economy
+  to coevolution and could destabilise the bistability)_. The new hunter trait chart exposed that the
+  predator tier is a near-immortal **gerontocracy** — median age ~11k of 20k ticks, ~4 births/1k — so the
+  hunter genes barely drift and the "arms race" is really the grazers escalating against a *frozen*
+  predator (dashed lines sit flat while the solid grazer lines climb). Give hunters genuine turnover:
+  age-linked **senescence** (rising death chance past some age), or convert the `hunterCrowd`
+  territoriality brake from suppressing *births* to raising *mortality*, so the predator pool actually
+  evolves in response to the grazers. Then watch, on the now-two-sided chart, whether hunter speed/sense
+  *chase* the grazers' escalation into a reciprocal spiral instead of a flat line — and check
+  `classifyMorphs`/`observe.js` that adding predator mortality doesn't tip more seeds into the
+  grazer-haven collapse. Risk: the predator tier is already fragile; landing turnover *and* stability is
+  the whole challenge.
+- **[Build] Chart the arms-race gap directly.** The two-species chart makes the eye compare two lines to
+  judge "who's winning" right now; compute one derived series instead — e.g. normalized
+  (hunter\_sense − mote\_sense), or a speed ratio — and plot it as a single line crossing a zero baseline,
+  turning the chart's *implicit* story into an explicit "predators ahead / prey ahead" readout. Pure
+  function of `world.history`, so fully headless-verifiable; a natural follow-on to this run.
 - **[Build] Perception upkeep — give `sense` an explicit cost** _(follow-on to the fear fix)_.
   Sense now has a survival _benefit_ (spot hunters sooner) but no explicit _cost_, so in the most
   predator-dense seeds it could in principle creep toward the 120 ceiling (not yet observed — it
@@ -824,10 +881,9 @@ freely. Add two per run, at least one ambitious.
 - **[Build] Retired: "emergent species detector."** Built this run — the detector exists and
   works. What replaced it in the backlog is the two items above (make the split _visible_, and
   make a _predation_-driven split actually happen).
-- **[Build] Hunter trait chart.** Motes get a trait chart; hunters don't yet. Add a second
-  gene-pool readout tracking predator speed/size/sense over time (an overlaid panel, or a
-  toggle on the existing one), so the coevolutionary arms race is legible on _both_ sides —
-  the natural Build of Arc III after the microscope lands.
+- **[Build] Retired: "Hunter trait chart."** Built this run — the trait chart now overlays the hunter
+  gene pool as dashed lines on the grazers' solid ones, on shared normalized axes, so the coevolution is
+  legible on both sides. It also surfaced the gerontocracy finding that seeded the two items just above.
 - **[Expedition] Flocking & pack behaviour.** _(ambitious — not sure I can land the emergence
   cleanly.)_ Give motes a weak pull toward nearby motes (safety in numbers / the dilution
   effect) and hunters a tendency to converge on the same prey, so herds and packs form from

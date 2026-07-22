@@ -60,8 +60,11 @@ them — recover, riding on top of the grazer–plant boom and bust.
 
 ## Watch it evolve
 
-- A **live trait chart** plots the population-average speed, size, and sense over time,
-  each normalized to its full genetic range, so you can watch the gene pool drift.
+- A **live trait chart** plots the population-average speed, size, and sense over time for
+  **both** species — grazers as solid lines, hunters as dashed lines — each normalized to its
+  own genetic range, so the coevolutionary arms race reads on both sides at once. Watch the
+  dashed predator curves sit nearly flat (hunters are long-lived and rarely breed, so selection
+  barely bites) while the solid grazer curves climb the speed ceiling.
 - A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
   own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
 - Every mote is **ringed by its lifestyle** — leaf-green for a committed hider (small, slow),

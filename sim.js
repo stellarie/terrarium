@@ -162,6 +162,17 @@
     { key: "sense", label: "sense", color: "#a78bfa", lo: 12,   hi: 120 },
   ];
 
+  // The same three genes for the *hunter* pool, drawn as dashed lines over the same
+  // panel so the coevolutionary arms race is legible on both sides at once. Each is
+  // normalized to the hunter's *own* clamp range (they're wider than the grazers'),
+  // so "how far along its range" is comparable across the two species even though the
+  // absolute scales differ. `src` is the live gene the history field is a mean of.
+  const HUNTER_TRAITS = [
+    { key: "hspeed", src: "speed", label: "speed", color: "#f4a259", lo: 0.6, hi: 3.2 },
+    { key: "hsize",  src: "size",  label: "size",  color: "#7fd1c1", lo: 2.4, hi: 9 },
+    { key: "hsense", src: "sense", label: "sense", color: "#a78bfa", lo: 24,  hi: 170 },
+  ];
+
   // The trophic cascade over time: plants, grazers and hunters, bottom to top of
   // the food chain. Each is scaled to its *own* recent peak (their magnitudes span
   // orders of magnitude), so the panel reads as timing, not absolute counts — you
@@ -642,12 +653,26 @@
       sense += m.g.sense;
     }
     const inv = n > 0 ? 1 / n : 0;
+    // hunter gene means, tracked so the predator pool has its own curves on the
+    // trait chart. null when the tier is empty so the chart breaks the line rather
+    // than drawing a phantom crash to zero (a collapse leaves a gap, not a plunge).
+    const hn = world.hunters.length;
+    let hspeed = 0, hsize = 0, hsense = 0;
+    for (const h of world.hunters) {
+      hspeed += h.g.speed;
+      hsize += h.g.size;
+      hsense += h.g.sense;
+    }
+    const hinv = hn > 0 ? 1 / hn : 0;
     world.history.push({
       speed: speed * inv,
       size: size * inv,
       sense: sense * inv,
+      hspeed: hn > 0 ? hspeed * hinv : null,
+      hsize: hn > 0 ? hsize * hinv : null,
+      hsense: hn > 0 ? hsense * hinv : null,
       pop: n,
-      hunters: world.hunters.length,
+      hunters: hn,
       food: Math.round(biomass()),
     });
     if (world.history.length > CONFIG.historyCap) world.history.shift();
@@ -1103,6 +1128,7 @@
     const cap = CONFIG.historyCap;
 
     if (hist.length > 1) {
+      // grazer genes — solid lines
       for (const t of TRAITS) {
         cctx.strokeStyle = t.color;
         cctx.lineWidth = 1.5;
@@ -1115,28 +1141,54 @@
         }
         cctx.stroke();
       }
+      // hunter genes — dashed lines on the same normalized axis, so the arms race
+      // reads at a glance (mote & hunter speed climbing together, say). Slightly
+      // faint so the faster-swinging grazer lines stay the visual lead, and drawn
+      // gap-aware: a null (no hunters that sample) lifts the pen so a collapse shows
+      // as a break in the curve rather than a false plunge to the floor.
+      cctx.setLineDash([4, 3]);
+      cctx.globalAlpha = 0.72;
+      for (const t of HUNTER_TRAITS) {
+        cctx.strokeStyle = t.color;
+        cctx.lineWidth = 1.25;
+        cctx.beginPath();
+        let pen = false;
+        for (let i = 0; i < hist.length; i++) {
+          const v = hist[i][t.key];
+          if (v == null) { pen = false; continue; }
+          const norm = clamp((v - t.lo) / (t.hi - t.lo), 0, 1);
+          const x = padL + (i / (cap - 1)) * plotW;
+          const y = padT + plotH * (1 - norm);
+          if (!pen) { cctx.moveTo(x, y); pen = true; } else cctx.lineTo(x, y);
+        }
+        cctx.stroke();
+      }
+      cctx.globalAlpha = 1;
+      cctx.setLineDash([]);
     }
 
-    // legend with current averages
+    // legend: one swatch per gene, then its current grazer·hunter average pair, so
+    // the two species' values sit side by side (solid grazer · dashed hunter).
     cctx.font = "11px ui-sans-serif, system-ui, sans-serif";
     cctx.textBaseline = "middle";
     const latest = hist.length ? hist[hist.length - 1] : null;
+    const fmt = (v) => (v == null ? "–" : v.toFixed(v >= 10 ? 0 : 2));
     let lx = padL;
-    for (const t of TRAITS) {
+    for (let gi = 0; gi < TRAITS.length; gi++) {
+      const t = TRAITS[gi], ht = HUNTER_TRAITS[gi];
       cctx.fillStyle = t.color;
       cctx.fillRect(lx, padT / 2 - 4, 8, 8);
       lx += 12;
-      const raw = latest ? latest[t.key] : null;
-      const val = raw === null ? "–" : raw.toFixed(raw >= 10 ? 0 : 2);
-      const text = `${t.label} ${val}`;
+      const g = latest ? latest[t.key] : null;
+      const h = latest ? latest[ht.key] : null;
+      const text = `${t.label} ${fmt(g)}·${fmt(h)}`;
       cctx.fillStyle = "#cdd8e4";
       cctx.fillText(text, lx, padT / 2);
       lx += cctx.measureText(text).width + 16;
     }
-    if (hist.length <= 1) {
-      cctx.fillStyle = "#6b7d8f";
-      cctx.fillText("gathering data…", lx, padT / 2);
-    }
+    // trailing key so the dashed lines aren't a mystery
+    cctx.fillStyle = "#6b7d8f";
+    cctx.fillText(hist.length <= 1 ? "gathering data…" : "grazer·hunter", lx, padT / 2);
   }
 
   // ---- trophic cascade chart ----------------------------------------------
