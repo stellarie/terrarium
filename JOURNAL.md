@@ -40,20 +40,30 @@ finish conditions met — food is a self-propagating process rather than a spawn
 grazing visibly shapes the landscape, and the pop/biomass chart now shows a
 bloom→overgraze→crash→recover limit cycle the old uniform rain never could.
 
-**Arc II — The Predation Era.** A second organism that eats _motes_, not plants: a
-three-tier ecology (vegetation → grazers → hunters) with the classic predator–prey cycle
-riding on top of the grazer–plant one. Give predators their own genome and senses, and
-let the two species coevolve — grazers pressured to flee, predators to catch.
+**Arc II — The Predation Era — ✅ COMPLETE (2026-07-22).** A second organism, the **hunter**,
+that eats _motes_ instead of plants: the world is now a three-tier food chain (vegetation →
+grazers → hunters). All three finish conditions met in a single Expedition — hunters are a
+self-sustaining population that visibly chases and catches motes; the new trophic-cascade
+chart shows the phase-lagged predator–prey oscillation (plants, motes and hunters each scaled
+to their own peak); and across 25 headless seeds neither tier ever trivially wins — motes
+never fall near extinction, hunters never pin at their cap, plants never die out. Grazers now
+flee predators (sprinting, at an energy cost), so predation is a real second axis of selection
+pressing on speed and sense.
 
-_Finished when:_ predators are a self-sustaining population that visibly hunts motes; the
-charts show a phase-lagged predator–prey oscillation; and neither species trivially wins
-(no instant extinction, no unchecked runaway).
+**Arc III — The Great Divergence.** Now that two forces pull on the grazers at once —
+_go where the food is_ and _flee what eats you_ — the population should stop merely drifting
+and start to **split**. This arc is about making that legible: track both gene pools (grazer
+_and_ hunter) over time, then detect when the grazers separate into distinct morphs (say fast
+skittish sprinters vs. slow thrifty grazers) and name them, turning "the population drifts"
+into "the population speciated."
 
-_Runs since the last Expedition:_ **1**. This run was a visuals Build (the hidden-landscape
-overlay) taken deliberately to rotate category before the predator Expedition — the last two
-runs were both ecology, and the anti-repetition rule wins over impatience. Next run is teed
-up for predators: the new overlay is also the instrument for reading the coming three-tier
-ecology.
+_Finished when:_ a viewer can see the grazer gene pool split into 2+ stable clusters, the
+world labels them ("2 morphs coexisting") and tints motes by cluster, and the split is shown
+to be _driven_ by predation (it collapses back to one morph if hunters vanish).
+
+_Runs since the last Expedition:_ **0** (this run was the Arc II Expedition). Next run should
+Build, not Expedition, and rotate category away from ecology — a natural first step is the
+hunter trait chart, giving Arc III its second microscope before the speciation centrepiece.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -180,20 +190,25 @@ the backlog.**
 
 - `index.html` — page shell, canvas, HUD, two chart canvases (`#chart`, `#chart2`), controls.
 - `style.css` — dark terrarium styling. CSS variables at the top.
-- `sim.js` — everything: one IIFE. Sections are commented: config, helpers, the
-  vegetation grid, seasons, entities, world state, vegetation dynamics, history sample,
-  `step()`, `draw()`, trait chart, population/biomass chart, HUD, loop, controls. Ends
-  with a Node-only `module.exports` hook (skipped in browsers) so the smoke test can
-  drive the real internals.
+- `sim.js` — everything: one IIFE. Sections are commented: config, helpers (incl. toroidal
+  distance/bearing), the vegetation grid, seasons, entities (motes _and_ hunters), world
+  state, vegetation dynamics, history sample, `step()` (grazers, then hunters), `draw()`,
+  trait chart, trophic-cascade chart, HUD, loop, controls. Ends with a Node-only
+  `module.exports` hook (skipped in browsers) so the smoke test can drive the real internals.
 - `smoke.js` — dependency-free headless smoke test: a tiny DOM/canvas shim loads the
-  real `sim.js`, runs 7200 ticks, and asserts (12 checks) no throw, the world never
-  empties, plants persist and fluctuate, genes drift, no NaN, the grazing field stays
-  finite and actually records, and every render path — including all three overlay modes —
-  runs without throwing. Run it with `node smoke.js`; it is the parachute that makes
-  Expeditions safe.
+  real `sim.js`, runs 7200 ticks (3 seasons), and asserts **20 checks** — no throw, the
+  world never empties, plants persist and fluctuate, genes drift, no NaN anywhere, the
+  grazing field records; and for the predator layer: hunters catch prey, breed, oscillate,
+  stay self-sustaining (rarely extinct), never nearly wipe the motes out (min ≥ 10) and are
+  never pinned at their cap; plus every render path — all three overlay modes, both charts,
+  hunters and kill-flashes — runs without throwing. Because it uses real randomness, tune by
+  running it across several seeds, not once. It is the parachute that makes Expeditions safe.
 - Core objects:
-  - **genome**: `{ speed, size, sense, metabo, hue }`.
-  - **mote**: `{ x, y, dir, energy, age, g: genome }`.
+  - **genome**: `{ speed, size, sense, metabo, hue }` — shared shape, different ranges per
+    species (hunters are faster, keener-sensed, and hued in a hot red/orange band).
+  - **mote** (grazer): `{ x, y, dir, energy, age, g }`.
+  - **hunter** (predator): `{ x, y, dir, energy, age, cool, g }` — `cool` is the digestion
+    timer that gates its next strike.
 - **The vegetation field** (this replaced discrete food pellets in Arc I):
   - `GRID` — a toroidal 64×36 lattice of `vegCell`-px cells (15px; divides 960×540 exactly).
   - `world.fert` — static per-cell carrying capacity in `[fertMin, 1]` from a few random
@@ -211,15 +226,40 @@ the backlog.**
   grazing, `×grazeDecay` each tick) auto-scaled to its own peak — as a cool→hot wash. Both
   draw over the meadow, under the motes, with a labelled gradient key. The economy never
   reads `graze` back, so like the charts the overlay cannot perturb the world.
-- `CONFIG` at the top of `sim.js` holds all the balance knobs. The economy was tuned
+- **The predation layer** (Arc II) — `world.hunters`, a second organism run right after the
+  grazers each `step()`:
+  - Hunters carry the same 5-gene genome on predatory ranges (`makeHunterGenome`) and are
+    drawn as hot-coloured arrowheads pointing along `dir`, distinct from the soft grazer discs.
+  - **Grazer fear:** before grazing, each mote scans `world.hunters` for the nearest within
+    `fearRange`; if one is close it flees straight away from it (`torusAngle`) and _sprints_
+    at `panicBoost`× speed — which burns more energy, so predation selects for speed and sense.
+  - **The hunt:** each hunter always stalks the nearest mote in sense range (steering toward
+    it), but can only **strike** when its digestion timer `cool` is 0. A catch (within
+    `size+size+huntRange`) absorbs a share of the prey's energy, kills the mote (`world.eaten++`),
+    drops a fading **kill-flash** into `world.sparks`, and resets `cool = huntCooldown`.
+  - **Why it's stable** (tuned empirically across ~25 `smoke.js` seeds): three stacked
+    stabilisers keep it off the knife-edge of double-extinction. (1) A post-kill **cooldown**
+    caps each hunter's kill rate, giving prey a refuge; decoupling _stalking_ from _striking_
+    made the cooldown a clean rate-cap instead of stranding digesting hunters in empty ground.
+    (2) **Territoriality** (`hunterCrowd`) raises the split-energy threshold with predator
+    density, so hunters brake to an equilibrium _below_ their cap and oscillate there instead
+    of pinning. (3) A high **metabolism** makes them die back fast when prey thins (the cycle's
+    downswing). A soft `hunterReseed*` parachute lets predators wander back in only when prey
+    is plentiful, so it can't mask a real crash.
+- `CONFIG` at the top of `sim.js` holds all the balance knobs. The grazer economy was tuned
   **empirically via `smoke.js`** into a limit cycle: `vegEnergy` (grazing income) sits
   near metabolic cost so scarcity really bites, and `vegGrowth` is slow enough that food
   is genuinely limiting — together they make the population bloom, overgraze, crash, and
   recover instead of pinning at `maxPop`. (Lesson: `vegEnergy` 46 → 5 was the pivotal
   change; anything much higher makes food effectively free and the world pins at the cap.)
-- `world.history` is a rolling buffer of samples `{ speed, size, sense, pop, food }` —
-  `food` is now **total plant biomass** — taken every `CONFIG.sampleEvery` ticks; both
-  charts read from it.
+  The predator knobs were tuned the same way — the pivotal lesson there was that the cooldown
+  is only a clean lever once a sated hunter keeps _tracking_ prey rather than drifting off.
+- `world.history` is a rolling buffer of samples `{ speed, size, sense, pop, hunters, food }`
+  — `food` is **total plant biomass** — taken every `CONFIG.sampleEvery` ticks; both charts
+  read from it. The lower chart is now the **trophic-cascade** chart: it plots plants, motes
+  and hunters, each normalised to its _own_ recent peak (their magnitudes span orders of
+  magnitude), so all three fill the panel and the eye can follow a bloom rippling up the food
+  chain with a lag at each tier. The legend still shows each tier's absolute current count.
 - **Seasons:** a sine on the tick scales plant *growth & seeding* (no longer a spawn
   rate) by 0.4×–1.6× over a 2400-tick period, with a day/night background tint and a HUD
   `season ×N.NN ↑/↓` readout.
@@ -231,6 +271,27 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — [Expedition] the hunters arrive (a three-tier food chain)
+
+The world grew a second creature: **hunters** — hot-coloured arrowheads that stalk the soft
+grazer motes, chase them down, and eat them in a little expanding kill-flash, so a visitor now
+watches predators cut through the herd while the grazers scatter and sprint away in panic
+(fleeing costs energy, so predation now presses selection on speed and sense, not just
+metabolism). The old pop/plants chart became a **trophic-cascade** chart — plants, motes and
+hunters each scaled to their own peak — where you can watch a bloom ripple up the food chain
+with a phase lag at every tier, the classic predator–prey oscillation riding on the grazer–plant
+one; the HUD gained `hunters` and `eaten` counts. This completes **Arc II — The Predation Era**
+in a single Expedition: all three finish conditions are met and, crucially, robustly — across
+~25 headless seeds the motes never fall near extinction and the hunters never pin at their cap
+or die out. Landing that stability was the whole battle: naïve predators either ran the prey to
+nothing or starved, and it took three stacked stabilisers found by sweeping `smoke.js` — a
+post-kill **digestion cooldown** (a prey refuge / kill-rate cap), predator **territoriality**
+(a crowding brake that holds them below their cap), and a steep **metabolism** (a fast
+die-back) — with the key insight that a sated hunter must keep _tracking_ prey, not wander off,
+for the cooldown to behave. Verified with `node --check` and the now-20-check smoke harness run
+over many seeds (all render paths, both charts, hunters and sparks exercised); live pixels
+still want an interactive eyeball, since this environment won't composite the file:// preview.
 
 ### 2026-07-22 — see the hidden landscape (fertility & grazing overlay)
 
@@ -292,14 +353,22 @@ Built the whole static page and the first working simulation from nothing: motes
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
 
-- **[Expedition] Predators.** A second species that eats motes instead of plants.
-  Predator/prey cycles are the classic emergent payoff. _This is the centrepiece of
-  Arc II — the current arc._
 - **[Expedition] Emergent species detector.** _(ambitious — not sure I can land it
   cleanly.)_ Cluster the live gene pool each sample (e.g. on speed×metabo×size) and,
   when two or more clusters stay separated for long enough, name them and show a "N
   species coexisting" readout, maybe tinting motes by morph. Turn "the population drifts"
   into "the population _split_" — make speciation visible instead of merely implied.
+  _This is the centrepiece of Arc III — the current arc — now with predation to drive the split._
+- **[Build] Hunter trait chart.** Motes get a trait chart; hunters don't yet. Add a second
+  gene-pool readout tracking predator speed/size/sense over time (an overlaid panel, or a
+  toggle on the existing one), so the coevolutionary arms race is legible on _both_ sides —
+  the natural first Build of Arc III and its second microscope before the speciation work.
+- **[Expedition] Flocking & pack behaviour.** _(ambitious — not sure I can land the emergence
+  cleanly.)_ Give motes a weak pull toward nearby motes (safety in numbers / the dilution
+  effect) and hunters a tendency to converge on the same prey, so herds and packs form from
+  purely local rules. Collective survival strategies would then _emerge_ rather than be coded —
+  and they'd interact with speciation, since a schooling morph and a scattering morph are
+  different ways to survive a hunter.
 - **[Expedition] Vision-based steering.** Replace "nearest food" with a couple of
   forward-facing sensors, edging toward tiny neural brains.
 - **[Expedition] World scrubber / time-lapse.** _(ambitious — not sure I can land it
