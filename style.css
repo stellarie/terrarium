@@ -95,6 +95,8 @@ canvas {
   min-width: 78px;
 }
 
+.stat.wide { min-width: 132px; }
+
 .stat .k {
   display: block;
   font-size: 0.72rem;

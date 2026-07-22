@@ -19,7 +19,7 @@
 require("./shim.js");
 const sim = require("./sim.js");
 const { world, step, seed, biomass, CONFIG, GRID,
-        draw, drawChart, drawCountChart, updateHud, classifyMorphs } = sim;
+        draw, drawChart, drawCountChart, updateHud, classifyMorphs, classifyRegime } = sim;
 
 // ---- assertions --------------------------------------------------------------
 let failures = 0;
@@ -146,6 +146,27 @@ check(cBi.k === 2, `morph detector splits a clean two-cluster pool into TWO (k=$
 const cLive = classifyMorphs(world.motes);
 check(cLive.k === 1 || cLive.k === 2, `morph detector returns a sane verdict on the live pool (k=${cLive.k})`);
 check(world.morphs && world.morphs.k >= 1, `live morph readout is populated for the HUD (k=${world.morphs && world.morphs.k})`);
+
+// the regime readout must name the right attractor on deterministic synthetic history
+// windows (each sample only needs a `hunters` count), and its hysteresis must hold the
+// prior state in the ambiguous middle band. Synthetic so this can't flake on randomness.
+const hist = (fn) => Array.from({ length: 24 }, (_, i) => ({ hunters: fn(i) }));
+const rCollapse = classifyRegime(hist(() => 7), "grazer-haven");
+const rArms = classifyRegime(hist(() => 45), "grazer-haven");
+const rRecover = classifyRegime(hist((i) => 6 + i * 0.6), "grazer-haven");
+const rDecline = classifyRegime(hist((i) => 55 - i * 1.3), "arms-race");
+const midHist = hist(() => 17);
+check(rCollapse.state === "grazer-haven", `regime names a starved predator tier "grazer-haven" (hmean ${rCollapse.hmean.toFixed(1)})`);
+check(rArms.state === "arms-race", `regime names a dense predator tier "arms-race" (hmean ${rArms.hmean.toFixed(1)})`);
+check(rRecover.state === "grazer-haven" && rRecover.trend === "recovering", `regime flags a climbing tier as recovering (state=${rRecover.state}, trend=${rRecover.trend})`);
+check(rDecline.state === "arms-race" && rDecline.trend === "declining", `regime flags a sliding tier as declining (state=${rDecline.state}, trend=${rDecline.trend})`);
+check(classifyRegime(midHist, "arms-race").state === "arms-race" &&
+      classifyRegime(midHist, "grazer-haven").state === "grazer-haven",
+      "regime hysteresis holds the prior attractor in the ambiguous middle band");
+check(classifyRegime([{ hunters: 5 }], "settling").state === "settling", "regime reads 'settling' until it has enough history");
+const knownRegime = ["settling", "arms-race", "grazer-haven"].includes(world.regime.state);
+check(knownRegime && typeof world.regime.label === "string" && world.regime.label.length > 0,
+      `live regime readout is populated for the HUD (${world.regime.state})`);
 
 // the render path (unexercised by step()) doesn't throw — including every overlay
 // mode (off / fertility / grazing) against the shimmed canvas
