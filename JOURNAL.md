@@ -61,19 +61,19 @@ _Finished when:_ a viewer can see the grazer gene pool split into 2+ stable clus
 world labels them ("2 morphs coexisting") and tints motes by cluster, and the split is shown
 to be _driven_ by predation (it collapses back to one morph if hunters vanish).
 
-_First readings (2026-07-22, from the new `observe.js`) challenge this arc's premise._ The
-grazers are **not** splitting — across every 20k-tick run they _converge_ to a single corner
-(fast, thrifty, **low-sense**), because with a fixed `fearRange` predation doesn't select on
-`sense` at all and abundant food doesn't reward long-range foraging. So before the speciation
-detector can find morphs, the world probably needs a _second selective axis_ that actually
-pulls grazers apart — the obvious one being **wiring fear detection to the `sense` gene** (see
-Log + backlog), so keen skittish sprinters and thrifty local grazers become genuinely
-different bets. That's the recommended next Build; the hunter trait chart is the lighter
-alternative.
+_Update (2026-07-22): the sense axis is now wired._ First `observe.js` readings challenged the
+arc's premise — grazers were _converging_ to a single fast, thrifty, **low-sense** corner because
+a fixed `fearRange` meant predation didn't select on `sense` at all. That's now fixed: fear
+detection uses the mote's own `sense` gene (above a 22px startle floor), and `observe.js` confirms
+it worked _and_ that the effect is **conditional** — across 8 seeds mote sense holds at 42–50
+wherever hunters thrive and sinks to ~16 only where the predator tier has collapsed, so sense
+tracks predation instead of collapsing blindly. The second selective axis the arc needed now
+exists and is real. Next step is the **speciation detector** itself — cluster the live grazer gene
+pool (e.g. speed × sense × metabo), and when two clusters stay apart, name them and tint the motes
+by morph. The hunter trait chart is still the lighter alternative Build.
 
-_Runs since the last Expedition:_ **0** — unchanged. The Arc II Expedition was the last real
-run; this `observe.js` run is the mandatory-tooling exception the loop says does **not**
-consume the counter. Next run should Build (not Expedition) and may rotate back toward ecology.
+_Runs since the last Expedition:_ **1** (this sense Build). The Arc II Expedition remains the last
+one; Expedition becomes mandatory again at 5.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -85,50 +85,47 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — `observe.js`, 20,000 ticks, 5 fresh unseeded runs.** These are
-_measured_, not quoted. Headline: **the world is bistable** — each seed settles into one of two
-regimes, so most figures are given as a range spanning both.
+**Last observed: 2026-07-22 — `observe.js`, 20,000 ticks, 8 fresh unseeded runs** (post the
+fear-wired-to-sense Build). Measured, not quoted. Headline unchanged — **the world is still
+bistable** — but the fix added a new axis the regimes now differ along: **prey alertness**.
 
-- **THE BISTABILITY (headline finding).** Two attractors, chosen by founding RNG:
-  _predator-dense arms-race_ (hunters ride the cap ~65/75, motes race the speed ceiling, meadow
-  stays green ~665 biomass, high churn) vs. _predator near-collapse / grazer-haven_ (hunters
-  bleed to **1–8 survivors**, grazers overpopulate & starve, meadow grazed to **~0 biomass**).
-  ~2 of 3 runs fell into the collapse regime.
-- **motes:** min **33–38** (the 0→6 reseed net _never_ fired), max **571–600** (crest touches
-  `maxPop` 600), mean **330–436**, CV 28–35% — always oscillates. Mean age swings wildly by
-  regime: **~480** (predator-dense, fast churn) to **~3400** (grazer-haven, near-idle).
-- **hunters:** min **1–12**, max **22–75**, mean **7–65** — the widest swing in the world.
-  Never _exactly_ zero, so `smoke.js` calls them "self-sustaining" in both regimes; `observe.js`
-  shows that's masking a tier that bleeds to a single survivor in most runs. At the cap they are
-  near-immortal (a founder survived all 20k ticks; ~60 hunter deaths vs ~120 births per run).
-- **plants (biomass):** min **0–24**, max **~1350–1600**, mean **185–681**, CV 49–148%.
-  In the grazer-haven regime the meadow is periodically grazed to **total collapse (0)** — a
-  state `smoke.js`'s 7200-tick window (min biomass ~5) never reaches.
-- **flow /1k ticks:** mote births **129–424**, starved **27–89**, eaten **23–353** (predation
-  is 12–88% of mote deaths, regime-dependent); hunter births ~6, deaths ~3.
-- **mote gene drift (founder→final), robust across all runs:** speed **0.95→1.5–2.45 ↑**,
-  size ~3.3→3.2 (flat), **sense 47→16–20 ↓ (collapses every run)**, **metabo 1.07→0.64–0.71 ↓
-  (sinks toward the 0.6 floor)**, hue drifts freely (neutral). No gene is _pinned_ at a clamp,
-  but speed (→2.45) and metabo (→0.64) both press close in the predator regime.
-- **hunter gene drift:** speed 1.5→1.7–2.5 ↑, sense 78→64–96 (regime-dependent), metabo
-  1.05→0.74–0.89 ↓.
-- **the sense contradiction (complaint):** mote sense collapses because nothing selects on it —
-  fear detection uses a _fixed_ `fearRange` (line 415, `thD2 = FEAR2`), not `m.g.sense`, so the
-  code's own claim (line 414: "predation selects for … sense") is **false**. Documented, not fixed.
+- **THE BISTABILITY (headline finding, persists).** Two RNG-chosen attractors: _predator-rich
+  arms-race_ (hunters mean **48–66**, motes race the speed ceiling, meadow stays green) vs.
+  _predator collapse / grazer-haven_ (hunters bleed to **1–7 survivors**, grazers overpopulate &
+  starve, meadow grazed toward **0 biomass**). Roughly half of 8 seeds fell into collapse.
+- **motes:** min **33–36** (the 0→6 reseed net _never_ fired), max **~575–600** (crest touches
+  `maxPop` 600), mean **~330–414**, CV ~31–32% — always oscillates. Mean age swings by regime,
+  ~500 (predator-rich churn) to ~3000 (grazer-haven near-idle).
+- **hunters:** min **1–4**, max **12–34**, mean **5–24** — the widest swing in the world.
+  Never _exactly_ zero, so `smoke.js` still blesses both regimes as "self-sustaining"; `observe.js`
+  shows collapse-regime hunters down to a handful of near-immortal survivors.
+- **plants (biomass):** min **0–24**, max **~1300–1360**, mean **~160–290**, CV 100–166%.
+  Grazed to **total collapse (0)** in the grazer-haven regime — a state `smoke.js`'s 7200-tick
+  window never reaches.
+- **flow /1k ticks:** mote births **127–208**, starved **80–100**, eaten **10–108** (predation is
+  **9–58% of mote deaths, regime-dependent**); hunter births ~0–3, deaths ~3–5.
+- **mote gene drift (founder→final):** speed **1.03→1.4–2.4 ↑**, size ~3.3→2.6–3.5, **sense
+  ~46→ now REGIME-COUPLED: 42–50 in predator-rich seeds, 16–23 in collapse** (was 16–20 in _all_
+  seeds before this run), metabo **1.05→0.64–0.71 ↓** (near the 0.6 floor), hue neutral. No gene
+  pinned at a clamp in any seed.
+- **hunter gene drift:** speed 1.5→1.9–2.4 ↑, sense 76→57–90 (regime-dependent), metabo
+  1.05→0.73–0.91 ↓.
+- **the sense fix (former complaint, now resolved).** Fear detection now uses `m.g.sense`
+  (floored at `fearFloor`=22px), not a fixed `fearRange`; the false comment is corrected. Sense
+  now tracks predation — a clean monotone link (hunters mean vs final sense) confirms it, so the
+  standing complaint here is retired.
 - **spatial:** motes spread fairly evenly over the torus (no strong edge-hugging); hunters track
-  the herd. The green-world effect is visible — predator-dense meadows stay lush with grazed
-  corridors, grazer-haven meadows are near-barren with only small refugia.
-- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and 20k every run, and
-  the predator tier slowly changes regime over the long horizon — motion the 7200-tick smoke
-  window is structurally too short to catch.
-- **live pixels:** ❗ still **unverified** — `observe.js` is headless too and does _not_ close
-  this gap. The whole visual layer (meadow, overlays, hunters, kill-flashes, both charts) has
-  now gone five runs without a human eyeball; per the note-to-self, that's the honest status of
-  the render layer, not a deferral.
+  the herd. Green-world effect visible — predator-rich meadows lush with grazed corridors,
+  grazer-haven meadows near-barren with small refugia.
+- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and 20k every run.
+- **live pixels:** ❗ still **unverified** — `observe.js` is headless too. The whole visual layer
+  (meadow, overlays, hunters, kill-flashes, both charts) has now gone **six** runs without a human
+  eyeball. Per the note-to-self, that's the honest status of the render layer, not a deferral, and
+  it is now the loudest standing complaint.
 
-_previously:_ never observed — Field Notes were prose quotes from Log entries; no gene average,
-population min/max/mean, or spatial figure had ever been read off a live run (grazing-peak 3.83,
-captured once, was the sole exception).
+_previously:_ (2026-07-22, pre-fix, 5 seeds) motes min 33–38 / max 571–600 / mean 330–436;
+hunters min 1–12 / mean 7–65; plants min 0–24 / max 1350–1600; **sense collapsed 47→16–20 in
+_every_ run** (nothing selected on it — fixed `fearRange`); metabo 1.07→0.64–0.71; no gene pinned.
 
 ---
 
@@ -363,9 +360,14 @@ the backlog.**
   grazers each `step()`:
   - Hunters carry the same 5-gene genome on predatory ranges (`makeHunterGenome`) and are
     drawn as hot-coloured arrowheads pointing along `dir`, distinct from the soft grazer discs.
-  - **Grazer fear:** before grazing, each mote scans `world.hunters` for the nearest within
-    `fearRange`; if one is close it flees straight away from it (`torusAngle`) and _sprints_
-    at `panicBoost`× speed — which burns more energy, so predation selects for speed and sense.
+  - **Grazer fear:** before grazing, each mote scans `world.hunters` for the nearest within its
+    own perception radius — the mote's `sense` gene, floored at `fearFloor` (22px) so even a dull
+    mote keeps a close-range startle reflex. If one is in range it flees straight away
+    (`torusAngle`) and _sprints_ at `panicBoost`× speed, which burns more energy — so a keen, fast
+    mote both spots the hunter sooner and outruns it, and predation genuinely selects on `sense`
+    and speed. (Verified 2026-07-22: sense holds ~45 in predator-rich seeds and sinks only when
+    the hunters themselves collapse; before this, a fixed `fearRange` meant sense was inert and
+    cratered in every run.)
   - **The hunt:** each hunter always stalks the nearest mote in sense range (steering toward
     it), but can only **strike** when its digestion timer `cool` is 0. A catch (within
     `size+size+huntRange`) absorbs a share of the prey's energy, kills the mote (`world.eaten++`),
@@ -404,6 +406,25 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — predation finally selects on sense (fear wired to the gene)
+
+**Observed:** `observe.js` caught mote `sense` collapsing 44→17 in every run, quietly refuting
+the code's own comment that "predation selects for sense" — fear detection used a _fixed_ 60px
+`fearRange`, so a keen mote spotted a hunter no sooner than a blind one, and sense (which also
+carries a small foraging-travel cost) had a cost and no benefit. This run made the fear radius
+the mote's own `sense` gene, floored at a 22px close-range startle reflex, so a keen-sensed mote
+now flees hunters from farther and lives to breed while dull motes are ambushed — and the
+readings bear it out: across 8 seeds sense now _tracks predators_, holding at **42–50 wherever
+hunters thrive** (mean 48–66) and sinking to **16–23 only where the predator tier has collapsed**
+(mean 4–7), a clean monotone link that refutes the rival "it's just random drift." A visitor
+watching the two charts together now sees the story couple — when the red hunters line stays
+healthy the purple sense line holds up, so a predator-rich world grows a visibly keener, twitchier
+herd while a predator-collapsed one fills with blind, complacent grazers. Verified with
+`node --check` on all four `.js` files, `smoke.js` green across 5 seeds, and a full `observe.js`
+report (no throw, no NaN, no gene newly pinned, safety nets silent); live pixels remain
+un-eyeballed for a sixth straight run — the honest status of the visual layer, not a deferral.
+(Category: ecology — rotated off last run's tooling; a Build, so the Expedition counter ticks to 1.)
 
 ### 2026-07-22 — the observatory opens (observe.js)
 
@@ -506,13 +527,21 @@ Built the whole static page and the first working simulation from nothing: motes
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
 
-- **[Build] Wire mote fear to the `sense` gene** _(evidence-backed, high value)_. `observe.js`
-  shows mote `sense` collapsing in every run because nothing selects on it: fear detection uses a
-  fixed `fearRange` (sim.js line 415, `thD2 = FEAR2`), so a keen-sensed mote spots a hunter no
-  sooner than a blind one — directly contradicting the comment on line 414. Make the threat
-  radius scale with `m.g.sense` (e.g. `min(fearRange, k·sense)` or fear range = `sense`), fix the
-  now-false comment, and re-observe: sense should stop cratering and predation should gain a real
-  second selective axis. Likely a _prerequisite_ for Arc III having any divergence to detect.
+- **[Build] Perception upkeep — give `sense` an explicit cost** _(follow-on to the fear fix)_.
+  Sense now has a survival _benefit_ (spot hunters sooner) but no explicit _cost_, so in the most
+  predator-dense seeds it could in principle creep toward the 120 ceiling (not yet observed — it
+  settled at 42–50). Add a small metabolic surcharge proportional to `m.g.sense` (sensory tissue
+  is expensive) inside the burn on sim.js ~line 445, so sense reaches a clean _interior_ optimum
+  set by the local predation rate — and re-observe whether the two regimes then stabilise sense at
+  visibly different, non-degenerate heights. Measure before committing; this is pre-emptive tuning.
+- **[Expedition] Prey alarm signalling → emergent herds** _(ambitious — not sure I can land stable
+  wave-propagation)_. When a mote flees, let it stamp a short-lived "alarm" into a decaying field
+  (built like the grazing overlay the economy never reads back for dynamics, but this one _is_ read
+  by prey), so nearby motes sense the alarm and flee too and panic ripples through a cluster as a
+  wave. Keen-sensed motes both raise louder alarms and hear them from farther, coupling `sense` to a
+  _collective_ defence; watch whether herds/flocks emerge from purely local rules and whether shared
+  vigilance pushes the sense equilibrium up. Risk: it either does nothing or triggers mass
+  stampede-crashes — landing a legible, stable middle is the whole challenge.
 - **[Expedition] Name the regime, then let a collapse recover** _(ambitious — not sure I can land
   a clean recovery mechanism)_. `observe.js` revealed the world coin-flips between a predator
   arms-race and a grazer-haven at tick 0 and then stays there — an invisible RNG lottery. Turn it

@@ -88,8 +88,10 @@
     hunterCorpseVeg: 0.85,    // a fallen hunter feeds more plants than a mote does
     hunterReseedPrey: 55,     // predators only wander back in when this many motes exist
     hunterReseedCount: 6,     // how many drift in when they'd otherwise be extinct
-    fearRange: 60,            // how far a mote can sense a hunter and start to flee — kept
-                              // moderate so predators stay tightly coupled to the prey
+    fearFloor: 22,            // close-range startle reflex: the *minimum* radius at which any
+                              // mote notices a hunter, however dull-sensed. Above this the
+                              // fear radius IS the mote's `sense` gene, so keen motes flee
+                              // sooner — predation now selects on sense (see step()).
     panicBoost: 1.6,          // speed multiplier while fleeing (burns more energy, too)
     sparkFade: 0.045,         // per-tick fade of a kill-flash marker (view only)
   };
@@ -135,7 +137,7 @@
     let dy = by - ay; if (dy > HH) dy -= H; else if (dy < -HH) dy += H;
     return Math.atan2(dy, dx);
   }
-  const FEAR2 = CONFIG.fearRange * CONFIG.fearRange;
+  const FEARFLOOR2 = CONFIG.fearFloor * CONFIG.fearFloor;
 
   // ---- the vegetation grid ------------------------------------------------
   // A toroidal lattice of cells laid over the field. Each cell holds a plant
@@ -409,10 +411,13 @@
       const m = world.motes[i];
       m.age++;
 
-      // fear first: if a hunter is within fear range, flee straight away from the
-      // nearest one — survival overrides grazing. Keener senses spot the threat from
-      // farther, and the panic sprint below rewards speed, so predation selects for both.
-      let threat = false, thx = 0, thy = 0, thD2 = FEAR2;
+      // fear first: if a hunter is within this mote's perception, flee straight away
+      // from the nearest one — survival overrides grazing. The fear radius is the mote's
+      // own `sense` gene (with a small startle floor), so a keen-sensed mote spots the
+      // threat from farther and gets more warning to sprint clear; a dull one is ambushed.
+      // That, plus the energy-costly panic sprint, makes predation select on sense AND speed.
+      const fearR2 = m.g.sense * m.g.sense;
+      let threat = false, thx = 0, thy = 0, thD2 = fearR2 > FEARFLOOR2 ? fearR2 : FEARFLOOR2;
       for (let h = 0; h < world.hunters.length; h++) {
         const hu = world.hunters[h];
         const d2 = torusD2(m.x, m.y, hu.x, hu.y);
