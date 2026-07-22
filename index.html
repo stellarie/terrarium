@@ -9,8 +9,8 @@
 <body>
   <div id="app">
     <header>
-      <h1>Terrarium <span class="tag">v1</span></h1>
-      <p class="sub">A self-contained world of motes grazing a living meadow. Plants grow, spread, and get eaten; motes drift, breed, and mutate. Nobody is driving. Toggle the <b>overlay</b> (or press <kbd>O</kbd>) to reveal the hidden fertility map and where the herd has been grazing.</p>
+      <h1>Terrarium <span class="tag">v2</span></h1>
+      <p class="sub">A self-contained world with a three-tier food chain: a living meadow, soft <b>motes</b> that graze it, and hot-coloured <b>hunters</b> that chase and eat the motes. Plants grow and spread, grazers flee, predators strike — nobody is driving. Toggle the <b>overlay</b> (or press <kbd>O</kbd>) to reveal the hidden fertility map and where the herd has been grazing.</p>
     </header>
 
     <div class="stage-wrap">
@@ -20,9 +20,11 @@
     <div class="hud">
       <div class="stat"><span class="k">tick</span><span id="s-tick" class="v">0</span></div>
       <div class="stat"><span class="k">motes</span><span id="s-pop" class="v">0</span></div>
+      <div class="stat"><span class="k">hunters</span><span id="s-hunt" class="v">0</span></div>
       <div class="stat"><span class="k">plants</span><span id="s-food" class="v">0</span></div>
       <div class="stat"><span class="k">born</span><span id="s-born" class="v">0</span></div>
       <div class="stat"><span class="k">died</span><span id="s-died" class="v">0</span></div>
+      <div class="stat"><span class="k">eaten</span><span id="s-eaten" class="v">0</span></div>
       <div class="stat"><span class="k">season</span><span id="s-season" class="v">–</span></div>
     </div>
 
@@ -32,8 +34,8 @@
     </div>
 
     <div class="chart-wrap">
-      <div class="chart-cap">population &amp; plant biomass over time — the boom &amp; bust of the economy</div>
-      <canvas id="chart2" width="960" height="120" aria-label="Population and food counts over time"></canvas>
+      <div class="chart-cap">the trophic cascade — plants, motes &amp; hunters over time, each scaled to its own peak so the predator–prey lag shows</div>
+      <canvas id="chart2" width="960" height="120" aria-label="Plant, mote and hunter counts over time"></canvas>
     </div>
 
     <div class="controls">

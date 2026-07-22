@@ -61,6 +61,37 @@
     startVegFrac: 0.7,       // initial vegetation as a fraction of each cell's fertility
     grazeDecay: 0.99,        // grazing-pressure heat fades ~1%/tick so the overlay shows
                              // *recent* eating; view-only, nothing in the economy reads it
+
+    // The Predation Era — hunters, a second organism that eats motes, not plants.
+    // The whole trophic pyramid balances here: hunters must be able to catch and
+    // profit from grazers, yet be costly enough that they can't run the prey to
+    // extinction. Tuned empirically with smoke.js into a phase-lagged limit cycle.
+    hunterStart: 12,          // predators seeded at world start — enough to blunt the
+                              // founding prey boom instead of chasing it from behind
+    hunterMaxPop: 75,         // a roomy ceiling the herd rarely touches — the real limit is
+                              // satiation + metabolism, so hunters oscillate, not pin here
+    hunterMetabolism: 0.1,    // base energy burned per tick — hunters are costly to run, so
+                              // they die back when prey thins (the cycle's downswing)
+    hunterStartEnergy: 120,
+    hunterReproEnergy: 285,   // energy needed to split (a slowish numerical response damps
+                              // the boom so predators can't overshoot the prey to nothing)
+    hunterReproCost: 140,     // energy handed to the pup
+    hunterCrowd: 1.6,         // territoriality: the split threshold rises steeply with
+                              // predator density, so hunters brake to an equilibrium well
+                              // below the cap and oscillate there instead of pinning at it
+    huntRange: 6,             // extra px added to (predator+prey radius) to land a catch
+    huntCooldown: 40,         // ticks a hunter must digest after a kill before it can strike
+                              // again — a Type-II satiation that caps the total harvest, so
+                              // prey keep a refuge and predators self-limit below their cap
+    huntAssimilation: 0.35,   // fraction of the prey's stored energy the hunter absorbs
+    huntBonus: 18,            // flat energy per kill on top of the assimilated share
+    hunterCorpseVeg: 0.85,    // a fallen hunter feeds more plants than a mote does
+    hunterReseedPrey: 55,     // predators only wander back in when this many motes exist
+    hunterReseedCount: 6,     // how many drift in when they'd otherwise be extinct
+    fearRange: 60,            // how far a mote can sense a hunter and start to flee — kept
+                              // moderate so predators stay tightly coupled to the prey
+    panicBoost: 1.6,          // speed multiplier while fleeing (burns more energy, too)
+    sparkFade: 0.045,         // per-tick fade of a kill-flash marker (view only)
   };
 
   // Traits plotted on the live chart, each normalized to its full genetic range
@@ -71,11 +102,14 @@
     { key: "sense", label: "sense", color: "#a78bfa", lo: 12,   hi: 120 },
   ];
 
-  // The economy's boom & bust: population count and total plant biomass share a
-  // panel with an auto-scaled axis, so grazing pressure is legible over time.
-  const COUNTS = [
-    { key: "pop",  label: "motes",  color: "#e88fb0" },
-    { key: "food", label: "plants", color: "#6cc08a" },
+  // The trophic cascade over time: plants, grazers and hunters, bottom to top of
+  // the food chain. Each is scaled to its *own* recent peak (their magnitudes span
+  // orders of magnitude), so the panel reads as timing, not absolute counts — you
+  // watch the peaks ripple upward plants → motes → hunters with a lag at each tier.
+  const TIERS = [
+    { key: "food",    label: "plants",  color: "#6cc08a" },
+    { key: "pop",     label: "motes",   color: "#e88fb0" },
+    { key: "hunters", label: "hunters", color: "#ff6b6b" },
   ];
 
   // ---- helpers ------------------------------------------------------------
@@ -86,6 +120,22 @@
   function mutate(v, amt, lo, hi) {
     return clamp(v + rand(-amt, amt), lo, hi);
   }
+
+  // Shortest separation on the torus: an edge wraps, so predators and fleeing prey
+  // reckon distance and bearing across the seams, not just within the rectangle.
+  const HW = W / 2, HH = H / 2;
+  function torusD2(ax, ay, bx, by) {
+    let dx = ax - bx; if (dx > HW) dx -= W; else if (dx < -HW) dx += W;
+    let dy = ay - by; if (dy > HH) dy -= H; else if (dy < -HH) dy += H;
+    return dx * dx + dy * dy;
+  }
+  // Bearing from (ax,ay) toward (bx,by) across the nearest seam.
+  function torusAngle(ax, ay, bx, by) {
+    let dx = bx - ax; if (dx > HW) dx -= W; else if (dx < -HW) dx += W;
+    let dy = by - ay; if (dy > HH) dy -= H; else if (dy < -HH) dy += H;
+    return Math.atan2(dy, dx);
+  }
+  const FEAR2 = CONFIG.fearRange * CONFIG.fearRange;
 
   // ---- the vegetation grid ------------------------------------------------
   // A toroidal lattice of cells laid over the field. Each cell holds a plant
@@ -181,16 +231,54 @@
     };
   }
 
+  // Hunters carry the same five-gene genome as motes but on predatory ranges:
+  // faster, keener-sensed, and coloured in a hot band (reds/oranges) so they read
+  // as a distinct species at a glance and never drift into the grazers' greens.
+  function makeHunterGenome(parent) {
+    if (!parent) {
+      return {
+        speed: rand(1.1, 2.0),
+        size: rand(3.6, 5.6),
+        sense: rand(55, 100),
+        metabo: rand(0.8, 1.3),
+        hue: rand(2, 34),
+      };
+    }
+    return {
+      speed: mutate(parent.speed, 0.16, 0.6, 3.2),
+      size: mutate(parent.size, 0.35, 2.4, 9),
+      sense: mutate(parent.sense, 8, 24, 170),
+      metabo: mutate(parent.metabo, 0.1, 0.55, 1.8),
+      hue: mutate(parent.hue, 6, 0, 45),
+    };
+  }
+
+  function makeHunter(x, y, genome) {
+    return {
+      x, y,
+      dir: rand(0, TAU),
+      energy: CONFIG.hunterStartEnergy,
+      age: 0,
+      cool: 0,               // digestion timer; >0 means sated and not hunting
+      g: genome || makeHunterGenome(null),
+    };
+  }
+
   // ---- world state --------------------------------------------------------
   const world = {
     motes: [],
+    hunters: [],                        // the second tier: predators that eat motes
+    sparks: [],                         // transient kill-flashes where a mote was caught
     veg: new Float64Array(GRID.n),      // plant density per cell
     vegNext: new Float64Array(GRID.n),  // scratch buffer for the diffusion pass
     fert: new Float64Array(GRID.n),     // static carrying capacity per cell
     graze: new Float64Array(GRID.n),    // decaying record of recent grazing (view only)
     tick: 0,
     born: 0,
-    died: 0,
+    died: 0,                            // motes lost to starvation (predation is `eaten`)
+    eaten: 0,                           // motes caught by hunters
+    hunterBorn: 0,
+    hunterDied: 0,
     paused: false,
     stepsPerFrame: 2,
     overlay: 0,    // hidden-landscape lens: 0 off · 1 fertility map · 2 grazing pressure
@@ -204,12 +292,20 @@
     world.graze = new Float64Array(GRID.n);
     for (let i = 0; i < GRID.n; i++) world.veg[i] = world.fert[i] * CONFIG.startVegFrac;
     world.motes = [];
+    world.hunters = [];
+    world.sparks = [];
     world.tick = 0;
     world.born = 0;
     world.died = 0;
+    world.eaten = 0;
+    world.hunterBorn = 0;
+    world.hunterDied = 0;
     world.history = [];
     for (let i = 0; i < CONFIG.startMotes; i++) {
       world.motes.push(makeMote(rand(0, W), rand(0, H)));
+    }
+    for (let i = 0; i < CONFIG.hunterStart; i++) {
+      world.hunters.push(makeHunter(rand(0, W), rand(0, H)));
     }
   }
 
@@ -292,6 +388,7 @@
       size: size * inv,
       sense: sense * inv,
       pop: n,
+      hunters: world.hunters.length,
       food: Math.round(biomass()),
     });
     if (world.history.length > CONFIG.historyCap) world.history.shift();
@@ -312,21 +409,35 @@
       const m = world.motes[i];
       m.age++;
 
-      // steer toward the greenest direction within sense range (chemotaxis):
-      // probe eight bearings; head for the best if it beats the current cell.
-      const reach = m.g.sense;
-      let bestVal = vegAtPoint(m.x, m.y) * 1.04;   // hysteresis so it lingers to graze
-      let bestDir = -1;
-      for (let k = 0; k < 8; k++) {
-        const a = k * (TAU / 8);
-        const val = vegAtPoint(m.x + Math.cos(a) * reach, m.y + Math.sin(a) * reach);
-        if (val > bestVal) { bestVal = val; bestDir = a; }
+      // fear first: if a hunter is within fear range, flee straight away from the
+      // nearest one — survival overrides grazing. Keener senses spot the threat from
+      // farther, and the panic sprint below rewards speed, so predation selects for both.
+      let threat = false, thx = 0, thy = 0, thD2 = FEAR2;
+      for (let h = 0; h < world.hunters.length; h++) {
+        const hu = world.hunters[h];
+        const d2 = torusD2(m.x, m.y, hu.x, hu.y);
+        if (d2 < thD2) { thD2 = d2; thx = hu.x; thy = hu.y; threat = true; }
       }
-      if (bestDir >= 0) m.dir = bestDir;
-      else if (Math.random() < 0.08) m.dir += rand(-0.6, 0.6); // idle wander
 
-      // move
-      const v = m.g.speed;
+      if (threat) {
+        m.dir = torusAngle(thx, thy, m.x, m.y); // bearing away from the hunter
+      } else {
+        // steer toward the greenest direction within sense range (chemotaxis):
+        // probe eight bearings; head for the best if it beats the current cell.
+        const reach = m.g.sense;
+        let bestVal = vegAtPoint(m.x, m.y) * 1.04;   // hysteresis so it lingers to graze
+        let bestDir = -1;
+        for (let k = 0; k < 8; k++) {
+          const a = k * (TAU / 8);
+          const val = vegAtPoint(m.x + Math.cos(a) * reach, m.y + Math.sin(a) * reach);
+          if (val > bestVal) { bestVal = val; bestDir = a; }
+        }
+        if (bestDir >= 0) m.dir = bestDir;
+        else if (Math.random() < 0.08) m.dir += rand(-0.6, 0.6); // idle wander
+      }
+
+      // move — a fleeing mote sprints (and pays for it in the burn below)
+      const v = m.g.speed * (threat ? CONFIG.panicBoost : 1);
       m.x = wrap(m.x + Math.cos(m.dir) * v, W);
       m.y = wrap(m.y + Math.sin(m.dir) * v, H);
 
@@ -364,9 +475,95 @@
 
     for (const c of newborns) world.motes.push(c);
 
+    // ---- the hunters hunt ---------------------------------------------------
+    // Grazers have already moved this tick; predators now chase the nearest mote
+    // in sense range, strike if they close the gap, and pay a steep metabolic bill
+    // — so a hunter that can't find prey starves, keeping the pyramid self-limiting.
+    const newHunters = [];
+    for (let i = world.hunters.length - 1; i >= 0; i--) {
+      const h = world.hunters[i];
+      h.age++;
+      if (h.cool > 0) h.cool--;
+
+      // always stalk the nearest mote in sense range — a sated hunter keeps tracking
+      // (and scaring) the herd, it simply can't strike again until it has digested.
+      // Decoupling stalking from striking makes the cooldown a clean cap on kill rate
+      // instead of stranding digesting hunters in empty ground where they'd starve.
+      let best = -1, bestD2 = h.g.sense * h.g.sense;
+      for (let j = 0; j < world.motes.length; j++) {
+        const p = world.motes[j];
+        const d2 = torusD2(h.x, h.y, p.x, p.y);
+        if (d2 < bestD2) { bestD2 = d2; best = j; }
+      }
+      if (best >= 0) {
+        const prey = world.motes[best];
+        h.dir = torusAngle(h.x, h.y, prey.x, prey.y);
+      } else if (Math.random() < 0.06) {
+        h.dir += rand(-0.5, 0.5); // prowl
+      }
+
+      // move
+      const v = h.g.speed;
+      h.x = wrap(h.x + Math.cos(h.dir) * v, W);
+      h.y = wrap(h.y + Math.sin(h.dir) * v, H);
+
+      // burn energy — hunters are expensive to run
+      h.energy -= CONFIG.hunterMetabolism * h.g.metabo * (1 + h.g.size * 0.1 + v * 0.4);
+
+      // strike: if digestion is done and the target is now within a body-length, eat it
+      if (best >= 0 && h.cool <= 0) {
+        const prey = world.motes[best];
+        const cr = h.g.size + prey.g.size + CONFIG.huntRange;
+        if (torusD2(h.x, h.y, prey.x, prey.y) < cr * cr) {
+          h.energy += (prey.energy > 0 ? prey.energy : 0) * CONFIG.huntAssimilation + CONFIG.huntBonus;
+          h.cool = CONFIG.huntCooldown;   // digest before the next strike
+          world.motes.splice(best, 1);
+          world.eaten++;
+          if (world.sparks.length < 240) world.sparks.push({ x: prey.x, y: prey.y, life: 1 });
+        }
+      }
+
+      // reproduce — the more hunters already crowd the world, the more energy a split
+      // costs, so the population self-limits below the cap rather than pinning against it
+      const crowd = (world.hunters.length + newHunters.length) / CONFIG.hunterMaxPop;
+      const effRepro = CONFIG.hunterReproEnergy * (1 + CONFIG.hunterCrowd * crowd);
+      if (h.energy >= effRepro &&
+          world.hunters.length + newHunters.length < CONFIG.hunterMaxPop) {
+        h.energy -= CONFIG.hunterReproCost;
+        const pup = makeHunter(h.x, h.y, makeHunterGenome(h.g));
+        pup.energy = CONFIG.hunterReproCost;
+        newHunters.push(pup);
+        world.hunterBorn++;
+      }
+
+      // death — a fallen hunter feeds the plants where it dropped
+      if (h.energy <= 0) {
+        world.hunters.splice(i, 1);
+        world.hunterDied++;
+        const di = cellIndex(h.x, h.y);
+        world.veg[di] = clamp(world.veg[di] + CONFIG.hunterCorpseVeg, 0, 1.2);
+      }
+    }
+    for (const c of newHunters) world.hunters.push(c);
+
+    // predators drift back in from "outside" only when prey is plentiful — a soft
+    // parachute against permanent extinction that can't mask a runaway crash.
+    if (world.hunters.length === 0 && world.motes.length >= CONFIG.hunterReseedPrey) {
+      for (let i = 0; i < CONFIG.hunterReseedCount; i++) {
+        world.hunters.push(makeHunter(rand(0, W), rand(0, H)));
+      }
+    }
+
     // if everyone dies, gently reseed a few so the world never stays empty
     if (world.motes.length === 0) {
       for (let i = 0; i < 6; i++) world.motes.push(makeMote(rand(0, W), rand(0, H)));
+    }
+
+    // fade the kill-flashes (view only)
+    for (let i = world.sparks.length - 1; i >= 0; i--) {
+      const s = world.sparks[i];
+      s.life -= CONFIG.sparkFade;
+      if (s.life <= 0) world.sparks.splice(i, 1);
     }
 
     if (world.tick % CONFIG.sampleEvery === 0) sample();
@@ -410,6 +607,36 @@
       ctx.beginPath();
       ctx.moveTo(m.x, m.y);
       ctx.lineTo(m.x + Math.cos(m.dir) * (m.g.size + 3), m.y + Math.sin(m.dir) * (m.g.size + 3));
+      ctx.stroke();
+    }
+
+    // hunters — hot-coloured arrowheads that point where they're charging, so a
+    // predator reads as directional and menacing next to the soft grazer discs
+    for (const h of world.hunters) {
+      const glow = clamp(h.energy / CONFIG.hunterReproEnergy, 0.3, 1);
+      const s = h.g.size;
+      ctx.save();
+      ctx.translate(h.x, h.y);
+      ctx.rotate(h.dir);
+      ctx.beginPath();
+      ctx.moveTo(s * 1.8, 0);        // nose
+      ctx.lineTo(-s, s * 0.95);      // rear corners, with a notched tail
+      ctx.lineTo(-s * 0.4, 0);
+      ctx.lineTo(-s, -s * 0.95);
+      ctx.closePath();
+      ctx.fillStyle = `hsl(${h.g.hue.toFixed(0)} 85% ${(46 + glow * 20).toFixed(0)}%)`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // kill-flashes — a brief expanding ring where a mote was caught, so predation
+    // is legible even when the world is running fast
+    for (const sp of world.sparks) {
+      const r = (1 - sp.life) * 13 + 3;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, r, 0, TAU);
+      ctx.strokeStyle = `rgba(255,${(90 + 130 * sp.life) | 0},${(70 * sp.life) | 0},${(sp.life * 0.85).toFixed(3)})`;
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
   }
@@ -552,7 +779,10 @@
     }
   }
 
-  // ---- population & plants chart ------------------------------------------
+  // ---- trophic cascade chart ----------------------------------------------
+  // Plants, motes and hunters over time — each scaled to its own recent peak, so
+  // the three tiers (spanning orders of magnitude in count) all fill the panel and
+  // the eye can follow a bloom rippling up the food chain with a lag at every step.
   function drawCountChart() {
     c2ctx.fillStyle = "#060a0f";
     c2ctx.fillRect(0, 0, C2W, C2H);
@@ -564,15 +794,7 @@
     const hist = world.history;
     const cap = CONFIG.historyCap;
 
-    // auto-scale the axis to the tallest count in view, rounded up to a tidy step
-    let vmax = 1;
-    for (const s of hist) {
-      if (s.pop > vmax) vmax = s.pop;
-      if (s.food > vmax) vmax = s.food;
-    }
-    const top = Math.max(50, Math.ceil(vmax / 50) * 50);
-
-    // faint reference lines at 0, half, and the axis top
+    // faint reference lines at 0, half, full of each tier's own scale
     c2ctx.strokeStyle = "rgba(255,255,255,0.06)";
     c2ctx.lineWidth = 1;
     for (const gy of [0, 0.5, 1]) {
@@ -584,12 +806,15 @@
     }
 
     if (hist.length > 1) {
-      for (const c of COUNTS) {
-        c2ctx.strokeStyle = c.color;
+      for (const t of TIERS) {
+        // each tier against its own peak in view (min 1 so a flat line hugs 0)
+        let peak = 1;
+        for (const s of hist) if (s[t.key] > peak) peak = s[t.key];
+        c2ctx.strokeStyle = t.color;
         c2ctx.lineWidth = 1.5;
         c2ctx.beginPath();
         for (let i = 0; i < hist.length; i++) {
-          const norm = clamp(hist[i][c.key] / top, 0, 1);
+          const norm = clamp(hist[i][t.key] / peak, 0, 1);
           const x = padL + (i / (cap - 1)) * plotW;
           const y = padT + plotH * (1 - norm);
           if (i === 0) c2ctx.moveTo(x, y); else c2ctx.lineTo(x, y);
@@ -598,39 +823,45 @@
       }
     }
 
-    // legend with current counts, plus the axis top so the scale is legible
+    // legend with each tier's current absolute count (magnitude the curves drop)
     c2ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
     c2ctx.textBaseline = "middle";
     const latest = hist.length ? hist[hist.length - 1] : null;
     let lx = padL;
-    for (const c of COUNTS) {
-      c2ctx.fillStyle = c.color;
+    for (const t of TIERS) {
+      c2ctx.fillStyle = t.color;
       c2ctx.fillRect(lx, padT / 2 - 4, 8, 8);
       lx += 12;
-      const text = `${c.label} ${latest ? latest[c.key] : "–"}`;
+      const text = `${t.label} ${latest ? latest[t.key] : "–"}`;
       c2ctx.fillStyle = "#cdd8e4";
       c2ctx.fillText(text, lx, padT / 2);
       lx += c2ctx.measureText(text).width + 16;
     }
-    c2ctx.fillStyle = "#6b7d8f";
-    c2ctx.fillText(hist.length <= 1 ? "gathering data…" : `top ${top}`, lx, padT / 2);
+    if (hist.length <= 1) {
+      c2ctx.fillStyle = "#6b7d8f";
+      c2ctx.fillText("gathering data…", lx, padT / 2);
+    }
   }
 
   // ---- hud ----------------------------------------------------------------
   const el = {
     tick: document.getElementById("s-tick"),
     pop: document.getElementById("s-pop"),
+    hunters: document.getElementById("s-hunt"),
     food: document.getElementById("s-food"),
     born: document.getElementById("s-born"),
     died: document.getElementById("s-died"),
+    eaten: document.getElementById("s-eaten"),
     season: document.getElementById("s-season"),
   };
   function updateHud() {
     el.tick.textContent = world.tick;
     el.pop.textContent = world.motes.length;
+    el.hunters.textContent = world.hunters.length;
     el.food.textContent = Math.round(biomass());
     el.born.textContent = world.born;
     el.died.textContent = world.died;
+    el.eaten.textContent = world.eaten;
     // growth multiplier, with an arrow for whether we're warming toward summer
     const rising = Math.cos((world.tick / CONFIG.seasonPeriod) * TAU) >= 0;
     el.season.textContent = `×${seasonGrow().toFixed(2)} ${rising ? "↑" : "↓"}`;

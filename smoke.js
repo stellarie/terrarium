@@ -63,6 +63,10 @@ seed();
 const startGenes = world.motes.map((m) => ({ ...m.g }));
 let minPop = Infinity, maxPop = 0;
 let minBio = Infinity, maxBio = 0;
+let minHunt = Infinity, maxHunt = 0;
+let hunterExtinctTicks = 0;      // ticks with zero hunters — should be rare
+let hunterCapTicks = 0;          // ticks pinned at the cap — a brief touch is fine, a
+                                 // long plateau there is the "unchecked runaway" we forbid
 let threw = null;
 
 const t0 = Date.now();
@@ -72,13 +76,19 @@ try {
     const p = world.motes.length;
     if (p < minPop) minPop = p;
     if (p > maxPop) maxPop = p;
+    const hn = world.hunters.length;
+    if (hn < minHunt) minHunt = hn;
+    if (hn > maxHunt) maxHunt = hn;
+    if (hn === 0) hunterExtinctTicks++;
+    if (hn >= CONFIG.hunterMaxPop) hunterCapTicks++;
     const b = biomass();
     if (b < minBio) minBio = b;
     if (b > maxBio) maxBio = b;
     if (t % 1200 === 0 || t === TICKS - 1) {
       console.log(
-        `  t=${String(t + 1).padStart(4)}  pop=${String(p).padStart(4)}  ` +
-        `biomass=${b.toFixed(0).padStart(4)}  born=${world.born}  died=${world.died}`
+        `  t=${String(t + 1).padStart(4)}  motes=${String(p).padStart(4)}  ` +
+        `hunters=${String(hn).padStart(3)}  biomass=${b.toFixed(0).padStart(4)}  ` +
+        `born=${world.born}  died=${world.died}  eaten=${world.eaten}`
       );
     }
   }
@@ -100,6 +110,23 @@ check(maxPop <= CONFIG.maxPop, `population stayed under the cap (max ${maxPop} �
 check(minBio > 0, `vegetation never fully died (min biomass ${minBio.toFixed(1)})`);
 check(minBio < maxBio * 0.9, `plant biomass genuinely fluctuates (${minBio.toFixed(0)}–${maxBio.toFixed(0)})`);
 
+// the second tier — hunters must actually hunt, breed, and persist as a species
+check(world.eaten > 0, `hunters caught motes (${world.eaten} eaten over the run)`);
+check(world.hunterBorn > 0, `hunters reproduced from kills (${world.hunterBorn} pups born)`);
+check(maxHunt > 0, `a hunter population existed (peak ${maxHunt})`);
+check(maxHunt > minHunt, `hunter population oscillated, not flat (${minHunt}–${maxHunt})`);
+check(
+  hunterExtinctTicks < TICKS * 0.25,
+  `hunters were self-sustaining, rarely extinct (${hunterExtinctTicks}/${TICKS} ticks empty)`
+);
+// neither tier trivially wins: prey stay well clear of extinction, and predators
+// never sit plastered against their cap (a brief founding-boom touch is allowed)
+check(minPop >= 10, `predators never nearly wiped the motes out (min motes ${minPop} ≥ 10)`);
+check(
+  hunterCapTicks < TICKS * 0.15,
+  `hunters weren't pinned at the cap (${hunterCapTicks}/${TICKS} ticks at ${CONFIG.hunterMaxPop})`
+);
+
 // state actually evolves: population swung, and the gene pool drifted
 check(maxPop > minPop, `population varied over time (${minPop}–${maxPop})`);
 const endGenes = world.motes.map((m) => m.g);
@@ -108,11 +135,12 @@ const drift = Math.abs(avg(endGenes, "speed") - avg(startGenes, "speed")) +
               Math.abs(avg(endGenes, "sense") - avg(startGenes, "sense"));
 check(drift > 0.01, `gene pool drifted from the founders (Δ ${drift.toFixed(3)})`);
 
-// no NaN / Inf leaked into any mote or the grid
-let clean = world.motes.every((m) => finite(m.x) && finite(m.y) && finite(m.energy) &&
-  finite(m.g.speed) && finite(m.g.size) && finite(m.g.sense));
+// no NaN / Inf leaked into any mote, hunter, or the grid
+const cleanCreature = (m) => finite(m.x) && finite(m.y) && finite(m.energy) &&
+  finite(m.g.speed) && finite(m.g.size) && finite(m.g.sense);
+let clean = world.motes.every(cleanCreature) && world.hunters.every(cleanCreature);
 for (let i = 0; i < world.veg.length && clean; i++) if (!finite(world.veg[i]) || world.veg[i] < 0) clean = false;
-check(clean, "no NaN/negative values in motes or the vegetation grid");
+check(clean, "no NaN/negative values in motes, hunters, or the vegetation grid");
 
 // the view-only grazing-pressure field stays sane and actually records something
 let grazeClean = true, gmax = 0;
@@ -131,6 +159,7 @@ check(world.history.length > 10, `history buffer filled for the charts (${world.
 // mode (off / fertility / grazing) against the shimmed canvas
 let renderThrew = null;
 try {
+  world.sparks.push({ x: 100, y: 100, life: 0.5 }); // ensure the kill-flash branch runs
   for (const ov of [0, 1, 2]) { world.overlay = ov; draw(); }
   world.overlay = 0;
   drawChart(); drawCountChart(); updateHud();

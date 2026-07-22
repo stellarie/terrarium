@@ -1,10 +1,11 @@
 # 🌱 Terrarium
 
-A self-contained artificial-life world that runs entirely in your browser. Little
-creatures called **motes** carry a small genome, wander a closed field, graze the
-plants growing there, spend energy, and split into mutated children when they've stored
-enough. There's no score and no goal — just an energy economy and the slow pressure of
-selection. Leave it running and watch the population drift.
+A self-contained artificial-life world that runs entirely in your browser, with a
+three-tier food chain: a living meadow, soft **motes** that graze it, and hot-coloured
+**hunters** that chase and eat the motes. Each creature carries a small genome and lives on
+an energy economy — grazers seek the greenest ground and flee predators; hunters stalk the
+herd and strike. There's no score and no goal, just selection: leave it running and watch
+plants, grazers and predators rise and fall against one another.
 
 ## The living ground
 
@@ -25,14 +26,29 @@ blooms again. A slow **seasonal cycle** breathes over the top of it, swinging pl
 growth between lean winters and abundant summers and tinting the world toward day and
 night.
 
+## The predators
+
+**Hunters** are a second creature that eats motes instead of plants — the top of the food
+chain. They're faster and keener-sensed than grazers, drawn as hot-coloured arrowheads that
+point where they're charging, and they stalk the nearest mote in range and strike when they
+close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a hunter must
+**digest** before it can strike again, which gives the herd a refuge, and predator
+**territoriality** keeps their numbers from running away. Grazers, in turn, **flee** — a
+mote that senses a nearby hunter sprints directly away (at an energy cost), so predation
+becomes a second pressure of selection, pushing grazers toward speed and sharper senses.
+
+Predators and prey settle into the classic **phase-lagged cycle**: hunters thrive and thin
+the herd, then starve back as prey grows scarce, letting the motes — and the meadow beneath
+them — recover, riding on top of the grazer–plant boom and bust.
+
 ## Watch it evolve
 
 - A **live trait chart** plots the population-average speed, size, and sense over time,
   each normalized to its full genetic range, so you can watch the gene pool drift.
-- A **population & plant-biomass chart** tracks the boom and bust directly — motes
-  against the green they live on.
-- The **HUD** shows tick, motes, plant biomass, births, deaths, and the current seasonal
-  growth multiplier.
+- A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
+  own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
+- The **HUD** shows tick, motes, hunters, plant biomass, births, natural deaths, motes
+  eaten, and the current seasonal growth multiplier.
 
 ### See the hidden landscape
 
@@ -61,8 +77,10 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a tiny DOM/canvas shim and asserts the world never throws, never empties, keeps
-plants alive, and actually evolves:
+behind a tiny DOM/canvas shim and runs 20 assertions — the world never throws or empties,
+plants persist and evolve, and the predator–prey layer stays balanced (hunters hunt, breed
+and oscillate without pinning at their cap or wiping the motes out). Because it uses real
+randomness, run it a few times:
 
 ```bash
 node smoke.js
@@ -80,7 +98,7 @@ publishes the site).
 
 | file | what it is |
 |------|------------|
-| `index.html` | page shell, canvas, HUD, two live charts, controls |
+| `index.html` | page shell, canvas, HUD, the trait & trophic-cascade charts, controls |
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `smoke.js` | headless smoke test — DOM/canvas shim + N real ticks + assertions |
@@ -95,9 +113,12 @@ The journal is the project's only memory between sessions.
 
 ## Status
 
-**v1** — the living ground: motes graze a spatial, self-propagating vegetation field
-grown over a fertility map, following the food gradient by sense; the economy
-limit-cycles between bloom and overgrazed crash under a seasonal breath. Live trait and
-population/biomass charts, a toggleable fertility/grazing overlay onto the hidden
-landscape, corpse fertilisation, and a committed headless smoke test. Next up: predators —
-a second species that eats motes, for a three-tier ecology. See the journal for the story.
+**v2 — The Predation Era.** A three-tier food chain: motes graze a spatial, self-propagating
+vegetation field grown over a fertility map, following the food gradient by sense; **hunters**
+chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
+predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
+breath — balanced to be robust, so neither tier trivially wins. Live trait and trophic-cascade
+charts, a toggleable fertility/grazing overlay onto the hidden landscape, corpse fertilisation,
+and a committed 20-check headless smoke test. Next up (**Arc III — The Great Divergence**):
+make speciation visible as the grazers split into distinct morphs under predation. See the
+journal for the story.
