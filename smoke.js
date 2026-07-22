@@ -298,6 +298,67 @@ step();
 check(world.hunterAged > agedBefore,
       `senescence is live — an ancient hunter died of old age on cue (aged toll ${agedBefore}→${world.hunterAged})`);
 
+// ---- the rasterizer (render.js) — the instrument that ended the pixel-blindness ----
+// It must keep working: a future edit that breaks colour parsing, a primitive, or the
+// PNG container would blind every later run again. Test the primitives draw() actually
+// uses on real pixels, then drive the real draw() to a PNG end-to-end in a subprocess.
+const { RasterCtx, encodePNG, parseColor } = require("./render.js");
+
+// parseColor — the four CSS forms draw() emits on the world canvas
+const pcHex = parseColor("#ff8a6b");
+check(pcHex[0] === 255 && pcHex[1] === 138 && pcHex[2] === 107 && pcHex[3] === 1,
+      "render: parseColor reads #rrggbb");
+const pcRgba = parseColor("rgba(10, 20, 30, 0.5)");
+check(pcRgba[0] === 10 && pcRgba[2] === 30 && pcRgba[3] === 0.5,
+      "render: parseColor reads rgba() with alpha");
+const pcHsl = parseColor("hsl(120 100% 50%)");       // pure green
+check(pcHsl[0] === 0 && pcHsl[1] === 255 && pcHsl[2] === 0,
+      "render: parseColor reads hsl() → rgb");
+const pcHslA = parseColor("hsl(0 100% 50% / 0.4)");  // red at 40% alpha (mote-ring form)
+check(pcHslA[0] === 255 && pcHslA[1] === 0 && Math.abs(pcHslA[3] - 0.4) < 1e-9,
+      "render: parseColor reads hsl(... / a)");
+
+// RasterCtx paints the exact primitives draw() uses, onto real pixels
+const rc = new RasterCtx(40, 30);
+const px = (x, y, k) => rc.buf[(y * rc.width + x) * 3 + k];
+rc.fillStyle = "rgb(20, 40, 60)"; rc.fillRect(0, 0, 40, 30);
+check(px(5, 5, 0) === 20 && px(5, 5, 2) === 60, "render: fillRect lays a solid background");
+rc.fillStyle = "hsl(0 100% 50%)";                     // an opaque red disc, like a mote body
+rc.beginPath(); rc.arc(20, 15, 6, 0, Math.PI * 2); rc.fill();
+check(px(20, 15, 0) === 255 && px(20, 15, 1) === 0, "render: arc+fill paints a filled disc");
+check(px(0, 0, 0) === 20, "render: the disc doesn't bleed to the far corner");
+let rThrew = null;
+try {                                                 // a translucent ring, like a lifestyle halo
+  rc.strokeStyle = "hsl(120 80% 58% / 0.6)"; rc.lineWidth = 2;
+  rc.beginPath(); rc.arc(20, 15, 10, 0, Math.PI * 2); rc.stroke();
+} catch (e) { rThrew = e; }
+check(!rThrew, "render: stroke paints a ring without throwing");
+let xThrew = null;
+try {                                                 // the transformed hunter-arrowhead path
+  rc.save(); rc.translate(20, 15); rc.rotate(0.6);
+  rc.beginPath(); rc.moveTo(6, 0); rc.lineTo(-4, 3); rc.lineTo(-4, -3); rc.closePath();
+  rc.fillStyle = "hsl(20 90% 55%)"; rc.fill(); rc.restore();
+} catch (e) { xThrew = e; }
+check(!xThrew, "render: save/translate/rotate + polygon fill (a hunter) doesn't throw");
+
+// encodePNG — a structurally valid PNG container
+const png = encodePNG(rc.width, rc.height, rc.buf);
+check(Buffer.isBuffer(png) && png[0] === 0x89 && png[1] === 0x50 && png[2] === 0x4E &&
+      png[3] === 0x47 && png.length > rc.width * rc.height * 3,
+      "render: encodePNG emits a PNG with the right signature");
+
+// end-to-end: the REAL draw() renders through the rasterizer to a PNG on disk
+const cp = require("child_process"), os = require("os"), pathmod = require("path"), fsmod = require("fs");
+const tmpPng = pathmod.join(os.tmpdir(), `terrarium-smoke-frame-${process.pid}.png`);
+let frameOK = false;
+try {
+  cp.execFileSync(process.execPath, ["observe.js", "--frame", tmpPng, "200"], { stdio: "ignore" });
+  const head = fsmod.readFileSync(tmpPng);
+  frameOK = head.length > 8 && head[0] === 0x89 && head[1] === 0x50;
+  fsmod.unlinkSync(tmpPng);
+} catch (e) { frameOK = false; }
+check(frameOK, "render: `observe.js --frame` drives the real draw() to a PNG end-to-end");
+
 // ---- verdict ----------------------------------------------------------------
 if (failures) {
   console.error(`\nSMOKE TEST FAILED — ${failures} check(s) failed.`);
