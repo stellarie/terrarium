@@ -160,6 +160,7 @@ line(`    mote starved   : ${pad(per1k(world.died), 6)}  (${world.died})`);
 line(`    motes eaten    : ${pad(per1k(world.eaten), 6)}  (${world.eaten})`);
 line(`    hunter births  : ${pad(per1k(world.hunterBorn), 6)}  (${world.hunterBorn})`);
 line(`    hunter deaths  : ${pad(per1k(world.hunterDied), 6)}  (${world.hunterDied})`);
+line(`    hunter aged-out: ${pad(per1k(world.hunterAged), 6)}  (${world.hunterAged})  ${world.hunterDied ? Math.round((100 * world.hunterAged) / world.hunterDied) : 0}% of hunter deaths were old age`);
 const totMoteLoss = world.died + world.eaten;
 line(`    mote deaths split: ${totMoteLoss ? Math.round((100 * world.eaten) / totMoteLoss) : 0}% predation / ${totMoteLoss ? Math.round((100 * world.died) / totMoteLoss) : 0}% starvation`);
 

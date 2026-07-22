@@ -40,7 +40,12 @@ close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a h
 faster, and sprints to close, snatching poorer but more frequent meals. This *hunger-driven
 boldness* is the predators' recovery valve: it lets a collapsed hunter tier claw its way back
 instead of dying out, so a nearly-empty predator population you're watching may suddenly climb
-again. Grazers, in turn, have **two ways to survive** — and a mote's genes decide which it can use.
+again. Hunters also **grow old and die** — past a long prime their death-risk climbs with age — so,
+unlike the near-immortal predators of earlier versions, the tier constantly **turns over**: old
+hunters give way to mutated young, and you can see it, because an aging hunter is ringed with a
+**darkening, weathered rim**. That turnover is what lets the predators' genes actually evolve, so the
+arms race finally runs **both ways** rather than grazers escalating against a frozen foe. Grazers, in
+turn, have **two ways to survive** — and a mote's genes decide which it can use.
 A **fleer** (fast, keen) spots a hunter within its **sense** range and sprints directly away
 at an energy cost; because keener, faster motes spot the threat sooner and outrun it,
 predation selects on **sense** and **speed**. A **hider** (small, slow) does the opposite:
@@ -62,9 +67,10 @@ them — recover, riding on top of the grazer–plant boom and bust.
 
 - A **live trait chart** plots the population-average speed, size, and sense over time for
   **both** species — grazers as solid lines, hunters as dashed lines — each normalized to its
-  own genetic range, so the coevolutionary arms race reads on both sides at once. Watch the
-  dashed predator curves sit nearly flat (hunters are long-lived and rarely breed, so selection
-  barely bites) while the solid grazer curves climb the speed ceiling.
+  own genetic range, so the coevolutionary arms race reads on both sides at once. Watch **both**
+  sets of curves climb — as the solid grazer lines escalate speed, the dashed predator lines now
+  chase them, a genuine reciprocal spiral. (Earlier versions had near-immortal hunters whose curves
+  sat frozen; senescence gave the tier turnover, so its genes finally move.)
 - A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
   own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
 - Every mote is **ringed by its lifestyle** — leaf-green for a committed hider (small, slow),
@@ -110,9 +116,10 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 34 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 36 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
-hunt, breed and oscillate without pinning at their cap or wiping the motes out), the
+hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
+**age and turn over** (senescence stays lethal to the ancient), the
 concealment mechanic is monotone (a small, slow mote outhides a big fast one in cover, and
 nobody hides on bare ground), the morph detector is honest (it calls a single broad cloud one
 morph and a clean two-cluster pool two), and the regime readout names each attractor correctly
@@ -175,7 +182,7 @@ publishes the site).
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
-| `smoke.js` | headless smoke test — 34 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 36 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings, and `--split-test` runs the predation experiment |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -193,12 +200,21 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait and trophic-cascade charts, a toggleable fertility/grazing overlay onto the
-hidden landscape, corpse fertilisation, a 30-check headless smoke test, and a headless
+hidden landscape, corpse fertilisation, a 36-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest (**Arc III — The Great Divergence**): **concealment, and two ways to survive a hunter.**
+Newest: **the hunters grow old.** The observatory kept catching the predator tier as a near-immortal
+**gerontocracy** — hunters had no age-linked mortality, so they neither bred nor died at equilibrium
+and their genes sat frozen while the grazers escalated: a one-sided "arms race" against a statue. Now
+hunters have **senescence** — past a long prime the death-risk climbs with age — so the tier **turns
+over** (median hunter age dropped roughly 11k→3k ticks, ~95% of hunter deaths now old age) and its
+genes finally **move**: in an arms-race world hunter speed now climbs to chase the grazers (1.35→2.41
+in one pass, where it used to sit flat) — a genuine reciprocal spiral. Aging hunters wear a darkening,
+weathered rim, so you can watch the tier renew itself on the field.
+
+Also in **Arc III — The Great Divergence**: **concealment, and two ways to survive a hunter.**
 Grazers used to have exactly one answer to a predator — flee — so the whole herd converged on it.
 Now a **small, slow** mote on **dense vegetation** can instead **hide**: it freezes and vanishes
 into cover, shrinking a hunter's sight and reach toward it toward zero. Because **speed breaks
