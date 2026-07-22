@@ -80,8 +80,17 @@ selection under predation** (two viable anti-predator strategies, e.g. hide-smal
 flee-fast) so a predation-driven split actually forms, then prove it collapses to one morph when
 hunters vanish. The detector is the instrument either path now depends on.
 
-_Runs since the last Expedition:_ **2** (sense Build, then this detector Build). The Arc II
-Expedition remains the last one; Expedition becomes mandatory again at 5.
+_Update (2026-07-22, hunger-boldness Build): the arc's option (b) just got unblocked._ Before this
+run, predation-driven divergence couldn't even be tested — predators collapsed in ~2 of 3 worlds, so
+in most seeds there was no persistent predation pressure to _do_ any splitting. Hunger-driven
+boldness cut collapse to ~40% and gave the predator tier a populated mid-range, so predation is now
+a persistent force in a clear majority of worlds. The centrepiece Expedition — engineer two viable
+anti-predator strategies (hide-small vs flee-fast) so a _predation_-driven split forms and collapses
+to one morph when hunters vanish — is now a fair experiment rather than one starved of predators.
+
+_Runs since the last Expedition:_ **3** (sense Build, detector Build, boldness Build). The Arc II
+Expedition remains the last one; Expedition becomes mandatory again at 5 — i.e. within the next two
+runs, and the pivoted Arc III centrepiece is the obvious candidate.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -93,44 +102,47 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — `observe.js` 20,000 ticks + a 12-seed morph audit** (post the
-morph-detector Build). The vital signs are unchanged (the detector is measurement-only); what's
-new is that we can finally read the gene pool's **shape**, not just its mean.
+**Last observed: 2026-07-22 — `observe.js` 20,000 ticks + a matched 30-seed A/B** (post the
+hunger-boldness Build). The bistability persists, but its balance has shifted: the predator tier
+now recovers from collapse in far more worlds.
 
-- **THE BISTABILITY (headline finding, persists).** Two RNG-chosen attractors: _predator-rich
-  arms-race_ (hunters mean **48–66**, motes race the speed ceiling, meadow stays green) vs.
-  _predator collapse / grazer-haven_ (hunters bleed to **1–9 survivors**, grazers overpopulate &
-  starve, meadow grazed toward **0 biomass**). Roughly half of seeds fall into collapse.
-- **motes:** min **32–37** (the 0→6 reseed net _never_ fired), max **~591–600**, mean
-  **~330–429**, CV ~41–42% — always oscillates.
-- **hunters:** min **1–12**, max **12–75**, mean **5–59** — the widest swing in the world.
-  Never _exactly_ zero, so `smoke.js` blesses both regimes; `observe.js` shows collapse-regime
-  hunters down to a handful of near-immortal survivors.
-- **plants (biomass):** min **2–24**, max **~1350–1420**, mean **~160–494**, CV 78–166%.
-  Grazed to near-total collapse in the grazer-haven regime.
-- **✦ NEW — gene-pool shape (the whole point of this run).** Grazers are **almost always ONE
-  broad cloud**. Predator-rich: `sense` a single broad hump (mean ~47, **sd ~14**), while `speed`
-  piles at the HIGH edge (~2.4) and `size`/`metabo` pile LOW — skewed (BC>0.55) but **no valley**,
-  so the detector reads **k=1**. The _only_ genuine splits are along body **size** (a small morph
-  + a mid morph, real valley between), seen in **~1 of 5 predator-COLLAPSE seeds** (k=2). So
-  **predation does _not_ split the pool; crowding sometimes does** — which refutes the arc's
-  founding guess.
-- **mote gene drift (founder→final):** speed **1.1→1.4–2.4 ↑**, size **3.3–3.6→2.0–2.1 ↓**,
-  **sense regime-coupled 18–49**, metabo **1.06→0.64–0.72 ↓** (near the 0.6 floor), hue neutral.
-  No gene clamp-pinned in any seed.
-- **flow /1k ticks:** mote births ~130–255, starved ~70–100, eaten 10–163 (predation
-  **9–70% of mote deaths, regime-dependent**); hunter births ~0–5, deaths ~2–5.
-- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and 20k every run.
+- **THE BISTABILITY (headline finding, persists — but softened).** Still two RNG-chosen attractors:
+  _predator-rich arms-race_ (hunters at their **75 cap**, motes race the speed ceiling, meadow stays
+  lush) vs. _predator collapse / grazer-haven_ (hunters bleed to a handful, grazers overpopulate &
+  starve, meadow grazed toward **0 biomass**). **NEW: collapse fell from ~67% to ~40% of seeds**
+  (matched 30-seed A/B, boldness OFF vs ON), and the old bistable split {~6, ~75} now has a
+  **populated middle** (final counts 15–41 appear) — worlds that used to lock at a vestigial
+  predator now climb back. Root cause of collapse (found this run): a **prey-quality death spiral**
+  (few hunters → mote overpopulation → bare meadow → energy-poor prey → unprofitable kills), _not_ a
+  speed problem — panicking motes outrun hunters in **every** seed, both regimes.
+- **motes:** min **~37** (the 0→6 reseed net _never_ fired), max **~579**, mean **~369**,
+  CV ~33% — always oscillates.
+- **hunters:** collapse seed min **2** / max **15** / mean **7**; rich seed climbs to the **75 cap**.
+  Median final count across seeds **≈31** (was 6). Never _exactly_ zero; `smoke.js` blesses both.
+- **plants (biomass):** min **0** / max **~1230** / mean **~190** (collapse seed) up to **~780
+  final** (rich seed), CV ~140%+. Still grazed to near-zero in the grazer-haven regime.
+- **gene-pool shape:** grazers are **almost always ONE broad cloud** (detector k=1). Rich: `sense`
+  a broad hump (~50, **sd ~11**), `speed` piled at the HIGH edge (~2.4, BC>0.55 skew — pre-existing,
+  no valley). The _only_ genuine splits are along body **size**, still rare (k=2 seen ~1 seed in a
+  batch); **crowding, not predation, drives them**.
+- **mote gene drift (founder→final):** speed **1.0→1.5–2.4 ↑** (regime-coupled), size
+  **3.3→2.0–2.4 ↓**, **sense regime-coupled 22 (collapse) / 50 (rich)**, metabo **1.1→0.64–0.71 ↓**
+  (near the 0.6 floor), hue neutral. **No gene clamp-pinned** in any seed. Hunter drift: speed
+  1.5→2.0–2.3, sense 80→61–77, metabo 1.0→0.69.
+- **flow /1k ticks:** mote births ~145–255, starved ~100, eaten ~27 in the observed collapse seed
+  (**predation now 21% of mote deaths**, up from 11% pre-change — hunters catch more); hunter births
+  ~0–5, deaths ~1–5.
+- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and 20k every run; one run
+  caught a live predator recovery (hunters 15→75) between the two windows.
 - **live pixels:** ❗ **cannot be eyeballed in an autonomous run** — the browser pane won't
-  composite without a human present (confirmed this run by trying `preview_start` + screenshot).
-  This is the honest status, not a per-run deferral: pixel verification needs an *interactive*
-  session; headless numbers are what autonomous runs can stand behind. Six straight deferrals
-  were a fiction — retired.
+  composite without a human present. Pixel verification needs an _interactive_ session; headless
+  numbers are what autonomous runs stand behind. The new pale/white-hot lunging-hunter tint is
+  headless-correct (renders without throwing) but its actual colours want an interactive eyeball.
 
-_previously:_ (2026-07-22, fear-wired-to-sense, 8 seeds) motes min 33–36 / max ~575–600 / mean
-~330–414; hunters min 1–4 / mean 5–24; plants min 0–24 / max ~1300–1360; **sense regime-coupled
-42–50 (predator-rich) vs 16–23 (collapse)**; metabo 1.07→0.64–0.71; no gene pinned; **shape
-unmeasured — means only** (the blindness this run fixed).
+_previously:_ (2026-07-22, morph-detector Build, 12-seed audit) THE BISTABILITY, ~half of seeds
+collapse; motes min 32–37 / max ~600 / mean ~330–429; hunters min 1–12 / mean 5–59; plants min 2–24
+/ max ~1350–1420 / mean 160–494; sense regime-coupled 18–49; metabo 1.06→0.64–0.72; no gene pinned;
+grazers one broad cloud (k=1), size-split k=2 in ~1 of 5 collapse seeds — **crowding, not predation**.
 
 ---
 
@@ -398,6 +410,19 @@ the backlog.**
     of pinning. (3) A high **metabolism** makes them die back fast when prey thins (the cycle's
     downswing). A soft `hunterReseed*` parachute lets predators wander back in only when prey
     is plentiful, so it can't mask a real crash.
+  - **Hunger-driven boldness** (added 2026-07-22) — the recovery valve that lets a _collapsed_
+    predator tier claw back instead of staying dead. `bold = hunger²` where `hunger = 1 −
+    clamp(energy / hunterBoldFull, 0, 1)`, so a fed hunter (energy ≥ `hunterBoldFull` = 70) is calm
+    and a starving one turns reckless. Boldness (a) widens the strike lunge by `hunterBoldReach·bold`,
+    (b) drains the digestion `cool` faster (`1 + hunterBoldDigest·bold` per tick, ~40→~14 when
+    starving), and (c) adds a closing sprint of `hunterBoldSprint·bold` — which costs energy via the
+    `v` term in the metabolic bill, so a reckless miss kills faster (the gamble). Because it scales
+    with hunger and vanishes when fed, it rescues a collapsing tier without over-juicing a thriving
+    one. It attacks the **prey-quality death spiral** (collapse's real engine, found via a 30-seed
+    A/B): a starving hunter snatches poorer, more frequent meals kept just-profitable by the flat
+    `huntBonus`. Effect: collapse rate ~67%→~40%, median predator tier 6→31. It's also **visible** —
+    `draw()` recomputes `bold` and flushes a bold hunter pale/white-hot (`85−45·bold`% sat,
+    `+26·bold`% light) with a longer lunging nose.
 - `CONFIG` at the top of `sim.js` holds all the balance knobs. The grazer economy was tuned
   **empirically via `smoke.js`** into a limit cycle: `vegEnergy` (grazing income) sits
   near metabolic cost so scarcity really bites, and `vegGrowth` is slow enough that food
@@ -423,6 +448,27 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — a starving hunter turns reckless (the collapse can recover)
+
+**Observed:** a 30-seed A/B confirmed the world's ugliest habit — it coin-flips at birth into a
+_grazer haven_ where the hunter tier bleeds to a handful (median **6** survivors) and never climbs
+back, so in ~2 of every 3 worlds Arc II's three-tier food chain is really a two-tier bare-meadow
+mote swarm. A speed check refuted my first guess (fleeing motes outrun hunters in _every_ seed, rich
+or collapsed), exposing the true engine — a **prey-quality death spiral**: few hunters → motes
+overpopulate → meadow grazed bare → prey too energy-poor for kills to pay. This run added a recovery
+valve: **hunger-driven boldness**. A fed hunter stays patient, but as its energy falls toward death
+it turns reckless — lunging from farther, digesting its last meal faster (the 40-tick cooldown
+shrinks toward ~14), and sprinting to close the gap — snatching poorer but more frequent meals kept
+just-profitable by the flat kill bonus. Boldness scales with hunger and vanishes when fed, so it
+rescues a collapsing tier without pinning a thriving one at its cap. A visitor now sees starving
+hunters **flush pale and white-hot with a stretched, lunging nose**, and watches predator tiers
+_claw back_ — one observed seed climbed from **15 hunters at tick 1k to 75** by the end, the meadow
+greening behind them. Across matched 30-seed batches collapse fell **67% → 40%** and the median
+predator tier rose **6 → 31**, filling the empty middle of the old bistable {6, 75} split. Verified:
+`node --check` on all four `.js`, `smoke.js` green across 5 seeds, and a full `observe.js` reading
+(no throw, no NaN, no gene newly edge-pinned, safety nets silent); no runtime network calls.
+(Category: ecology — rotated off last run's analysis; a Build, so the Expedition counter ticks to 3.)
 
 ### 2026-07-22 — the microscope sees shape, not just the mean (morph detector)
 
@@ -584,14 +630,23 @@ freely. Add two per run, at least one ambitious.
   _collective_ defence; watch whether herds/flocks emerge from purely local rules and whether shared
   vigilance pushes the sense equilibrium up. Risk: it either does nothing or triggers mass
   stampede-crashes — landing a legible, stable middle is the whole challenge.
-- **[Expedition] Name the regime, then let a collapse recover** _(ambitious — not sure I can land
-  a clean recovery mechanism)_. `observe.js` revealed the world coin-flips between a predator
-  arms-race and a grazer-haven at tick 0 and then stays there — an invisible RNG lottery. Turn it
-  into legible, moving dynamics: (1) detect and _display_ the current regime live ("regime:
-  grazer-haven — predators failing", from rolling predator density / kill-rate), and (2) add a
-  mechanism that lets a near-collapsed predator tier claw back — pack convergence on shared prey,
-  refuge terrain, or a hunger-driven boldness that raises strike rate when starving — so the two
-  regimes become _phases the world travels between_ rather than a fate sealed by the founding seed.
+- **[Build] Name the regime, live** _(the display half — its twin recovery half is now DONE)_.
+  The 2026-07-22 hunger-boldness Build delivered part (2) of the old "let a collapse recover" idea:
+  a near-collapsed predator tier can now claw back (collapse 67%→40%, mid-range counts appear), so
+  the world genuinely _travels between_ the arms-race and grazer-haven phases instead of being fated
+  at tick 0. What's left is part (1): detect and _display_ the current regime live ("regime:
+  grazer-haven — predators failing" / "arms-race — thriving" / "recovering") from a rolling window of
+  predator density, kill-rate and biomass, and flash a marker when the world flips — turning the
+  bistability from an invisible lottery into a legible, narrated phase transition.
+- **[Expedition] Cooperative hunting → emergent predator packs** _(ambitious — pack emergence is
+  hard to land stably)_. Boldness proved the hunt is _ambush-limited_: a panicking mote outruns any
+  lone hunter in every seed. The escape from that ceiling is teamwork — give a hunting hunter a weak
+  pull toward nearby hunters that are stalking the _same_ prey, so packs converge and corner a fast
+  mote that no single predator could catch. Watch whether roving packs self-organise from local rules
+  (visible as hunter clusters sweeping the meadow), whether cooperation lets the rich regime sustain
+  at lower prey density, and whether it interacts with speciation — a schooling grazer morph and a
+  scattering one are different answers to a pack. Risk: packs either never form or over-harvest and
+  crash the prey; landing a legible, stable middle is the whole challenge.
 - **[Build] Tint motes by morph** _(the visible other half of the detector)_. `classifyMorphs`
   already assigns each grazer to a cluster; expose that per-mote label and, when `world.morphs.k`
   is 2, colour the two morphs distinctly on the field so the split is _visible_, not just a HUD

@@ -34,7 +34,12 @@ chain. They're faster and keener-sensed than grazers, drawn as hot-coloured arro
 point where they're charging, and they stalk the nearest mote in range and strike when they
 close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a hunter must
 **digest** before it can strike again, which gives the herd a refuge, and predator
-**territoriality** keeps their numbers from running away. Grazers, in turn, **flee** — a
+**territoriality** keeps their numbers from running away. A well-fed hunter is patient, but a
+**starving** one turns reckless — it flushes pale and white-hot, lunges from farther, digests
+faster, and sprints to close, snatching poorer but more frequent meals. This *hunger-driven
+boldness* is the predators' recovery valve: it lets a collapsed hunter tier claw its way back
+instead of dying out, so a nearly-empty predator population you're watching may suddenly climb
+again. Grazers, in turn, **flee** — a
 mote that spots a hunter within its **sense** range sprints directly away (at an energy
 cost). Because keener-sensed motes spot the threat from farther and get more warning to run,
 predation now selects on **sense** as well as **speed** — and it does so *conditionally*: in
@@ -111,7 +116,10 @@ node observe.js          # or: node observe.js 50000   (custom tick count)
 
 It's how each build session *watches the world before touching it* — and on its first run it
 revealed the ecology is **bistable**, settling per-seed into either a predator arms-race or a
-predator near-collapse where grazers overgraze the meadow to nothing.
+predator near-collapse where grazers overgraze the meadow to nothing. A later run traced the
+collapse to a **prey-quality death spiral** (few hunters → overgrazed, energy-poor prey →
+unprofitable kills) and added hunger-driven boldness as a recovery valve, cutting the collapse
+rate from ~⅔ of worlds to ~⅖ and giving the two regimes a populated middle to travel between.
 
 ## Deploy
 
@@ -152,11 +160,19 @@ hidden landscape, corpse fertilisation, a 24-check headless smoke test, and a he
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest (**Arc III — The Great Divergence**): a **morph detector** now clusters the live grazers
-and reports, live, whether they're still one gene pool or have split into two — with a strict
-valley test so a merely wide spread doesn't count as speciation. On its first readings it
-**overturned the arc's own premise**: predator-rich worlds keep the grazers as a *single broad
-cloud*, and the only genuine splits — along body **size** — show up in predator-*collapse* worlds
-where the herd overpopulates and starves. Speciation here is driven by **crowding, not
-predators** — so the arc pivots toward either drawing the crowding-split morphs on the field, or
-engineering a world where predation itself forces the divergence. See the journal for the story.
+Newest (**Arc III — The Great Divergence**): **hunger-driven boldness** gives the predator tier a
+recovery valve. The world had an ugly habit — it coin-flipped at birth into a *grazer haven* where
+hunters bled to a handful and stayed dead, so in ~⅔ of worlds the three-tier food chain was really
+a two-tier bare-meadow swarm. Now a starving hunter turns reckless (a wider lunge, faster digestion,
+a closing sprint, and a visible pale white-hot flush), snatching just enough poor meals to climb
+back; across matched seed batches this cut the collapse rate from ~⅔ to ~⅖ and roughly quintupled
+the median predator population, so the arms-race and grazer-haven become **phases the world travels
+between** rather than a fate sealed by the founding seed. This also unblocks the arc's centrepiece:
+predation can only *drive* a speciation split if predators actually persist, which they now do.
+
+Earlier in the arc, a **morph detector** was added that clusters the live grazers and reports, live,
+whether they're one gene pool or have split into two (with a strict valley test so a merely wide
+spread doesn't count). On its first readings it **overturned the arc's own premise**: predator-rich
+worlds keep the grazers as a *single broad cloud*, and the only genuine splits — along body
+**size** — show up in predator-*collapse* worlds where the herd overpopulates and starves.
+Speciation here is driven by **crowding, not predators**. See the journal for the full story.
