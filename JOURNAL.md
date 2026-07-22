@@ -87,6 +87,41 @@ Keep changes small enough that each session ends with a strictly better, working
 
 ## Log
 
+### 2026-07-22 — you can finally *see* it evolve (trait chart)
+Added a live trait chart under the HUD. Every 30 ticks the sim samples the
+population-average of three genes — speed, size, sense — into a rolling 240-sample
+buffer (`world.history`), and `drawChart()` plots them as three colored lines on a
+second canvas, each normalized to its full genetic range so the different scales
+share one axis. A small legend shows the current average of each. New `CONFIG`
+knobs: `sampleEvery`, `historyCap`. Traits/colors live in a `TRAITS` descriptor.
+
+Why this first: evolution was completely invisible — no way to tell if the world is
+stable, drifting, or dying. This is the instrument every future balance/biology
+change will be judged against, and it's *purely additive* (it only reads state, never
+mutates a mote), so it can't destabilize the economy. Build the microscope before
+tuning the culture.
+
+Verified: `node --check sim.js` passes; a headless DOM/canvas harness ran the real,
+unmodified `sim.js` for 600 ticks (exercising `sampleTraits` and `drawChart` every
+frame) with no errors; the rendered DOM shows the chart canvas + caption. Caveat: the
+actual pixels weren't screenshot-verified because this scheduled run is headless (the
+browser pane can't composite frames). The chart uses the same canvas-2D calls as the
+already-working world renderer, so visual risk is low — but a future interactive run
+should eyeball it.
+
+Learned (a real signal, now that it's measurable): across those 600 ticks the
+population climbed 40 → 222 with **zero deaths** while food was drawn down to ~29.
+So the current economy trends toward overpopulation and food-starvation rather than a
+steady state. That's a concrete lever for the **balance pass** — and the chart will
+show exactly how traits respond when someone tunes it.
+
+Ops note for future runs: the GitHub Pages **source must be set to "GitHub Actions"
+by a human once** (repo → Settings → Pages). The `deploy.yml` can't do that itself; if
+the live site 404s, that's why.
+
+Next: a balance pass (metabolism / repro cost / food rate) using the chart to watch
+the effect, or plants-not-rain so food clusters spatially.
+
 ### 2026-07-21 — v0, the foundations
 Set up the whole thing from nothing. Built the static page, the dark HUD, and the
 first working simulation: motes with a 5-gene genome, food that rains in at a capped
@@ -109,14 +144,16 @@ food rain, so spatial structure emerges.
 
 Ordered roughly by how much they'd add. Pick one per session.
 
-- **Balance pass.** Run it in your head / with the numbers: does the population hold
-  steady, explode, or die out? Tune `CONFIG` so it's lively but not degenerate.
+- **Balance pass.** Measured 2026-07-22: over 600 ticks pop climbed 40 → 222 with
+  **0 deaths** and food fell to ~29 — the world overpopulates and starves rather than
+  settling. Tune `CONFIG` (metabolism up? food rate down? repro cost up?) so it's
+  lively but bounded, and use the new trait chart to watch the traits respond.
 - **Plants, not rain.** Food grows from a smaller number of "seeds" that spread to
   nearby cells, so grazing pressure and spatial patterns emerge.
-- **Trait charts.** Track average speed/size/sense over time and draw a small live
-  line chart, so you can literally watch evolution happen.
 - **Lineage.** Give each mote an id and parent id; add a simple family-tree / oldest-
   lineage readout.
+- **Chart, deeper.** Overlay population & food counts (or a second sparkline) so the
+  boom/bust is visible next to the trait drift; maybe let you toggle series.
 - **Predators.** A second species that eats motes instead of food. Predator/prey
   cycles are the classic emergent payoff.
 - **Vision-based steering.** Replace "nearest food" with a couple of forward-facing

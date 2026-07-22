@@ -16,6 +16,11 @@
   const W = canvas.width;
   const H = canvas.height;
 
+  const chartCanvas = document.getElementById("chart");
+  const cctx = chartCanvas.getContext("2d");
+  const CW = chartCanvas.width;
+  const CH = chartCanvas.height;
+
   // ---- tunables -----------------------------------------------------------
   const CONFIG = {
     startMotes: 40,
@@ -28,7 +33,17 @@
     baseMetabolism: 0.06,    // energy burned per tick at rest
     startEnergy: 90,
     maxPop: 600,
+    sampleEvery: 30,         // ticks between trait-history samples
+    historyCap: 240,         // how many samples the trait chart keeps
   };
+
+  // Traits plotted on the live chart, each normalized to its full genetic range
+  // (the mutation clamp bounds) so three very different scales share one axis.
+  const TRAITS = [
+    { key: "speed", label: "speed", color: "#f4a259", lo: 0.25, hi: 2.6 },
+    { key: "size",  label: "size",  color: "#7fd1c1", lo: 1.6,  hi: 6.5 },
+    { key: "sense", label: "sense", color: "#a78bfa", lo: 12,   hi: 120 },
+  ];
 
   // ---- helpers ------------------------------------------------------------
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -82,6 +97,7 @@
     died: 0,
     paused: false,
     stepsPerFrame: 2,
+    history: [],   // rolling samples of population-average traits
   };
 
   function seed() {
@@ -90,6 +106,7 @@
     world.tick = 0;
     world.born = 0;
     world.died = 0;
+    world.history = [];
     for (let i = 0; i < CONFIG.startMotes; i++) {
       world.motes.push(makeMote(rand(0, W), rand(0, H)));
     }
@@ -109,6 +126,19 @@
       if (d < bestD) { bestD = d; best = f; }
     }
     return best;
+  }
+
+  function sampleTraits() {
+    const n = world.motes.length;
+    if (n === 0) return;
+    let speed = 0, size = 0, sense = 0;
+    for (const m of world.motes) {
+      speed += m.g.speed;
+      size += m.g.size;
+      sense += m.g.sense;
+    }
+    world.history.push({ speed: speed / n, size: size / n, sense: sense / n });
+    if (world.history.length > CONFIG.historyCap) world.history.shift();
   }
 
   function step() {
@@ -181,6 +211,9 @@
     if (world.motes.length === 0) {
       for (let i = 0; i < 6; i++) world.motes.push(makeMote(rand(0, W), rand(0, H)));
     }
+
+    // record the shape of the gene pool for the live chart
+    if (world.tick % CONFIG.sampleEvery === 0) sampleTraits();
   }
 
   // ---- render -------------------------------------------------------------
@@ -210,6 +243,66 @@
     }
   }
 
+  // ---- trait chart --------------------------------------------------------
+  function drawChart() {
+    cctx.fillStyle = "#060a0f";
+    cctx.fillRect(0, 0, CW, CH);
+
+    const padL = 8, padR = 8, padT = 22, padB = 10;
+    const plotW = CW - padL - padR;
+    const plotH = CH - padT - padB;
+
+    // faint reference lines at 0%, 50%, 100% of each gene's range
+    cctx.strokeStyle = "rgba(255,255,255,0.06)";
+    cctx.lineWidth = 1;
+    for (const gy of [0, 0.5, 1]) {
+      const y = padT + plotH * gy;
+      cctx.beginPath();
+      cctx.moveTo(padL, y);
+      cctx.lineTo(CW - padR, y);
+      cctx.stroke();
+    }
+
+    const hist = world.history;
+    const cap = CONFIG.historyCap;
+
+    if (hist.length > 1) {
+      for (const t of TRAITS) {
+        cctx.strokeStyle = t.color;
+        cctx.lineWidth = 1.5;
+        cctx.beginPath();
+        for (let i = 0; i < hist.length; i++) {
+          const norm = clamp((hist[i][t.key] - t.lo) / (t.hi - t.lo), 0, 1);
+          const x = padL + (i / (cap - 1)) * plotW;
+          const y = padT + plotH * (1 - norm);
+          if (i === 0) cctx.moveTo(x, y); else cctx.lineTo(x, y);
+        }
+        cctx.stroke();
+      }
+    }
+
+    // legend with current averages
+    cctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+    cctx.textBaseline = "middle";
+    const latest = hist.length ? hist[hist.length - 1] : null;
+    let lx = padL;
+    for (const t of TRAITS) {
+      cctx.fillStyle = t.color;
+      cctx.fillRect(lx, padT / 2 - 4, 8, 8);
+      lx += 12;
+      const raw = latest ? latest[t.key] : null;
+      const val = raw === null ? "–" : raw.toFixed(raw >= 10 ? 0 : 2);
+      const text = `${t.label} ${val}`;
+      cctx.fillStyle = "#cdd8e4";
+      cctx.fillText(text, lx, padT / 2);
+      lx += cctx.measureText(text).width + 16;
+    }
+    if (hist.length <= 1) {
+      cctx.fillStyle = "#6b7d8f";
+      cctx.fillText("gathering data…", lx, padT / 2);
+    }
+  }
+
   // ---- hud ----------------------------------------------------------------
   const el = {
     tick: document.getElementById("s-tick"),
@@ -232,6 +325,7 @@
       for (let i = 0; i < world.stepsPerFrame; i++) step();
     }
     draw();
+    drawChart();
     updateHud();
     requestAnimationFrame(frame);
   }
