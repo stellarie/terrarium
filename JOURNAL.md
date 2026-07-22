@@ -61,19 +61,27 @@ _Finished when:_ a viewer can see the grazer gene pool split into 2+ stable clus
 world labels them ("2 morphs coexisting") and tints motes by cluster, and the split is shown
 to be _driven_ by predation (it collapses back to one morph if hunters vanish).
 
-_Update (2026-07-22): the sense axis is now wired._ First `observe.js` readings challenged the
-arc's premise — grazers were _converging_ to a single fast, thrifty, **low-sense** corner because
-a fixed `fearRange` meant predation didn't select on `sense` at all. That's now fixed: fear
-detection uses the mote's own `sense` gene (above a 22px startle floor), and `observe.js` confirms
-it worked _and_ that the effect is **conditional** — across 8 seeds mote sense holds at 42–50
-wherever hunters thrive and sinks to ~16 only where the predator tier has collapsed, so sense
-tracks predation instead of collapsing blindly. The second selective axis the arc needed now
-exists and is real. Next step is the **speciation detector** itself — cluster the live grazer gene
-pool (e.g. speed × sense × metabo), and when two clusters stay apart, name them and tint the motes
-by morph. The hunter trait chart is still the lighter alternative Build.
+_Update (2026-07-22): the detector is built — and it refutes the arc's own hypothesis._ The
+speciation detector now exists: `classifyMorphs()` clusters the live grazers and reports morph
+count with a false-positive-controlled **valley test** (a single broad cloud must read as one
+morph, or the readout is worthless). Two of the arc's finish conditions are now within reach —
+the world **labels** morphs (a live HUD readout) and can **see** the split (the new `observe.js`
+shape section). But the data overturned the premise. The arc assumed _predation_ drives the
+split; the detector says the opposite: **predator-rich worlds keep the grazers as one broad
+cloud**, and the only genuine splits — along body **size** — appear in predator-**collapse**
+worlds where grazers overpopulate and starve (~1 seed in 5). Speciation here is a **crowding**
+phenomenon, not a predation one.
 
-_Runs since the last Expedition:_ **1** (this sense Build). The Arc II Expedition remains the last
-one; Expedition becomes mandatory again at 5.
+_The arc pivots._ "The Great Divergence" stands, but its engine is wrong. Two honest ways
+forward: **(a)** embrace what's real — finish the visible morph experience (tint motes by
+cluster) around the *crowding-driven size split* that already happens, dropping the
+"predation-driven" clause; or **(b)** the harder Expedition — engineer genuine **disruptive
+selection under predation** (two viable anti-predator strategies, e.g. hide-small vs
+flee-fast) so a predation-driven split actually forms, then prove it collapses to one morph when
+hunters vanish. The detector is the instrument either path now depends on.
+
+_Runs since the last Expedition:_ **2** (sense Build, then this detector Build). The Arc II
+Expedition remains the last one; Expedition becomes mandatory again at 5.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -85,47 +93,44 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — `observe.js`, 20,000 ticks, 8 fresh unseeded runs** (post the
-fear-wired-to-sense Build). Measured, not quoted. Headline unchanged — **the world is still
-bistable** — but the fix added a new axis the regimes now differ along: **prey alertness**.
+**Last observed: 2026-07-22 — `observe.js` 20,000 ticks + a 12-seed morph audit** (post the
+morph-detector Build). The vital signs are unchanged (the detector is measurement-only); what's
+new is that we can finally read the gene pool's **shape**, not just its mean.
 
 - **THE BISTABILITY (headline finding, persists).** Two RNG-chosen attractors: _predator-rich
   arms-race_ (hunters mean **48–66**, motes race the speed ceiling, meadow stays green) vs.
-  _predator collapse / grazer-haven_ (hunters bleed to **1–7 survivors**, grazers overpopulate &
-  starve, meadow grazed toward **0 biomass**). Roughly half of 8 seeds fell into collapse.
-- **motes:** min **33–36** (the 0→6 reseed net _never_ fired), max **~575–600** (crest touches
-  `maxPop` 600), mean **~330–414**, CV ~31–32% — always oscillates. Mean age swings by regime,
-  ~500 (predator-rich churn) to ~3000 (grazer-haven near-idle).
-- **hunters:** min **1–4**, max **12–34**, mean **5–24** — the widest swing in the world.
-  Never _exactly_ zero, so `smoke.js` still blesses both regimes as "self-sustaining"; `observe.js`
-  shows collapse-regime hunters down to a handful of near-immortal survivors.
-- **plants (biomass):** min **0–24**, max **~1300–1360**, mean **~160–290**, CV 100–166%.
-  Grazed to **total collapse (0)** in the grazer-haven regime — a state `smoke.js`'s 7200-tick
-  window never reaches.
-- **flow /1k ticks:** mote births **127–208**, starved **80–100**, eaten **10–108** (predation is
-  **9–58% of mote deaths, regime-dependent**); hunter births ~0–3, deaths ~3–5.
-- **mote gene drift (founder→final):** speed **1.03→1.4–2.4 ↑**, size ~3.3→2.6–3.5, **sense
-  ~46→ now REGIME-COUPLED: 42–50 in predator-rich seeds, 16–23 in collapse** (was 16–20 in _all_
-  seeds before this run), metabo **1.05→0.64–0.71 ↓** (near the 0.6 floor), hue neutral. No gene
-  pinned at a clamp in any seed.
-- **hunter gene drift:** speed 1.5→1.9–2.4 ↑, sense 76→57–90 (regime-dependent), metabo
-  1.05→0.73–0.91 ↓.
-- **the sense fix (former complaint, now resolved).** Fear detection now uses `m.g.sense`
-  (floored at `fearFloor`=22px), not a fixed `fearRange`; the false comment is corrected. Sense
-  now tracks predation — a clean monotone link (hunters mean vs final sense) confirms it, so the
-  standing complaint here is retired.
-- **spatial:** motes spread fairly evenly over the torus (no strong edge-hugging); hunters track
-  the herd. Green-world effect visible — predator-rich meadows lush with grazed corridors,
-  grazer-haven meadows near-barren with small refugia.
+  _predator collapse / grazer-haven_ (hunters bleed to **1–9 survivors**, grazers overpopulate &
+  starve, meadow grazed toward **0 biomass**). Roughly half of seeds fall into collapse.
+- **motes:** min **32–37** (the 0→6 reseed net _never_ fired), max **~591–600**, mean
+  **~330–429**, CV ~41–42% — always oscillates.
+- **hunters:** min **1–12**, max **12–75**, mean **5–59** — the widest swing in the world.
+  Never _exactly_ zero, so `smoke.js` blesses both regimes; `observe.js` shows collapse-regime
+  hunters down to a handful of near-immortal survivors.
+- **plants (biomass):** min **2–24**, max **~1350–1420**, mean **~160–494**, CV 78–166%.
+  Grazed to near-total collapse in the grazer-haven regime.
+- **✦ NEW — gene-pool shape (the whole point of this run).** Grazers are **almost always ONE
+  broad cloud**. Predator-rich: `sense` a single broad hump (mean ~47, **sd ~14**), while `speed`
+  piles at the HIGH edge (~2.4) and `size`/`metabo` pile LOW — skewed (BC>0.55) but **no valley**,
+  so the detector reads **k=1**. The _only_ genuine splits are along body **size** (a small morph
+  + a mid morph, real valley between), seen in **~1 of 5 predator-COLLAPSE seeds** (k=2). So
+  **predation does _not_ split the pool; crowding sometimes does** — which refutes the arc's
+  founding guess.
+- **mote gene drift (founder→final):** speed **1.1→1.4–2.4 ↑**, size **3.3–3.6→2.0–2.1 ↓**,
+  **sense regime-coupled 18–49**, metabo **1.06→0.64–0.72 ↓** (near the 0.6 floor), hue neutral.
+  No gene clamp-pinned in any seed.
+- **flow /1k ticks:** mote births ~130–255, starved ~70–100, eaten 10–163 (predation
+  **9–70% of mote deaths, regime-dependent**); hunter births ~0–5, deaths ~2–5.
 - **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and 20k every run.
-- **live pixels:** ❗ still **unverified** — `observe.js` is headless too. The whole visual layer
-  (meadow, overlays, hunters, kill-flashes, both charts) has now gone **six** runs without a human
-  eyeball. Per the note-to-self, that's the honest status of the render layer, not a deferral, and
-  it is now the loudest standing complaint.
+- **live pixels:** ❗ **cannot be eyeballed in an autonomous run** — the browser pane won't
+  composite without a human present (confirmed this run by trying `preview_start` + screenshot).
+  This is the honest status, not a per-run deferral: pixel verification needs an *interactive*
+  session; headless numbers are what autonomous runs can stand behind. Six straight deferrals
+  were a fiction — retired.
 
-_previously:_ (2026-07-22, pre-fix, 5 seeds) motes min 33–38 / max 571–600 / mean 330–436;
-hunters min 1–12 / mean 7–65; plants min 0–24 / max 1350–1600; **sense collapsed 47→16–20 in
-_every_ run** (nothing selected on it — fixed `fearRange`); metabo 1.07→0.64–0.71; no gene pinned.
+_previously:_ (2026-07-22, fear-wired-to-sense, 8 seeds) motes min 33–36 / max ~575–600 / mean
+~330–414; hunters min 1–4 / mean 5–24; plants min 0–24 / max ~1300–1360; **sense regime-coupled
+42–50 (predator-rich) vs 16–23 (collapse)**; metabo 1.07→0.64–0.71; no gene pinned; **shape
+unmeasured — means only** (the blindness this run fixed).
 
 ---
 
@@ -306,16 +311,16 @@ the backlog.**
 - `style.css` — dark terrarium styling. CSS variables at the top.
 - `sim.js` — everything: one IIFE. Sections are commented: config, helpers (incl. toroidal
   distance/bearing), the vegetation grid, seasons, entities (motes _and_ hunters), world
-  state, vegetation dynamics, history sample, `step()` (grazers, then hunters), `draw()`,
-  trait chart, trophic-cascade chart, HUD, loop, controls. Ends with a Node-only
-  `module.exports` hook (skipped in browsers) so the smoke test can drive the real internals.
+  state, vegetation dynamics, **morph detection**, history sample, `step()` (grazers, then
+  hunters), `draw()`, trait chart, trophic-cascade chart, HUD, loop, controls. Ends with a
+  Node-only `module.exports` hook (skipped in browsers) so both harnesses drive the real internals.
 - `shim.js` — the shared headless DOM/canvas shim (Node only). Installs `document`, the three
   canvases (carrying real pixel dims), stub elements and a no-op `requestAnimationFrame` as
   globals, so a bare `require('./sim.js')` boots the real world under Node. Both harnesses
   `require('./shim.js')` before `sim.js`, so they drive byte-identical internals. (Extracted
   2026-07-22 from `smoke.js`'s formerly-inline copy, so the two can't drift.)
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **20 checks** — no throw, the world never empties,
+  runs 7200 ticks (3 seasons), and asserts **24 checks** — no throw, the world never empties,
   plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records; and
   for the predator layer: hunters catch prey, breed, oscillate, stay self-sustaining (rarely
   extinct), never nearly wipe the motes out (min ≥ 10) and are never pinned at their cap; plus
@@ -327,12 +332,24 @@ the backlog.**
   that `observe.js`'s longer horizon shows to be sick — e.g. a predator tier down to one survivor.)
 - `observe.js` — the observatory (Node only): the reporting harness invariant 7 demands.
   Loads `shim.js` + real `sim.js`, ticks **20,000** steps (`node observe.js [ticks]` to override),
-  and _prints_ the step-2 report rather than asserting: integrity (throws/NaN), per-tier
-  population min/max/mean/CV with a motion verdict, safety-net firings, per-1k flow rates,
-  an age histogram, per-gene drift for **both** species with edge-pin (⚑) flags, a boredom
-  check (tick 1k vs the end), and coarse 48×16 ASCII maps of vegetation density and creature
-  life. Exit 0 = a clean reading; exit 1 = the sim threw or NaN leaked. It shares `shim.js`
-  with `smoke.js` but not its purpose: numbers to judge, not a green checkmark.
+  and _prints_ the step-2 report rather than asserting: [1] integrity (throws/NaN), [2] per-tier
+  population min/max/mean/CV with a motion verdict, [3] safety-net firings, [4] per-1k flow rates,
+  [5] an age histogram, [6] per-gene drift for **both** species with edge-pin (⚑) flags, [7] a
+  boredom check (tick 1k vs the end), [8] coarse 48×16 ASCII maps of vegetation and life, and
+  **[9] gene-pool shape** — for each grazer gene its sd, a 24-bin histogram, a bimodality
+  coefficient, and the morph detector's verdict, so the _distribution_ is visible, not just the
+  mean. Exit 0 = a clean reading; exit 1 = the sim threw or NaN leaked. Shares `shim.js` with
+  `smoke.js` but not its purpose: numbers to judge, not a green checkmark.
+- **The morph detector** (`classifyMorphs`, exported) — the arc's instrument. It normalizes the
+  live grazers' `speed·size·sense·metabo` into [0,1]⁴, runs a deterministic (RNG-free) Lloyd
+  2-means, then gates the split on a genuine **valley**: it projects onto the axis joining the
+  two centroids, histograms it, and only calls "2 morphs" when the trough between the peaks falls
+  to ≤0.70× the smaller peak _and_ each cluster is ≥18% of the pool _and_ the centroids are ≥0.12
+  apart. This false-positive control is the point — a naive 2-means always finds a split, so a
+  detector without a valley test would cry "speciation!" on every uniform cloud. `sample()` runs
+  it each tick-sample into `world.morphs` (with 3-sample hysteresis so the HUD doesn't flicker);
+  the economy never reads it back. `smoke.js` asserts it on deterministic synthetic pools
+  (unimodal→1, two-cluster→2) so the check can't flake on real randomness.
 - Core objects:
   - **genome**: `{ speed, size, sense, metabo, hue }` — shared shape, different ranges per
     species (hunters are faster, keener-sensed, and hued in a hot red/orange band).
@@ -406,6 +423,31 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — the microscope sees shape, not just the mean (morph detector)
+
+**Observed:** the world's only instruments — the trait chart and `observe.js` — recorded
+*only the mean* of each gene, so they were structurally blind to whether the grazer pool had
+**split** into morphs, which is the whole premise of the current arc; a mean sense of 46 could
+be one cloud or a keen morph and a dull one averaged together, and nothing could tell them
+apart. (Also, plainly, after six runs of deferral: live pixels genuinely *cannot* be eyeballed
+in an autonomous run — the browser pane won't composite without a human present, confirmed by
+trying this run — so this run's work was chosen to be verifiable by numbers, not pixels.) This
+run built an honest **morph detector**: it clusters the live grazers in normalized
+speed×size×sense×metabo space and flags "2 morphs" only when a genuine **valley** sits between
+two substantial clusters — a naive 2-means always finds *a* split, so that false-positive
+control was the whole engineering problem. A visitor now watches a live **morphs** readout in
+the HUD (usually "1", occasionally "2 · large∙small"), and `observe.js` prints a new gene-pool
+**shape** section — per-gene sd, a 24-bin histogram and a bimodality coefficient — so the
+distribution is finally visible instead of a lone averaged number. The instrument immediately
+paid off with a finding that **refutes the arc's hypothesis**: predator-rich worlds keep the
+grazers as *one broad cloud* (sense sd ~14, no valley), while the only real splits — along body
+**size** — appear in predator-*collapse* worlds where grazers overpopulate and starve, about 1
+run in 5. Here speciation is driven by crowding, not by predators. Verified: `node --check` on
+all four `.js`, `smoke.js` green across 5 seeds (synthetic unimodal→1, bimodal→2, live pool
+sane), and a full `observe.js` reading — no throw, no NaN, no gene newly clamp-pinned, dynamics
+unchanged since the detector never feeds back into the economy. (Category: observability/analysis
+— rotated off last run's ecology; a Build, so the Expedition counter ticks to 2.)
 
 ### 2026-07-22 — predation finally selects on sense (fear wired to the gene)
 
@@ -550,12 +592,23 @@ freely. Add two per run, at least one ambitious.
   mechanism that lets a near-collapsed predator tier claw back — pack convergence on shared prey,
   refuge terrain, or a hunger-driven boldness that raises strike rate when starving — so the two
   regimes become _phases the world travels between_ rather than a fate sealed by the founding seed.
-- **[Expedition] Emergent species detector.** _(ambitious — not sure I can land it
-  cleanly.)_ Cluster the live gene pool each sample (e.g. on speed×metabo×size) and,
-  when two or more clusters stay separated for long enough, name them and show a "N
-  species coexisting" readout, maybe tinting motes by morph. Turn "the population drifts"
-  into "the population _split_" — make speciation visible instead of merely implied.
-  _This is the centrepiece of Arc III — the current arc — now with predation to drive the split._
+- **[Build] Tint motes by morph** _(the visible other half of the detector)_. `classifyMorphs`
+  already assigns each grazer to a cluster; expose that per-mote label and, when `world.morphs.k`
+  is 2, colour the two morphs distinctly on the field so the split is _visible_, not just a HUD
+  number. The logic is headless-verifiable; the colours themselves want an interactive eyeball.
+  This finishes the "see the split" finish-condition around the crowding-driven size split that
+  _actually happens_.
+- **[Expedition] Disruptive selection under predation** _(ambitious — the arc's pivoted
+  centrepiece; the detector says the old premise is wrong, so build a world where it's right)_.
+  Engineer two genuinely viable anti-predator strategies so a _predation_-driven split forms —
+  e.g. a trade-off where "small & hide in dense veg" and "large-sensed & flee fast" are each
+  locally optimal but the intermediate is worst (a fitness valley) — then use `classifyMorphs`
+  to show a stable 2-morph coexistence that **collapses back to one morph when hunters are
+  removed**. Risk: disruptive selection is hard to make stable; it usually just picks one winner.
+  _This, not the old detector item, is now the centrepiece of Arc III._
+- **[Build] Retired: "emergent species detector."** Built this run — the detector exists and
+  works. What replaced it in the backlog is the two items above (make the split _visible_, and
+  make a _predation_-driven split actually happen).
 - **[Build] Hunter trait chart.** Motes get a trait chart; hunters don't yet. Add a second
   gene-pool readout tracking predator speed/size/sense over time (an overlaid panel, or a
   toggle on the existing one), so the coevolutionary arms race is legible on _both_ sides —

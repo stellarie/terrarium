@@ -285,6 +285,9 @@
     stepsPerFrame: 2,
     overlay: 0,    // hidden-landscape lens: 0 off · 1 fertility map · 2 grazing pressure
     history: [],   // rolling samples of trait averages + counts
+    morphs: { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 }, // live morph readout
+    _morphPendK: 1, // hysteresis: proposed k awaiting confirmation
+    _morphPendN: 0, // consecutive samples agreeing on the proposed k
   };
 
   function seed() {
@@ -303,6 +306,9 @@
     world.hunterBorn = 0;
     world.hunterDied = 0;
     world.history = [];
+    world.morphs = { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 };
+    world._morphPendK = 1;
+    world._morphPendN = 0;
     for (let i = 0; i < CONFIG.startMotes; i++) {
       world.motes.push(makeMote(rand(0, W), rand(0, H)));
     }
@@ -373,6 +379,126 @@
     for (let i = 0; i < gz.length; i++) gz[i] *= d;
   }
 
+  // ---- morph detection ----------------------------------------------------
+  // A population's *mean* hides its *shape*: a mean sense of 40 could be one broad
+  // cloud or two morphs — a keen one and a dull one — averaged together, and the
+  // trait chart (means only) can't tell them apart. This clusters the live grazer
+  // pool in normalized gene space and asks whether it has genuinely SPLIT. It is
+  // deliberately conservative: a single broad cloud must read as ONE morph, because
+  // a naive 2-means always finds *a* split and a detector that always cries
+  // "speciation!" is worthless. Only a real valley between two substantial clusters
+  // counts. Pure measurement — nothing in the economy ever reads world.morphs back.
+  const MORPH_GENES = [
+    { key: "speed",  lo: 0.25, hi: 2.6,  hiName: "swift",  loName: "slow"    },
+    { key: "size",   lo: 1.6,  hi: 6.5,  hiName: "large",  loName: "small"   },
+    { key: "sense",  lo: 12,   hi: 120,  hiName: "keen",   loName: "dull"    },
+    { key: "metabo", lo: 0.6,  hi: 1.8,  hiName: "greedy", loName: "thrifty" },
+  ];
+  const MORPH = {
+    minPop: 30,        // fewer grazers than this: don't presume to name morphs
+    minFrac: 0.18,     // the smaller morph must be at least this share of the pool
+    valleyRatio: 0.70, // the dip between the two peaks must fall to ≤ this × smaller peak
+    minGap: 0.12,      // centroids at least this far apart in the normalized [0,1]⁴ space
+    hist: 20,          // bins for the valley test along the separating axis
+  };
+
+  // Normalize each gene to [0,1] over its clamp range so the four axes are comparable.
+  function morphFeatures(motes) {
+    const G = MORPH_GENES, dim = G.length, F = new Array(motes.length);
+    for (let i = 0; i < motes.length; i++) {
+      const g = motes[i].g, v = new Array(dim);
+      for (let d = 0; d < dim; d++) v[d] = (g[G[d].key] - G[d].lo) / (G[d].hi - G[d].lo);
+      F[i] = v;
+    }
+    return F;
+  }
+
+  // Deterministic Lloyd 2-means (no RNG, so the readout is stable frame to frame):
+  // seed the two centroids at the extremes of the highest-variance axis, then relax.
+  function twoMeans(F) {
+    const n = F.length, dim = F[0].length;
+    let axis = 0, bestVar = -1;
+    for (let d = 0; d < dim; d++) {
+      let m = 0; for (let i = 0; i < n; i++) m += F[i][d]; m /= n;
+      let s = 0; for (let i = 0; i < n; i++) { const e = F[i][d] - m; s += e * e; } s /= n;
+      if (s > bestVar) { bestVar = s; axis = d; }
+    }
+    let lo = null, hi = null, vlo = Infinity, vhi = -Infinity;
+    for (let i = 0; i < n; i++) {
+      const a = F[i][axis];
+      if (a < vlo) { vlo = a; lo = F[i]; }
+      if (a > vhi) { vhi = a; hi = F[i]; }
+    }
+    const c0 = lo.slice(), c1 = hi.slice(), assign = new Int8Array(n);
+    for (let it = 0; it < 12; it++) {
+      for (let i = 0; i < n; i++) {
+        let d0 = 0, d1 = 0;
+        for (let d = 0; d < dim; d++) { const a = F[i][d] - c0[d], b = F[i][d] - c1[d]; d0 += a * a; d1 += b * b; }
+        assign[i] = d1 < d0 ? 1 : 0;
+      }
+      const s0 = new Array(dim).fill(0), s1 = new Array(dim).fill(0);
+      let n0 = 0, n1 = 0;
+      for (let i = 0; i < n; i++) {
+        const t = assign[i], s = t ? s1 : s0;
+        for (let d = 0; d < dim; d++) s[d] += F[i][d];
+        if (t) n1++; else n0++;
+      }
+      if (n0 === 0 || n1 === 0) break;
+      for (let d = 0; d < dim; d++) { c0[d] = s0[d] / n0; c1[d] = s1[d] / n1; }
+    }
+    return { c0, c1, assign };
+  }
+
+  // Is the grazer pool one cloud or two morphs? Returns { k, gene, n0, n1, sep }.
+  // The gate is a genuine VALLEY between two substantial clusters, not merely the
+  // fact that 2-means found a dividing line (it always will) — see the comment above.
+  function classifyMorphs(motes) {
+    const n = motes.length;
+    if (n < MORPH.minPop) return { k: 1, n, gene: null, n0: n, n1: 0, sep: 0 };
+    const F = morphFeatures(motes), dim = F[0].length;
+    const { c0, c1, assign } = twoMeans(F);
+    let n0 = 0, n1 = 0;
+    for (let i = 0; i < n; i++) assign[i] ? n1++ : n0++;
+    if (n0 === 0 || n1 === 0) return { k: 1, n, gene: null, n0: n, n1: 0, sep: 0 };
+    const frac = Math.min(n0, n1) / n;
+
+    // unit vector from centroid 0 toward centroid 1
+    const u = new Array(dim); let ulen = 0;
+    for (let d = 0; d < dim; d++) { u[d] = c1[d] - c0[d]; ulen += u[d] * u[d]; }
+    ulen = Math.sqrt(ulen);
+    if (ulen < MORPH.minGap) return { k: 1, n, gene: null, n0, n1, sep: ulen };
+    for (let d = 0; d < dim; d++) u[d] /= ulen;
+
+    // project every mote onto that axis and histogram the projection
+    const proj = new Array(n); let plo = Infinity, phi = -Infinity;
+    for (let i = 0; i < n; i++) {
+      let t = 0; for (let d = 0; d < dim; d++) t += F[i][d] * u[d];
+      proj[i] = t; if (t < plo) plo = t; if (t > phi) phi = t;
+    }
+    const B = MORPH.hist, bins = new Array(B).fill(0), span = (phi - plo) || 1;
+    for (let i = 0; i < n; i++) { let b = ((proj[i] - plo) / span * B) | 0; if (b < 0) b = 0; if (b >= B) b = B - 1; bins[b]++; }
+    // smooth (3-wide) so a one-bin notch can't fake a valley
+    const sm = new Array(B);
+    for (let b = 0; b < B; b++) sm[b] = (bins[Math.max(0, b - 1)] + bins[b] + bins[Math.min(B - 1, b + 1)]) / 3;
+    // where the two centroids land along the axis, as bin indices
+    let t0 = 0, t1 = 0; for (let d = 0; d < dim; d++) { t0 += c0[d] * u[d]; t1 += c1[d] * u[d]; }
+    let b0 = ((Math.min(t0, t1) - plo) / span * B) | 0, b1 = ((Math.max(t0, t1) - plo) / span * B) | 0;
+    b0 = clamp(b0, 0, B - 1); b1 = clamp(b1, 0, B - 1);
+    if (b1 - b0 < 2) return { k: 1, n, gene: null, n0, n1, sep: ulen };
+    // a peak on each flank, the lowest point between them
+    let peakL = 0; for (let b = 0; b <= b0; b++) if (sm[b] > peakL) peakL = sm[b];
+    let peakR = 0; for (let b = b1; b < B; b++) if (sm[b] > peakR) peakR = sm[b];
+    let trough = Infinity; for (let b = b0; b <= b1; b++) if (sm[b] < trough) trough = sm[b];
+    const smaller = Math.min(peakL, peakR) || 1;
+    const bimodal = trough <= MORPH.valleyRatio * smaller && frac >= MORPH.minFrac;
+    if (!bimodal) return { k: 1, n, gene: null, n0, n1, sep: ulen };
+
+    // name the split by the gene whose two centroids differ most (normalized units)
+    let gi = 0, gbest = -1;
+    for (let d = 0; d < dim; d++) { const diff = Math.abs(c1[d] - c0[d]); if (diff > gbest) { gbest = diff; gi = d; } }
+    return { k: 2, n, gene: MORPH_GENES[gi].key, n0, n1, sep: ulen };
+  }
+
   // ---- history sample -----------------------------------------------------
   // One rolling sample records both the gene-pool shape (for the trait chart)
   // and the raw population/biomass counts (for the boom-and-bust chart).
@@ -394,6 +520,14 @@
       food: Math.round(biomass()),
     });
     if (world.history.length > CONFIG.historyCap) world.history.shift();
+
+    // update the morph readout on the same cadence, with light hysteresis so the
+    // HUD doesn't flicker between 1 and 2 on a marginal sample: a change in morph
+    // count must persist for three samples (~90 ticks) before it's committed.
+    const cls = classifyMorphs(world.motes);
+    if (cls.k === world._morphPendK) world._morphPendN++;
+    else { world._morphPendK = cls.k; world._morphPendN = 1; }
+    if (world._morphPendN >= 3 || cls.k === world.morphs.k) world.morphs = cls;
   }
 
   // ---- simulation step ----------------------------------------------------
@@ -857,7 +991,13 @@
     born: document.getElementById("s-born"),
     died: document.getElementById("s-died"),
     eaten: document.getElementById("s-eaten"),
+    morphs: document.getElementById("s-morphs"),
     season: document.getElementById("s-season"),
+  };
+  // short "high∙low" caption for the axis a morph split runs along
+  const morphAxisLabel = (key) => {
+    const g = MORPH_GENES.find((x) => x.key === key);
+    return g ? `${g.hiName}∙${g.loName}` : key;
   };
   function updateHud() {
     el.tick.textContent = world.tick;
@@ -867,6 +1007,9 @@
     el.born.textContent = world.born;
     el.died.textContent = world.died;
     el.eaten.textContent = world.eaten;
+    // morph readout: "1" for a single cloud, "2 · keen∙dull" when the pool has split
+    const mo = world.morphs;
+    el.morphs.textContent = mo.k >= 2 && mo.gene ? `${mo.k} · ${morphAxisLabel(mo.gene)}` : String(mo.k);
     // growth multiplier, with an arrow for whether we're warming toward summer
     const rising = Math.cos((world.tick / CONFIG.seasonPeriod) * TAU) >= 0;
     el.season.textContent = `×${seasonGrow().toFixed(2)} ${rising ? "↑" : "↓"}`;
@@ -926,6 +1069,7 @@
     module.exports = {
       world, step, seed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, updateHud,
+      classifyMorphs, MORPH_GENES,
     };
   }
 })();
