@@ -174,6 +174,7 @@
     regimeArmsOn: 22,         // mean hunters at/above which the world reads "arms-race"
     regimeHavenOn: 12,        // mean hunters at/below which it reads "grazer-haven"
     regimeFlashTicks: 150,    // how long the on-canvas transition banner lingers after a flip
+    moodEase: 0.012,          // per-frame easing of the regime "mood" tint toward its target (~a few seconds)
   };
 
   // Traits plotted on the live chart, each normalized to its full genetic range
@@ -432,6 +433,7 @@
     world._morphPendN = 0;
     world.regime = { state: "settling", trend: "steady", label: "settling — reading the world…",
                      hmean: 0, flash: 0, flashText: "" };
+    world.mood = 0;          // eased regime atmosphere: +1 arms-race (warm/tense), -1 grazer-haven (cold/sparse)
     for (let i = 0; i < CONFIG.startMotes; i++) {
       world.motes.push(makeMote(rand(0, W), rand(0, H)));
     }
@@ -663,6 +665,18 @@
       ? (trend === "declining" ? "arms-race — thriving, but destabilising ↓" : "arms-race — predators thriving")
       : (trend === "recovering" ? "grazer-haven — predators clawing back ↑" : "grazer-haven — predators failing");
     return { state, trend, label, hmean };
+  }
+
+  // The world's "mood" target for a given regime: +1 = arms-race (warm, tense,
+  // ember-lit), -1 = grazer-haven (cold, sparse, blue-dim), 0 = settling. A trend
+  // that softens the regime (an arms-race destabilising, a haven clawing back)
+  // relaxes the mood toward neutral so the light eases ahead of the label flipping.
+  // Pure narration: draw() eases world.mood toward this; nothing reads it back.
+  function regimeMood(r) {
+    if (!r) return 0;
+    if (r.state === "arms-race")    return r.trend === "declining"  ?  0.45 :  1;
+    if (r.state === "grazer-haven") return r.trend === "recovering" ? -0.35 : -1;
+    return 0;
   }
 
   // ---- history sample -----------------------------------------------------
@@ -952,9 +966,22 @@
 
   // ---- render -------------------------------------------------------------
   function draw() {
-    // seasonal base: cool and dark in winter, a touch warmer at high summer
+    // ease the world's "mood" toward the current regime so its light leans warm and
+    // tense in a predator arms-race, cold and sparse in a grazer-haven collapse — a
+    // shift a visitor feels before reading the HUD. Pure narration: the economy never
+    // sees world.mood, exactly like the charts and the regime chip.
+    world.mood += (regimeMood(world.regime) - world.mood) * CONFIG.moodEase;
+    const mood = world.mood;
+    const warm = mood > 0 ? mood : 0, cold = mood < 0 ? -mood : 0;
+
+    // seasonal base (cool/dark in winter, warmer at high summer), then leaned by mood:
+    // an arms-race stokes the reds and banks the blue toward an ember dark, a
+    // grazer-haven cools and dims the whole field toward a hollow blue-grey
     const p = (seasonWave() + 1) / 2; // 0 = deep winter, 1 = high summer
-    ctx.fillStyle = `rgb(${6 + 6 * p | 0}, ${9 + 5 * p | 0}, ${13 + 5 * p | 0})`;
+    const br = clamp(6 + 6 * p + 13 * warm - 3 * cold, 0, 255) | 0;
+    const bg = clamp(9 + 5 * p + 3 * warm + 1 * cold, 0, 255) | 0;
+    const bb = clamp(13 + 5 * p - 5 * warm + 10 * cold, 0, 255) | 0;
+    ctx.fillStyle = `rgb(${br}, ${bg}, ${bb})`;
     ctx.fillRect(0, 0, W, H);
 
     // the living ground — each vegetated cell tinted by its density, the whole
@@ -1046,6 +1073,21 @@
       ctx.strokeStyle = `rgba(255,${(90 + 130 * sp.life) | 0},${(70 * sp.life) | 0},${(sp.life * 0.85).toFixed(3)})`;
       ctx.lineWidth = 2;
       ctx.stroke();
+    }
+
+    // mood vignette — a soft, tinted darkening of the field's edges that reads as the
+    // world's light: warm and close-walled in an arms-race, cold and hollow in a
+    // grazer-haven. Kept gentle (edge alpha ≤ ~0.24) so the living scene stays legible;
+    // it's the ambient half of the regime cue the HUD chip states outright.
+    {
+      const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.30,
+                                          W / 2, H / 2, Math.max(W, H) * 0.62);
+      const va = 0.10 + 0.14 * Math.abs(mood);
+      const vr = 4 + 30 * warm, vgc = 6 + 4 * warm + 6 * cold, vb = 12 + 22 * cold;
+      vg.addColorStop(0, "rgba(0,0,0,0)");
+      vg.addColorStop(1, `rgba(${vr | 0},${vgc | 0},${vb | 0},${va.toFixed(3)})`);
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
     }
 
     // regime-transition banner — when the world tips from one attractor to the other,
@@ -1402,7 +1444,7 @@
     module.exports = {
       world, step, seed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, updateHud,
-      classifyMorphs, MORPH_GENES, classifyRegime,
+      classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
       concealment, hideability, cellIndex,
     };
   }

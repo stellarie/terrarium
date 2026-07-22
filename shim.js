@@ -15,9 +15,11 @@
  */
 "use strict";
 
+const gradientStub = { addColorStop() {} };  // createLinear/RadialGradient return this
 const noopCtx = new Proxy({}, {
   get(_t, prop) {
     if (prop === "measureText") return () => ({ width: 0 });
+    if (prop === "createLinearGradient" || prop === "createRadialGradient") return () => gradientStub;
     return () => {};
   },
   set() { return true; },
