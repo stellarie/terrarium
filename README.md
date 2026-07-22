@@ -86,6 +86,11 @@ them — recover, riding on top of the grazer–plant boom and bust.
   hysteretic, so it won't strobe on a marginal seed, and when the world *tips* from one
   attractor to the other a labelled banner fades across the top of the field — so the
   bistable phase transition, once invisible, is impossible to miss.
+- The **whole meadow's light leans with the regime**: an arms-race stokes a warm, tense,
+  close-walled glow, a grazer-haven cools and dims toward a hollow blue-grey, and the shift
+  eases in over a few seconds — so the world's *mood* reads at a glance, before you even
+  read the HUD chip. It's pure atmosphere (a background lean plus a soft tinted vignette);
+  nothing in the ecology reads it back.
 - The **HUD** shows tick, motes, hunters, plant biomass, births, natural deaths, motes
   eaten, the **morph** count, the **regime**, and the current seasonal growth multiplier.
 

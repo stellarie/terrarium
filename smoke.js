@@ -19,7 +19,7 @@
 require("./shim.js");
 const sim = require("./sim.js");
 const { world, step, seed, biomass, CONFIG, GRID,
-        draw, drawChart, drawCountChart, updateHud, classifyMorphs, classifyRegime } = sim;
+        draw, drawChart, drawCountChart, updateHud, classifyMorphs, classifyRegime, regimeMood } = sim;
 
 // ---- assertions --------------------------------------------------------------
 let failures = 0;
@@ -212,6 +212,28 @@ check(classifyRegime([{ hunters: 5 }], "settling").state === "settling", "regime
 const knownRegime = ["settling", "arms-race", "grazer-haven"].includes(world.regime.state);
 check(knownRegime && typeof world.regime.label === "string" && world.regime.label.length > 0,
       `live regime readout is populated for the HUD (${world.regime.state})`);
+
+// the regime "mood" tint must lean the right way: an arms-race is warm (+), a
+// grazer-haven cold (−), settling neutral (0), and a softening trend relaxes each
+// toward neutral. Pure function of the regime, so this can't flake on randomness.
+const mArms = regimeMood({ state: "arms-race", trend: "steady" });
+const mHaven = regimeMood({ state: "grazer-haven", trend: "steady" });
+check(mArms === 1 && mHaven === -1 && regimeMood({ state: "settling" }) === 0 && regimeMood(null) === 0,
+      `regime mood signs the attractors right (arms ${mArms}, haven ${mHaven}, settling 0)`);
+check(regimeMood({ state: "arms-race", trend: "declining" }) === 0.45 &&
+      regimeMood({ state: "grazer-haven", trend: "recovering" }) === -0.35 &&
+      mArms > 0 && mHaven < 0,
+      "a softening trend relaxes the mood toward neutral (declining/recovering) yet keeps its sign");
+// and the eased tint must actually converge toward its target across frames — this
+// also drives the leaned background + vignette through the shimmed gradient stub, so
+// a throw in the new draw path fails here, not just silently in a browser.
+world.mood = 0; world.regime = { state: "arms-race", trend: "steady", flash: 0, flashText: "", label: "x" };
+for (let i = 0; i < 500; i++) draw();
+const moodWarm = world.mood;
+world.regime.state = "grazer-haven";
+for (let i = 0; i < 500; i++) draw();
+check(moodWarm > 0.6 && world.mood < -0.6,
+      `mood eases toward the live regime (arms-race → ${moodWarm.toFixed(2)}, then grazer-haven → ${world.mood.toFixed(2)})`);
 
 // the render path (unexercised by step()) doesn't throw — including every overlay
 // mode (off / fertility / grazing) against the shimmed canvas
