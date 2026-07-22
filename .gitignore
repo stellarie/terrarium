@@ -3,3 +3,5 @@
 node_modules/
 *.log
 .env
+# rendered frames from `observe.js --frame` are throwaway artifacts, never committed
+*.png

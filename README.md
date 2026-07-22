@@ -135,14 +135,15 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 36 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 60 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
 concealment mechanic is monotone (a small, slow mote outhides a big fast one in cover, and
 nobody hides on bare ground), the morph detector is honest (it calls a single broad cloud one
-morph and a clean two-cluster pool two), and the regime readout names each attractor correctly
-with the right hysteresis. Because it uses real randomness, run it a few times:
+morph and a clean two-cluster pool two), the regime readout names each attractor correctly
+with the right hysteresis, and the **headless renderer** works end-to-end (it drives the real
+`draw()` to a valid PNG). Because it uses real randomness, run it a few times:
 
 ```bash
 node smoke.js
@@ -185,6 +186,23 @@ predators and every world collapses to slow, cheap hiders. (What predation does 
 make two lifestyles coexist *within one* world — the bistability keeps each world on a single
 answer. See the journal for that open thread.)
 
+### See it — render a frame to a PNG
+
+A browser preview can't be composited in an automated session, so for a long time the world's
+*look* went unverified. No more: the observatory ships a tiny **dependency-free rasterizer**
+(`render.js`) — a real subset of the 2D canvas — that the shim can hand the actual `draw()`, so
+one true frame can be encoded to a PNG (hand-rolled, no zlib) and looked at:
+
+```bash
+node observe.js --frame world.png          # or: node observe.js --frame world.png 12000 1
+```
+
+It boots a fresh world, ticks it (default 4,000), seats the regime's warm/cold mood, renders one
+real `draw()`, and prints a caption (regime, tier counts, mean hue, lifestyle mix). A trailing
+`1` or `2` turns on the fertility/grazing overlay. It images the **world** canvas (not the side
+charts) and draws no **text**, but every colour, mote ring, hunter rim and vignette is the real
+thing — the same `draw()` the browser runs.
+
 ## Deploy
 
 Any static host works — GitHub Pages, Netlify, Vercel, Cloudflare Pages, an S3 bucket.
@@ -201,8 +219,9 @@ publishes the site).
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
-| `smoke.js` | headless smoke test — 36 assertions over thousands of real ticks |
-| `observe.js` | the observatory — prints readings, and `--split-test` runs the predation experiment |
+| `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
+| `smoke.js` | headless smoke test — 60 assertions over thousands of real ticks |
+| `observe.js` | the observatory — prints readings; `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
 ## How it's built
@@ -224,7 +243,15 @@ hidden landscape, corpse fertilisation, a 49-check headless smoke test, and a he
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the hunters grow old.** The observatory kept catching the predator tier as a near-immortal
+Newest: **the world can finally be seen headlessly.** For a long stretch every visual change shipped
+"logic-correct, look unknown" — an autonomous session has no composited browser to eyeball. That's over:
+a dependency-free **rasterizer** (`render.js`) implements a real subset of the 2D canvas, so the shim can
+hand the *actual* `draw()` a pixel buffer and `node observe.js --frame world.png` encodes one true frame to
+a hand-rolled PNG. The world is now inspectable from the same `draw()` the browser runs — and looking at it
+immediately surfaced honest work (the meadow renders as a blocky 15px mosaic; the warm/cold mood tint reads
+only faintly under a full meadow), now on the roadmap.
+
+Also: **the hunters grow old.** The observatory kept catching the predator tier as a near-immortal
 **gerontocracy** — hunters had no age-linked mortality, so they neither bred nor died at equilibrium
 and their genes sat frozen while the grazers escalated: a one-sided "arms race" against a statue. Now
 hunters have **senescence** — past a long prime the death-risk climbs with age — so the tier **turns

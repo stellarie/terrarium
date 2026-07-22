@@ -33,6 +33,17 @@ const canvases = {
 };
 for (const c of Object.values(canvases)) c.getContext = () => noopCtx;
 
+// Opt-in real rasterizer for the world canvas: when a harness sets this global BEFORE
+// requiring the shim, the world's getContext hands sim.js an actual pixel-painting
+// context (render.js) instead of the no-op one, so the *real* draw() renders true
+// pixels a frame can be encoded from. Charts stay no-op — only the world is imaged.
+let worldRaster = null;
+if (global.__TERRARIUM_RASTER) {
+  const { RasterCtx } = require("./render.js");
+  worldRaster = new RasterCtx(canvases.world.width, canvases.world.height);
+  canvases.world.getContext = () => worldRaster;
+}
+
 const stubEl = () => ({ addEventListener() {}, textContent: "", value: "2", style: {} });
 const cache = {};
 
@@ -45,4 +56,4 @@ global.document = {
 };
 global.requestAnimationFrame = () => 0; // never auto-runs the render loop; we drive step()
 
-module.exports = { canvases, noopCtx };
+module.exports = { canvases, noopCtx, worldRaster };

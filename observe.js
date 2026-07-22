@@ -18,11 +18,15 @@
  */
 "use strict";
 
-require("./shim.js");
+const ARGS = process.argv.slice(2);
+// `--frame` must arm the rasterizer BEFORE the shim loads, since sim.js captures its
+// world ctx at require time — so the flag is read here, above the requires.
+if (ARGS.includes("--frame")) global.__TERRARIUM_RASTER = true;
+
+const shim = require("./shim.js");
 const sim = require("./sim.js");
 const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs, hideability, predationShare } = sim;
 
-const ARGS = process.argv.slice(2);
 const W = 960, H = 540;
 
 // A dedicated experiment (not the normal single-world report): does PREDATION drive
@@ -32,6 +36,54 @@ if (ARGS.includes("--split-test") || ARGS.includes("--divergence")) {
   const nums = ARGS.filter((a) => !a.startsWith("--")).map((x) => parseInt(x, 10)).filter((x) => x > 0);
   splitTest(nums[0] || 6, nums[1] || 15000);
   process.exit(0);
+}
+
+// `node observe.js --frame [out.png] [ticks] [overlay]` — the end of the pixel-blindness.
+// Boot the real world, tick it, render ONE real draw() to a hand-encoded PNG, and print
+// a short caption so the image isn't contextless. out defaults to terrarium-frame.png,
+// ticks to 4000 (long enough for a full meadow + settled tiers), overlay 0/1/2 off/fert/graze.
+if (ARGS.includes("--frame")) {
+  frameMode();
+  process.exit(0);
+}
+
+function frameMode() {
+  const fs = require("fs");
+  const { encodePNG } = require("./render.js");
+  const rest = ARGS.filter((a) => !a.startsWith("--"));
+  const out = rest.find((a) => !/^\d+$/.test(a)) || "terrarium-frame.png";
+  const nums = rest.filter((a) => /^\d+$/.test(a)).map(Number);
+  const ticks = nums.find((n) => n > 3) || 4000;      // first int > 3 is the tick count
+  const overlay = nums.includes(1) ? 1 : nums.includes(2) ? 2 : 0; // small ints pick an overlay lens
+
+  seed();
+  for (let i = 0; i < ticks; i++) step();
+  world.overlay = overlay;
+  // A single frame can't show the eased mood tint the way a viewer watching for seconds
+  // sees it: world.mood relaxes toward the regime over many draws (CONFIG.moodEase per
+  // frame). Since mood is pure narration the economy never reads, seat it directly at the
+  // settled target so the frame's warm/cold light is faithful to the steady state, then draw.
+  world.mood = sim.regimeMood(world.regime);
+  sim.draw();
+
+  const raster = shim.worldRaster;
+  if (!raster) { console.error("frame: rasterizer not armed (shim.worldRaster is null)"); process.exit(1); }
+  const png = encodePNG(raster.width, raster.height, raster.getBuffer());
+  fs.writeFileSync(out, png);
+
+  // caption: what the imaged world actually is, so a reader knows what they're looking at
+  const meanHue = world.motes.length
+    ? (world.motes.reduce((s, m) => s + m.g.hue, 0) / world.motes.length).toFixed(0) : "—";
+  const nm = world.motes.length ? world.motes.filter((m) => hideability(m.g) > 0.55).length : 0;
+  const nf = world.motes.length ? world.motes.filter((m) => hideability(m.g) < 0.30).length : 0;
+  console.log("═══ TERRARIUM FRAME ═══");
+  console.log(`  wrote ${out}  (${raster.width}×${raster.height} PNG, ${png.length} bytes)`);
+  console.log(`  tick ${world.tick}  ·  overlay ${["off", "fertility", "grazing"][overlay]}`);
+  console.log(`  regime  : ${world.regime.state}${world.regime.trend ? " / " + world.regime.trend : ""}  (mood ${world.mood.toFixed(2)})`);
+  console.log(`  motes   : ${world.motes.length}   hunters: ${world.hunters.length}   biomass: ${Math.round(biomass())}`);
+  console.log(`  mote hue mean ${meanHue}°  ·  lifestyle: ${nf} fleers / ${nm} hiders (of ${world.motes.length})`);
+  console.log(`  morphs  : ${world.morphs.k}${world.morphs.gene ? " along " + world.morphs.gene : ""}`);
+  console.log("  (text/labels are not rendered; colour, position, rings & rims are real)");
 }
 
 const TICKS = Math.max(1000, parseInt(process.argv[2], 10) || 20000);
