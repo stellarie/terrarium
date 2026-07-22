@@ -9,8 +9,8 @@
 <body>
   <div id="app">
     <header>
-      <h1>Terrarium <span class="tag">v0</span></h1>
-      <p class="sub">A self-contained world of motes. They eat, drift, breed, and mutate. Nobody is driving.</p>
+      <h1>Terrarium <span class="tag">v1</span></h1>
+      <p class="sub">A self-contained world of motes grazing a living meadow. Plants grow, spread, and get eaten; motes drift, breed, and mutate. Nobody is driving.</p>
     </header>
 
     <div class="stage-wrap">
@@ -20,7 +20,7 @@
     <div class="hud">
       <div class="stat"><span class="k">tick</span><span id="s-tick" class="v">0</span></div>
       <div class="stat"><span class="k">motes</span><span id="s-pop" class="v">0</span></div>
-      <div class="stat"><span class="k">food</span><span id="s-food" class="v">0</span></div>
+      <div class="stat"><span class="k">plants</span><span id="s-food" class="v">0</span></div>
       <div class="stat"><span class="k">born</span><span id="s-born" class="v">0</span></div>
       <div class="stat"><span class="k">died</span><span id="s-died" class="v">0</span></div>
       <div class="stat"><span class="k">season</span><span id="s-season" class="v">–</span></div>
@@ -32,13 +32,13 @@
     </div>
 
     <div class="chart-wrap">
-      <div class="chart-cap">population &amp; food over time — the boom &amp; bust of the economy</div>
+      <div class="chart-cap">population &amp; plant biomass over time — the boom &amp; bust of the economy</div>
       <canvas id="chart2" width="960" height="120" aria-label="Population and food counts over time"></canvas>
     </div>
 
     <div class="controls">
       <button id="btn-pause">pause</button>
-      <button id="btn-seed">scatter food</button>
+      <button id="btn-seed">sow seeds</button>
       <button id="btn-reset">reseed world</button>
       <label class="speed">speed
         <input id="speed" type="range" min="1" max="8" value="2" />
