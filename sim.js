@@ -76,9 +76,14 @@
     hunterReproEnergy: 285,   // energy needed to split (a slowish numerical response damps
                               // the boom so predators can't overshoot the prey to nothing)
     hunterReproCost: 140,     // energy handed to the pup
-    hunterCrowd: 1.6,         // territoriality: the split threshold rises steeply with
+    hunterCrowd: 2.4,         // territoriality: the split threshold rises steeply with
                               // predator density, so hunters brake to an equilibrium well
-                              // below the cap and oscillate there instead of pinning at it
+                              // below the cap and oscillate there instead of pinning at it.
+                              // Raised 1.6→2.4 when senescence was added: aging lifts the
+                              // birth flux (young replace culled old), which in a rich
+                              // arms-race can bump the cap — a stronger crowd brake absorbs
+                              // that overshoot. It bites ONLY at high density, so the
+                              // collapse/recovery regime (density≈0) is untouched.
     huntRange: 6,             // extra px added to (predator+prey radius) to land a catch
     huntCooldown: 40,         // ticks a hunter must digest after a kill before it can strike
                               // again — a Type-II satiation that caps the total harvest, so
@@ -138,6 +143,23 @@
                               // 40-tick digestion shrinks toward ~14 when starving
     hunterBoldSprint: 0.45,   // extra fraction of speed at full hunger to close the gap
                               // (costs energy via the metabolic bill — a real gamble)
+
+    // Senescence — the predator tier must die of OLD AGE, not only of hunger.
+    // observe.js kept finding the hunters a near-immortal *gerontocracy*: they die
+    // only at energy≤0 and hunterCrowd throttles *births*, so at equilibrium a hunter
+    // neither starves nor breeds — it just persists. Median age ran to ~11–17k of 20k,
+    // ~0.6 births/1k, and the gene pool sat FROZEN while the grazers escalated: the
+    // advertised "arms race" was one-sided, grazers racing a statue. Aging fixes it. Past
+    // a long prime the per-tick death hazard climbs with age (a Gompertz-style ramp), so
+    // old hunters make way for mutated young and the predator pool finally TURNS OVER and
+    // can chase the grazers back. Tuned via observe.js/smoke.js so turnover rises sharply
+    // yet the tier stays self-sustaining — freeing crowded slots lets births compensate.
+    hunterSenesceOnset: 4200, // ticks of prime life before the aging hazard begins at all
+    hunterSenesceRate: 3.2e-7,// per-tick death prob added per tick lived past the onset;
+                              // ~sqrt(1.386/rate) sets the median extra lifespan (~2080t),
+                              // so a typical hunter now dies around age ~6–7k, not ~15k
+    hunterSenesceVis: 3600,   // ticks past onset over which a hunter visibly "weathers"
+                              // (a darkening rim in draw()) — view only, reads as age
 
     sparkFade: 0.045,         // per-tick fade of a kill-flash marker (view only)
 
@@ -375,6 +397,7 @@
     eaten: 0,                           // motes caught by hunters
     hunterBorn: 0,
     hunterDied: 0,
+    hunterAged: 0,                      // subset of hunterDied that died of old age (senescence)
     paused: false,
     stepsPerFrame: 2,
     overlay: 0,    // hidden-landscape lens: 0 off · 1 fertility map · 2 grazing pressure
@@ -402,6 +425,7 @@
     world.eaten = 0;
     world.hunterBorn = 0;
     world.hunterDied = 0;
+    world.hunterAged = 0;
     world.history = [];
     world.morphs = { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 };
     world._morphPendK = 1;
@@ -880,10 +904,20 @@
         world.hunterBorn++;
       }
 
-      // death — a fallen hunter feeds the plants where it dropped
-      if (h.energy <= 0) {
+      // death — from starvation OR old age. Senescence: past a long prime the per-tick
+      // death hazard climbs linearly with age, so ancient hunters make way for young and
+      // the predator pool finally turns over instead of freezing. Either way a fallen
+      // hunter feeds the plants where it dropped.
+      const starved = h.energy <= 0;
+      let aged = false;
+      if (!starved && h.age > CONFIG.hunterSenesceOnset) {
+        const hazard = CONFIG.hunterSenesceRate * (h.age - CONFIG.hunterSenesceOnset);
+        if (Math.random() < hazard) aged = true;
+      }
+      if (starved || aged) {
         world.hunters.splice(i, 1);
         world.hunterDied++;
+        if (aged) world.hunterAged++;
         const di = cellIndex(h.x, h.y);
         world.veg[di] = clamp(world.veg[di] + CONFIG.hunterCorpseVeg, 0, 1.2);
       }
@@ -979,6 +1013,10 @@
       // flushes pale and white-hot, so a collapsing predator tier looks frantic
       const hunger = 1 - clamp(h.energy / CONFIG.hunterBoldFull, 0, 1);
       const bold = hunger * hunger;
+      // age reads on a separate channel from hunger: a weathered dark rim thickens as a
+      // hunter grows old (senescence), so a visitor sees the tier turn over — young
+      // hunters are clean-edged, ancient ones ringed and about to make way
+      const sen = clamp((h.age - CONFIG.hunterSenesceOnset) / CONFIG.hunterSenesceVis, 0, 1);
       const s = h.g.size;
       ctx.save();
       ctx.translate(h.x, h.y);
@@ -991,6 +1029,11 @@
       ctx.closePath();
       ctx.fillStyle = `hsl(${h.g.hue.toFixed(0)} ${(85 - bold * 45).toFixed(0)}% ${(46 + glow * 20 + bold * 26).toFixed(0)}%)`;
       ctx.fill();
+      if (sen > 0.02) {
+        ctx.lineWidth = 1 + sen * 1.6;
+        ctx.strokeStyle = `rgba(24,14,20,${(sen * 0.72).toFixed(3)})`;
+        ctx.stroke();
+      }
       ctx.restore();
     }
 

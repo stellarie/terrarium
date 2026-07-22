@@ -88,6 +88,8 @@ check(world.eaten > 0, `hunters caught motes (${world.eaten} eaten over the run)
 check(world.hunterBorn > 0, `hunters reproduced from kills (${world.hunterBorn} pups born)`);
 check(maxHunt > 0, `a hunter population existed (peak ${maxHunt})`);
 check(maxHunt > minHunt, `hunter population oscillated, not flat (${minHunt}–${maxHunt})`);
+// (senescence turnover is checked deterministically at the end — a stochastic run can't
+//  guarantee a natural aged death, but the mechanism must always be wired and lethal)
 check(
   hunterExtinctTicks < TICKS * 0.25,
   `hunters were self-sustaining, rarely extinct (${hunterExtinctTicks}/${TICKS} ticks empty)`
@@ -221,6 +223,22 @@ try {
   drawChart(); drawCountChart(); updateHud();
 } catch (e) { renderThrew = e; }
 check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays) / charts / hud render without throwing");
+
+// senescence must stay LIVE and lethal to the ancient — the fix for the hunter
+// gerontocracy. A single stochastic run can't guarantee a natural old-age death (a hard
+// collapse can starve every hunter before its prime ends), so prove the mechanism
+// deterministically: drop in one well-fed hunter so old its per-tick hazard exceeds 1,
+// step once, and confirm the old-age toll ticks up. Guards against a future edit quietly
+// re-freezing the predator pool by disabling turnover.
+const agedBefore = world.hunterAged;
+world.hunters.push({
+  x: 480, y: 270, dir: 0, energy: 200, cool: 0,
+  age: CONFIG.hunterSenesceOnset + 10_000_000,   // hazard = rate·Δage ≫ 1 → certain death
+  g: { speed: 1.5, size: 4, sense: 70, metabo: 1, hue: 20 },
+});
+step();
+check(world.hunterAged > agedBefore,
+      `senescence is live — an ancient hunter died of old age on cue (aged toll ${agedBefore}→${world.hunterAged})`);
 
 // ---- verdict ----------------------------------------------------------------
 if (failures) {
