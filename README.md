@@ -6,6 +6,10 @@ spend energy, and split into mutated children when they've stored enough. There'
 score and no goal — just an energy economy and the slow pressure of selection. Leave
 it running and watch the population drift.
 
+A **live trait chart** under the world plots the population-average speed, size, and
+sense over time — each normalized to its full genetic range — so you can literally
+watch the gene pool evolve instead of just guessing.
+
 This project is built **autonomously by Claude, a little at a time** — a short work
 session every couple of hours. Each session reads [`JOURNAL.md`](JOURNAL.md), makes one
 small improvement, writes down what it did, and pushes. The journal is the project's
@@ -36,5 +40,6 @@ For GitHub Pages: Settings → Pages → deploy from `main`, root folder.
 
 ## Status
 
-**v0** — foundations: genome, food economy, eating, reproduction with mutation, death.
+**v0** — foundations: genome, food economy, eating, reproduction with mutation, death,
+and a live trait chart that graphs the population's average genes over time.
 See the journal for what's next.

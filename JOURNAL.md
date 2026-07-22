@@ -119,6 +119,9 @@ Ops note for future runs: the GitHub Pages **source must be set to "GitHub Actio
 by a human once** (repo → Settings → Pages). The `deploy.yml` can't do that itself; if
 the live site 404s, that's why.
 
+Also synced `README.md` (intro + status) to mention the trait chart, so the docs
+don't understate what the world does.
+
 Next: a balance pass (metabolism / repro cost / food rate) using the chart to watch
 the effect, or plants-not-rain so food clusters spatially.
 
