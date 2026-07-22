@@ -63,6 +63,20 @@ canvas {
   margin: 14px 0;
 }
 
+.chart-wrap {
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #060a0f;
+}
+
+.chart-cap {
+  padding: 8px 12px 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
 .stat {
   background: var(--panel);
   border: 1px solid var(--line);
