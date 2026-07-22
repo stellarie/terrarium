@@ -29,6 +29,7 @@ const canvases = {
   world: { width: 960, height: 540 },
   chart: { width: 960, height: 140 },
   chart2: { width: 960, height: 120 },
+  chart3: { width: 960, height: 96 },
 };
 for (const c of Object.values(canvases)) c.getContext = () => noopCtx;
 

@@ -82,6 +82,11 @@ them — recover, riding on top of the grazer–plant boom and bust.
   sat frozen; senescence gave the tier turnover, so its genes finally move.)
 - A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
   own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
+- A **death-balance chart** asks *what is killing the herd right now* — a diverging band that
+  swells **warm above the line when the hunters are doing the killing** (predation, an arms-race)
+  and **cool below when hunger is** (starvation, a food-limited grazer-haven). It reads the actual
+  causes of death, not a gene, so it tracks the regime honestly: it rides warm between crashes and
+  plunges cool during an overgraze die-off, making the boom-bust visible as a colour.
 - Every mote is **ringed by its lifestyle** — leaf-green for a committed hider (small, slow),
   amber for a committed fleer (fast), fading toward the ambiguous middle — so the hider/fleer
   divergence predation drives is visible on the field, in every world, at a glance.
@@ -192,7 +197,7 @@ publishes the site).
 
 | file | what it is |
 |------|------------|
-| `index.html` | page shell, canvas, HUD, the trait & trophic-cascade charts, controls |
+| `index.html` | page shell, canvas, HUD, the trait / trophic-cascade / death-balance charts, controls |
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
@@ -213,8 +218,8 @@ The journal is the project's only memory between sessions.
 vegetation field grown over a fertility map, following the food gradient by sense; **hunters**
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
-breath. Live trait and trophic-cascade charts, a toggleable fertility/grazing overlay onto the
-hidden landscape, corpse fertilisation, a 36-check headless smoke test, and a headless
+breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing overlay onto the
+hidden landscape, corpse fertilisation, a 49-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.

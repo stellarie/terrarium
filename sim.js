@@ -33,6 +33,11 @@
   const C2W = chart2Canvas.width;
   const C2H = chart2Canvas.height;
 
+  const chart3Canvas = document.getElementById("chart3");
+  const c3ctx = chart3Canvas.getContext("2d");
+  const C3W = chart3Canvas.width;
+  const C3H = chart3Canvas.height;
+
   // ---- tunables -----------------------------------------------------------
   const CONFIG = {
     startMotes: 40,
@@ -43,6 +48,15 @@
     maxPop: 600,
     sampleEvery: 30,         // ticks between history samples
     historyCap: 240,         // how many samples the charts keep
+    // The death-balance chart: a diverging band asking what is killing the herd right
+    // now — the hunters (predation) or hunger (starvation). It plots the predation
+    // *share* of recent mote deaths, smoothed over a trailing window of samples so the
+    // few deaths per 30-tick sample don't make it strobe between 0 and 1. This is
+    // honest by construction — it counts the actual deaths, so it tracks the regime
+    // (predation-heavy in an arms-race, starvation-heavy in a grazer-haven) rather
+    // than guessing from gene means (a gene-gap index was tried and measured to read
+    // *backwards* from the ecology, so it was dropped for this).
+    predWindow: 10,          // samples (~300 ticks) the predation share is pooled over
     seasonPeriod: 2400,      // ticks per full seasonal cycle (summer→winter→summer)
     seasonAmplitude: 0.6,    // growth swing; <1 so lean winters never fully starve
 
@@ -220,6 +234,26 @@
     { key: "pop",     label: "motes",   color: "#e88fb0" },
     { key: "hunters", label: "hunters", color: "#ff6b6b" },
   ];
+
+  // The predation share of mote deaths over a trailing window of history samples:
+  // pool the predation deaths (de) and starvation deaths (dd) across samples
+  // [i-win+1 .. i] and return predation / (predation + starvation):
+  //   →1  the hunters are claiming the herd (top-down control — an arms-race)
+  //   →0  hunger is claiming the herd (bottom-up control — a grazer-haven)
+  //   null nothing died in the window (rare; the band breaks rather than lying)
+  // Honest by construction: it counts what actually killed the motes, so it can't
+  // read backwards from the ecology the way a gene-gap index did. Pure function of
+  // (history, index, window), so the smoke test can assert it on synthetic arrays.
+  function predationShare(hist, i, win) {
+    let e = 0, d = 0;
+    for (let k = Math.max(0, i - win + 1); k <= i; k++) {
+      if (!hist[k]) continue;
+      e += hist[k].de || 0;
+      d += hist[k].dd || 0;
+    }
+    const tot = e + d;
+    return tot > 0 ? e / tot : null;
+  }
 
   // ---- helpers ------------------------------------------------------------
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -430,6 +464,8 @@
     morphs: { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 }, // live morph readout
     _morphPendK: 1, // hysteresis: proposed k awaiting confirmation
     _morphPendN: 0, // consecutive samples agreeing on the proposed k
+    _prevEaten: 0,  // cumulative predation/starvation deaths at the last sample, so
+    _prevDied: 0,   // each sample can record how many of each happened in its window
     // which bistable attractor the world is in, read live off the history buffer
     regime: { state: "settling", trend: "steady", label: "settling — reading the world…",
               hmean: 0, flash: 0, flashText: "" },
@@ -448,6 +484,8 @@
     world.born = 0;
     world.died = 0;
     world.eaten = 0;
+    world._prevEaten = 0;
+    world._prevDied = 0;
     world.hunterBorn = 0;
     world.hunterDied = 0;
     world.hunterAged = 0;
@@ -726,6 +764,12 @@
       hsense += h.g.sense;
     }
     const hinv = hn > 0 ? 1 / hn : 0;
+    // deaths since the last sample, split by cause, so the death-balance chart can
+    // ask what is actually killing the herd — hunters (predation) or hunger.
+    const de = world.eaten - world._prevEaten;
+    const dd = world.died - world._prevDied;
+    world._prevEaten = world.eaten;
+    world._prevDied = world.died;
     world.history.push({
       speed: speed * inv,
       size: size * inv,
@@ -736,6 +780,7 @@
       pop: n,
       hunters: hn,
       food: Math.round(biomass()),
+      de, dd,   // predation deaths / starvation deaths this window
     });
     if (world.history.length > CONFIG.historyCap) world.history.shift();
 
@@ -1368,6 +1413,106 @@
     }
   }
 
+  // ---- death-balance chart ------------------------------------------------
+  // One diverging band, above/below a central line, that answers "what is killing
+  // the herd right now?" — the hunters (warm, above the line: predation, top-down
+  // control) vs. hunger (cool, below: starvation, bottom-up control), from the
+  // smoothed predationShare(). It swells warm as an arms-race lets the predators
+  // claim most of the herd, sinks cool as a grazer-haven leaves hunger to do the
+  // killing, and breaks only in the rare window where nothing died at all.
+  const ARMS_WARM = "255,107,107";  // predation dominates (matches the hunter tier)
+  const ARMS_COOL = "108,192,138";  // starvation dominates (matches the haven green)
+  function drawArmsChart() {
+    c3ctx.fillStyle = "#060a0f";
+    c3ctx.fillRect(0, 0, C3W, C3H);
+
+    const padL = 8, padR = 8, padT = 22, padB = 10;
+    const plotW = C3W - padL - padR;
+    const plotH = C3H - padT - padB;
+    const mid = padT + plotH / 2;      // the 50/50 line (predation share = 0.5)
+    const half = plotH / 2;
+    const hist = world.history;
+    const cap = CONFIG.historyCap;
+    const win = CONFIG.predWindow;
+    // predation share in [0,1] → a signed height in [-1,1] (½ = the middle line)
+    const yFor = (share) => mid - clamp(2 * share - 1, -1, 1) * half;
+
+    // precompute each sample's point (null in a window where nothing died)
+    const pts = [];
+    for (let i = 0; i < hist.length; i++) {
+      const share = predationShare(hist, i, win);
+      const x = padL + (i / (cap - 1)) * plotW;
+      pts.push(share == null ? null : { x, y: yFor(share) });
+    }
+
+    if (hist.length > 1) {
+      // walk contiguous runs of scored samples; fill each against the middle line,
+      // split by side (warm above = predation, cool below = starvation), then stroke.
+      let i = 0;
+      while (i < pts.length) {
+        if (!pts[i]) { i++; continue; }
+        let j = i;
+        while (j + 1 < pts.length && pts[j + 1]) j++;
+        if (j > i) {
+          for (const sign of [1, -1]) {
+            c3ctx.beginPath();
+            c3ctx.moveTo(pts[i].x, mid);
+            for (let k = i; k <= j; k++) {
+              const y = sign > 0 ? Math.min(pts[k].y, mid) : Math.max(pts[k].y, mid);
+              c3ctx.lineTo(pts[k].x, y);
+            }
+            c3ctx.lineTo(pts[j].x, mid);
+            c3ctx.closePath();
+            const rgb = sign > 0 ? ARMS_WARM : ARMS_COOL;
+            const g = c3ctx.createLinearGradient(0, mid, 0, sign > 0 ? padT : padT + plotH);
+            g.addColorStop(0, `rgba(${rgb},0.04)`);
+            g.addColorStop(1, `rgba(${rgb},0.5)`);
+            c3ctx.fillStyle = g;
+            c3ctx.fill();
+          }
+          c3ctx.beginPath();
+          for (let k = i; k <= j; k++) {
+            if (k === i) c3ctx.moveTo(pts[k].x, pts[k].y); else c3ctx.lineTo(pts[k].x, pts[k].y);
+          }
+          c3ctx.lineWidth = 1.5;
+          c3ctx.strokeStyle = "rgba(232,238,246,0.85)";
+          c3ctx.stroke();
+        }
+        i = j + 1;
+      }
+    }
+
+    // the 50/50 line, drawn over the fills
+    c3ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    c3ctx.lineWidth = 1;
+    c3ctx.beginPath();
+    c3ctx.moveTo(padL, mid);
+    c3ctx.lineTo(C3W - padR, mid);
+    c3ctx.stroke();
+
+    // readout: which force is doing the killing right now, coloured to match, plus
+    // a fixed axis hint. The current share pools the same trailing window as the band.
+    c3ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+    c3ctx.textBaseline = "middle";
+    const cur = hist.length ? predationShare(hist, hist.length - 1, win) : null;
+    let label, col;
+    if (hist.length <= 1) { label = "gathering data…"; col = "#6b7d8f"; }
+    else if (cur == null) { label = "a still moment — nothing has died"; col = "#6b7d8f"; }
+    else {
+      const pct = Math.round(cur * 100);
+      if (cur >= 0.55) { label = `the hunters are doing the killing — ${pct}% predation`; col = "#ff6b6b"; }
+      else if (cur <= 0.45) { label = `hunger is doing the killing — ${100 - pct}% starvation`; col = "#6cc08a"; }
+      else { label = `an even split — ${pct}% predation`; col = "#cdd8e4"; }
+    }
+    c3ctx.fillStyle = col;
+    c3ctx.textAlign = "left";
+    c3ctx.fillText(label, padL, padT / 2);
+    c3ctx.fillStyle = "#6b7d8f";
+    c3ctx.textAlign = "right";
+    c3ctx.fillText("↑ predation   ↓ starvation", C3W - padR, padT / 2);
+    c3ctx.textAlign = "left";
+  }
+
   // ---- hud ----------------------------------------------------------------
   const el = {
     tick: document.getElementById("s-tick"),
@@ -1426,6 +1571,7 @@
     draw();
     drawChart();
     drawCountChart();
+    drawArmsChart();
     updateHud();
     requestAnimationFrame(frame);
   }
@@ -1471,9 +1617,9 @@
   if (typeof module !== "undefined" && module.exports) {
     module.exports = {
       world, step, seed, sample, biomass, CONFIG, GRID,
-      draw, drawChart, drawCountChart, updateHud,
+      draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
-      concealment, hideability, metaboIntakeMult, cellIndex,
+      concealment, hideability, metaboIntakeMult, predationShare, cellIndex,
     };
   }
 })();
