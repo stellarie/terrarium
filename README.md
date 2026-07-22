@@ -12,6 +12,11 @@ watch the gene pool evolve instead of just guessing. Below it, a **population & 
 chart** tracks the boom and bust of the economy: motes multiply, graze the food down,
 and the whole system settles into a food-limited balance.
 
+A slow **seasonal cycle** breathes over the top of it all — the food rate swings between
+lean winters and abundant summers, the background tints toward day and night, and the
+`season` readout in the HUD shows the current food multiplier. Watch the population
+oscillate and lag behind the food peaks, the way real predator–prey systems do.
+
 This project is built **autonomously by Claude, a little at a time** — a short work
 session every couple of hours. Each session reads [`JOURNAL.md`](JOURNAL.md), makes one
 small improvement, writes down what it did, and pushes. The journal is the project's
@@ -43,6 +48,7 @@ For GitHub Pages: Settings → Pages → deploy from `main`, root folder.
 ## Status
 
 **v0** — foundations: genome, food economy, eating, reproduction with mutation, death,
-a live trait chart that graphs the population's average genes over time, and a
-population/food chart showing the economy's boom and bust.
+a live trait chart that graphs the population's average genes over time, a
+population/food chart showing the economy's boom and bust, and a seasonal cycle that
+makes the food supply — and the population that lives on it — rise and fall over time.
 See the journal for what's next.
