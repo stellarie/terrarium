@@ -16,9 +16,10 @@ capacity, **spread** into neighbouring bare cells, and get **grazed down** by th
 that roam them. Where herds linger, they carve the meadow into bare corridors and
 patches; when a mote dies, its corpse fertilises the ground where it fell.
 
-Because food is now *spatial*, a mote's **sense** gene means "how far can I perceive
-good grazing": motes follow the vegetation gradient toward the greenest ground nearby.
-Selection now pushes against **space**, not just against an abundance dial.
+Because food is now *spatial*, a mote's **sense** gene is its whole perception radius —
+"how far can I perceive the world": it follows the vegetation gradient toward the greenest
+ground nearby, and (see the predators, below) it spots approaching hunters at that same
+range. Selection now pushes against **space**, not just against an abundance dial.
 
 The result is a genuine **boom and bust**: the population blooms, overgrazes the meadow
 toward bare earth, crashes in a wave of starvation, and then — as the plants recover —
@@ -34,8 +35,11 @@ point where they're charging, and they stalk the nearest mote in range and strik
 close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a hunter must
 **digest** before it can strike again, which gives the herd a refuge, and predator
 **territoriality** keeps their numbers from running away. Grazers, in turn, **flee** — a
-mote that spots a nearby hunter sprints directly away (at an energy cost), so predation
-becomes a second pressure of selection, pushing grazers toward **speed**.
+mote that spots a hunter within its **sense** range sprints directly away (at an energy
+cost). Because keener-sensed motes spot the threat from farther and get more warning to run,
+predation now selects on **sense** as well as **speed** — and it does so *conditionally*: in
+a predator-rich world the herd evolves keen and twitchy, while in a world where the hunters
+collapse the grazers drift blind and complacent, since nothing is left to fear.
 
 Predators and prey settle into the classic **phase-lagged cycle**: hunters thrive and thin
 the herd, then starve back as prey grows scarce, letting the motes — and the meadow beneath
@@ -138,8 +142,9 @@ chase and eat the motes; and grazers flee. The two cycles interlock into a phase
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait and trophic-cascade charts, a toggleable fertility/grazing overlay onto the
 hidden landscape, corpse fertilisation, a 20-check headless smoke test, and now a headless
-**observatory** (`observe.js`) that reports the world's vital signs. Next up (**Arc III — The
-Great Divergence**): make speciation visible as the grazers split into distinct morphs — though
-the observatory's first readings show they currently *converge* rather than split, so the arc
-likely needs a new selective axis (wiring predator-fear to the sense gene) before there are
-morphs to detect. See the journal for the story.
+**observatory** (`observe.js`) that reports the world's vital signs. Predation now selects on
+the **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and
+the herd's alertness tracks how dangerous its world is. Next up (**Arc III — The Great
+Divergence**): with that second selective axis in place, build the **speciation detector** —
+cluster the live grazer gene pool and, when it splits into distinct morphs, name them and tint
+the motes. See the journal for the story.
