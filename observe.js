@@ -20,7 +20,7 @@
 
 require("./shim.js");
 const sim = require("./sim.js");
-const { world, step, seed, biomass, CONFIG, GRID } = sim;
+const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs } = sim;
 
 const TICKS = Math.max(1000, parseInt(process.argv[2], 10) || 20000);
 const W = 960, H = 540;
@@ -156,6 +156,9 @@ line("\n[8] SPATIAL  (coarse density, 48×16 over the 960×540 torus)");
 vegMap();
 lifeMap();
 
+line("\n[9] GENE-POOL SHAPE  (the mean hides the shape — has the grazer pool SPLIT?)");
+shapeReport();
+
 line();
 line(threw ? "READING ABORTED — the sim threw (see [1])." :
      nanFlags.length ? "READING SUSPECT — NaN/negative leaked (see [1])." :
@@ -272,6 +275,44 @@ function binCell(x, y) {
   const mx = Math.min(MC - 1, Math.max(0, (x / W * MC) | 0));
   const my = Math.min(MR - 1, Math.max(0, (y / H * MR) | 0));
   return my * MC + mx;
+}
+
+// The distribution the mean throws away. For each grazer gene: mean, spread (sd),
+// a 24-bin histogram over its clamp range so a split shows as two humps with a
+// valley, and a bimodality coefficient (BC > 0.555 hints at a non-unimodal shape).
+// Then the morph detector's verdict — which requires a genuine valley, not just BC.
+function shapeReport() {
+  const pop = world.motes;
+  if (!pop.length) { line("    (no grazers alive to read)"); return; }
+  const genes = ["speed", "size", "sense", "metabo"];
+  const ramp = " .:-=+*#%@";
+  line(`    grazer gene distributions (final tick, n=${pop.length})`);
+  line("    gene      mean      sd     BC     shape (histogram over the clamp range)");
+  for (const k of genes) {
+    const vals = pop.map((m) => m.g[k]);
+    const n = vals.length;
+    const mean = vals.reduce((a, b) => a + b, 0) / n;
+    let m2 = 0, m3 = 0, m4 = 0;
+    for (const x of vals) { const e = x - mean; const e2 = e * e; m2 += e2; m3 += e2 * e; m4 += e2 * e2; }
+    m2 /= n; m3 /= n; m4 /= n;
+    const sd = Math.sqrt(m2);
+    const skew = m2 > 0 ? m3 / Math.pow(m2, 1.5) : 0;
+    const kurt = m2 > 0 ? m4 / (m2 * m2) : 0;             // non-excess kurtosis
+    const bc = kurt > 0 ? (skew * skew + 1) / kurt : 0;   // Sarle's bimodality coeff
+    const [lo, hi] = RANGE.mote[k];
+    const B = 24, bins = new Array(B).fill(0);
+    for (const x of vals) { let b = ((x - lo) / (hi - lo) * B) | 0; if (b < 0) b = 0; if (b >= B) b = B - 1; bins[b]++; }
+    const bmax = Math.max(1, ...bins);
+    const spark = bins.map((c) => ramp[Math.min(9, Math.round((c / bmax) * 9))]).join("");
+    const flag = bc > 0.555 ? " ⚑" : "  ";
+    line(`    ${k.padEnd(7)} ${pad(fmt(mean), 7)} ${pad(fmt(sd), 7)} ${pad(fmt(bc), 6)}${flag} [${spark}]`);
+  }
+  const mo = classifyMorphs(pop);
+  const verdict = mo.k >= 2 && mo.gene
+    ? `${mo.k} MORPHS coexisting, split along ${mo.gene} (${mo.n0} vs ${mo.n1}, sep ${fmt(mo.sep)})`
+    : "ONE broad cloud — no genuine split";
+  line(`    morph detector: ${verdict}`);
+  line("    (⚑ = BC>0.555, a hint of non-unimodality; the detector needs a real valley, not just skew)");
 }
 
 process.exit(threw || nanFlags.length ? 1 : 0);

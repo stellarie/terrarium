@@ -51,8 +51,12 @@ them — recover, riding on top of the grazer–plant boom and bust.
   each normalized to its full genetic range, so you can watch the gene pool drift.
 - A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
   own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
+- A **morph readout** in the HUD watches whether the grazers are still one gene pool or have
+  **split** into two morphs. A detector clusters the live herd and reports "1" for a single
+  broad cloud, or e.g. "2 · large∙small" when it finds a genuine split — it's deliberately
+  strict, so it won't cry "speciation!" over a merely wide spread.
 - The **HUD** shows tick, motes, hunters, plant biomass, births, natural deaths, motes
-  eaten, and the current seasonal growth multiplier.
+  eaten, the **morph** count, and the current seasonal growth multiplier.
 
 ### See the hidden landscape
 
@@ -81,10 +85,11 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 20 assertions — the world never throws
-or empties, plants persist and evolve, and the predator–prey layer stays balanced (hunters
-hunt, breed and oscillate without pinning at their cap or wiping the motes out). Because it
-uses real randomness, run it a few times:
+behind a shared DOM/canvas shim (`shim.js`) and runs 24 assertions — the world never throws
+or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
+hunt, breed and oscillate without pinning at their cap or wiping the motes out), and the morph
+detector is honest (it calls a single broad cloud one morph and a clean two-cluster pool two).
+Because it uses real randomness, run it a few times:
 
 ```bash
 node smoke.js
@@ -96,8 +101,9 @@ The smoke test only answers *"is anything broken?"* To ask *"what is the world a
 **doing**?"*, run the **observatory** — it boots the same real `sim.js`, ticks it 20,000 steps,
 and prints readings you interpret rather than pass/fail: per-tier population min/max/mean,
 safety-net firings, births/deaths/kills per 1,000 ticks, an age histogram, per-gene drift for
-**both** species (with edge-of-range flags), a boredom check, and coarse ASCII maps of the
-meadow and its life.
+**both** species (with edge-of-range flags), a boredom check, coarse ASCII maps of the meadow
+and its life, and a **gene-pool shape** section — each grazer gene's spread, a histogram, and
+the morph detector's verdict, so you can see whether the mean is hiding a split.
 
 ```bash
 node observe.js          # or: node observe.js 50000   (custom tick count)
@@ -123,7 +129,7 @@ publishes the site).
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
-| `smoke.js` | headless smoke test — 20 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 24 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings of what the world is doing |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -141,10 +147,16 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait and trophic-cascade charts, a toggleable fertility/grazing overlay onto the
-hidden landscape, corpse fertilisation, a 20-check headless smoke test, and now a headless
-**observatory** (`observe.js`) that reports the world's vital signs. Predation now selects on
-the **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and
-the herd's alertness tracks how dangerous its world is. Next up (**Arc III — The Great
-Divergence**): with that second selective axis in place, build the **speciation detector** —
-cluster the live grazer gene pool and, when it splits into distinct morphs, name them and tint
-the motes. See the journal for the story.
+hidden landscape, corpse fertilisation, a 24-check headless smoke test, and a headless
+**observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
+**sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
+herd's alertness tracks how dangerous its world is.
+
+Newest (**Arc III — The Great Divergence**): a **morph detector** now clusters the live grazers
+and reports, live, whether they're still one gene pool or have split into two — with a strict
+valley test so a merely wide spread doesn't count as speciation. On its first readings it
+**overturned the arc's own premise**: predator-rich worlds keep the grazers as a *single broad
+cloud*, and the only genuine splits — along body **size** — show up in predator-*collapse* worlds
+where the herd overpopulates and starves. Speciation here is driven by **crowding, not
+predators** — so the arc pivots toward either drawing the crowding-split morphs on the field, or
+engineering a world where predation itself forces the divergence. See the journal for the story.

@@ -19,7 +19,7 @@
 require("./shim.js");
 const sim = require("./sim.js");
 const { world, step, seed, biomass, CONFIG, GRID,
-        draw, drawChart, drawCountChart, updateHud } = sim;
+        draw, drawChart, drawCountChart, updateHud, classifyMorphs } = sim;
 
 // ---- assertions --------------------------------------------------------------
 let failures = 0;
@@ -127,6 +127,25 @@ check(gmax > 0, `grazing pressure was recorded for the overlay (peak ${gmax.toFi
 
 // history is being recorded for the charts
 check(world.history.length > 10, `history buffer filled for the charts (${world.history.length} samples)`);
+
+// the morph detector must be HONEST: one broad cloud reads as one morph (a naive
+// 2-means would always split), a genuinely two-cluster pool reads as two. Test both
+// with deterministic synthetic pools so this check never flakes on real randomness.
+let _s = 987654321;
+const rnd = () => (_s = (_s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+const jit = (c, w) => c + (rnd() - 0.5) * w;
+const uniPool = [];
+for (let i = 0; i < 300; i++) uniPool.push({ g: { speed: jit(1.3, 0.4), size: jit(3.2, 0.8), sense: jit(45, 16), metabo: jit(1.0, 0.2) } });
+const biPool = [];
+for (let i = 0; i < 150; i++) biPool.push({ g: { speed: jit(0.6, 0.1), size: jit(2.1, 0.2), sense: jit(22, 5), metabo: jit(0.7, 0.06) } });
+for (let i = 0; i < 150; i++) biPool.push({ g: { speed: jit(2.3, 0.1), size: jit(5.0, 0.2), sense: jit(105, 5), metabo: jit(1.5, 0.06) } });
+const cUni = classifyMorphs(uniPool);
+const cBi = classifyMorphs(biPool);
+check(cUni.k === 1, `morph detector calls a single broad cloud ONE morph (k=${cUni.k})`);
+check(cBi.k === 2, `morph detector splits a clean two-cluster pool into TWO (k=${cBi.k}${cBi.gene ? " along " + cBi.gene : ""})`);
+const cLive = classifyMorphs(world.motes);
+check(cLive.k === 1 || cLive.k === 2, `morph detector returns a sane verdict on the live pool (k=${cLive.k})`);
+check(world.morphs && world.morphs.k >= 1, `live morph readout is populated for the HUD (k=${world.morphs && world.morphs.k})`);
 
 // the render path (unexercised by step()) doesn't throw — including every overlay
 // mode (off / fertility / grazing) against the shimmed canvas
