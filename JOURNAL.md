@@ -61,13 +61,19 @@ _Finished when:_ a viewer can see the grazer gene pool split into 2+ stable clus
 world labels them ("2 morphs coexisting") and tints motes by cluster, and the split is shown
 to be _driven_ by predation (it collapses back to one morph if hunters vanish).
 
-_Runs since the last Expedition:_ **0** (the Arc II Expedition was the last run). Next run
-should Build, not Expedition, and rotate category away from ecology.
+_First readings (2026-07-22, from the new `observe.js`) challenge this arc's premise._ The
+grazers are **not** splitting — across every 20k-tick run they _converge_ to a single corner
+(fast, thrifty, **low-sense**), because with a fixed `fearRange` predation doesn't select on
+`sense` at all and abundant food doesn't reward long-range foraging. So before the speciation
+detector can find morphs, the world probably needs a _second selective axis_ that actually
+pulls grazers apart — the obvious one being **wiring fear detection to the `sense` gene** (see
+Log + backlog), so keen skittish sprinters and thrifty local grazers become genuinely
+different bets. That's the recommended next Build; the hunter trait chart is the lighter
+alternative.
 
-_But first:_ step 2 of the loop now requires an observation harness that **reports**, and
-none is committed — `smoke.js` only asserts. So the next run's job is **`observe.js`**
-(category: tooling, which also satisfies the rotation), and it does **not** consume the
-Expedition counter. The hunter trait chart follows it.
+_Runs since the last Expedition:_ **0** — unchanged. The Arc II Expedition was the last real
+run; this `observe.js` run is the mandatory-tooling exception the loop says does **not**
+consume the counter. Next run should Build (not Expedition) and may rotate back toward ecology.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -79,29 +85,50 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: never.** Everything below is quoted from past Log entries, not read off a
-live run. The first `observe.js` run should replace this section wholesale.
+**Last observed: 2026-07-22 — `observe.js`, 20,000 ticks, 5 fresh unseeded runs.** These are
+_measured_, not quoted. Headline: **the world is bistable** — each seed settles into one of two
+regimes, so most figures are given as a range spanning both.
 
-- **grazers:** a limit cycle — bloom → overgraze to bare earth → starvation crash → regrowth.
-  No current min/max/mean is written down anywhere.
-- **hunters:** self-sustaining across ~25 `smoke.js` seeds; never pinned at their cap, rarely
-  extinct, and motes never fall below ~10. No population figures recorded.
-- **plants:** total biomass fluctuates with the cycle. `vegEnergy` = 5 keeps grazing income
-  near metabolic cost, which is what makes scarcity bite.
-- **season:** ×0.4 → ×1.6 over 2400 ticks, now scaling plant _growth & seeding_ rather than a
-  spawn rate.
-- **grazer traits:** ❗ **still never recorded.** Two charts have shipped and not one run has
-  written down an actual gene average, so nobody knows what this population has become.
-- **hunter traits:** not tracked at all. (Arc III's first microscope.)
-- **spatial:** the fertility and grazing overlays exist, but the only number ever captured was
-  a grazing-field peak of 3.83, once, and never since. Nobody has measured _where_ anything is.
-- **live pixels:** ❗ **unverified for four consecutive runs.** Nobody has actually looked at
-  the vegetation field, the overlays, the hunters, the kill-flashes or the cascade chart
-  rendered on screen — every entry defers it to "an interactive run" that never comes. This is
-  the project's largest standing risk: the whole world could be rendering wrong and every
-  headless check would still be green.
+- **THE BISTABILITY (headline finding).** Two attractors, chosen by founding RNG:
+  _predator-dense arms-race_ (hunters ride the cap ~65/75, motes race the speed ceiling, meadow
+  stays green ~665 biomass, high churn) vs. _predator near-collapse / grazer-haven_ (hunters
+  bleed to **1–8 survivors**, grazers overpopulate & starve, meadow grazed to **~0 biomass**).
+  ~2 of 3 runs fell into the collapse regime.
+- **motes:** min **33–38** (the 0→6 reseed net _never_ fired), max **571–600** (crest touches
+  `maxPop` 600), mean **330–436**, CV 28–35% — always oscillates. Mean age swings wildly by
+  regime: **~480** (predator-dense, fast churn) to **~3400** (grazer-haven, near-idle).
+- **hunters:** min **1–12**, max **22–75**, mean **7–65** — the widest swing in the world.
+  Never _exactly_ zero, so `smoke.js` calls them "self-sustaining" in both regimes; `observe.js`
+  shows that's masking a tier that bleeds to a single survivor in most runs. At the cap they are
+  near-immortal (a founder survived all 20k ticks; ~60 hunter deaths vs ~120 births per run).
+- **plants (biomass):** min **0–24**, max **~1350–1600**, mean **185–681**, CV 49–148%.
+  In the grazer-haven regime the meadow is periodically grazed to **total collapse (0)** — a
+  state `smoke.js`'s 7200-tick window (min biomass ~5) never reaches.
+- **flow /1k ticks:** mote births **129–424**, starved **27–89**, eaten **23–353** (predation
+  is 12–88% of mote deaths, regime-dependent); hunter births ~6, deaths ~3.
+- **mote gene drift (founder→final), robust across all runs:** speed **0.95→1.5–2.45 ↑**,
+  size ~3.3→3.2 (flat), **sense 47→16–20 ↓ (collapses every run)**, **metabo 1.07→0.64–0.71 ↓
+  (sinks toward the 0.6 floor)**, hue drifts freely (neutral). No gene is _pinned_ at a clamp,
+  but speed (→2.45) and metabo (→0.64) both press close in the predator regime.
+- **hunter gene drift:** speed 1.5→1.7–2.5 ↑, sense 78→64–96 (regime-dependent), metabo
+  1.05→0.74–0.89 ↓.
+- **the sense contradiction (complaint):** mote sense collapses because nothing selects on it —
+  fear detection uses a _fixed_ `fearRange` (line 415, `thD2 = FEAR2`), not `m.g.sense`, so the
+  code's own claim (line 414: "predation selects for … sense") is **false**. Documented, not fixed.
+- **spatial:** motes spread fairly evenly over the torus (no strong edge-hugging); hunters track
+  the herd. The green-world effect is visible — predator-dense meadows stay lush with grazed
+  corridors, grazer-haven meadows are near-barren with only small refugia.
+- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and 20k every run, and
+  the predator tier slowly changes regime over the long horizon — motion the 7200-tick smoke
+  window is structurally too short to catch.
+- **live pixels:** ❗ still **unverified** — `observe.js` is headless too and does _not_ close
+  this gap. The whole visual layer (meadow, overlays, hunters, kill-flashes, both charts) has
+  now gone five runs without a human eyeball; per the note-to-self, that's the honest status of
+  the render layer, not a deferral.
 
-_previously:_ —
+_previously:_ never observed — Field Notes were prose quotes from Log entries; no gene average,
+population min/max/mean, or spatial figure had ever been read off a live run (grazing-peak 3.83,
+captured once, was the sole exception).
 
 ---
 
@@ -285,17 +312,30 @@ the backlog.**
   state, vegetation dynamics, history sample, `step()` (grazers, then hunters), `draw()`,
   trait chart, trophic-cascade chart, HUD, loop, controls. Ends with a Node-only
   `module.exports` hook (skipped in browsers) so the smoke test can drive the real internals.
-- `smoke.js` — dependency-free headless smoke test: a tiny DOM/canvas shim loads the
-  real `sim.js`, runs 7200 ticks (3 seasons), and asserts **20 checks** — no throw, the
-  world never empties, plants persist and fluctuate, genes drift, no NaN anywhere, the
-  grazing field records; and for the predator layer: hunters catch prey, breed, oscillate,
-  stay self-sustaining (rarely extinct), never nearly wipe the motes out (min ≥ 10) and are
-  never pinned at their cap; plus every render path — all three overlay modes, both charts,
-  hunters and kill-flashes — runs without throwing. Because it uses real randomness, tune by
-  running it across several seeds, not once. It is the parachute that makes Expeditions safe.
-  **It is not a microscope:** it answers "is anything broken?" with pass/fail and says nothing
-  about what the world is _doing_. Step 2 of the loop needs a reporting harness (`observe.js`)
-  that prints readings instead of assertions; the two share the DOM shim but not their purpose.
+- `shim.js` — the shared headless DOM/canvas shim (Node only). Installs `document`, the three
+  canvases (carrying real pixel dims), stub elements and a no-op `requestAnimationFrame` as
+  globals, so a bare `require('./sim.js')` boots the real world under Node. Both harnesses
+  `require('./shim.js')` before `sim.js`, so they drive byte-identical internals. (Extracted
+  2026-07-22 from `smoke.js`'s formerly-inline copy, so the two can't drift.)
+- `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
+  runs 7200 ticks (3 seasons), and asserts **20 checks** — no throw, the world never empties,
+  plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records; and
+  for the predator layer: hunters catch prey, breed, oscillate, stay self-sustaining (rarely
+  extinct), never nearly wipe the motes out (min ≥ 10) and are never pinned at their cap; plus
+  every render path — all three overlay modes, both charts, hunters and kill-flashes — runs
+  without throwing. Because it uses real randomness, tune by running it across several seeds.
+  It is the parachute that makes Expeditions safe. **It is not a microscope:** it answers "is
+  anything broken?" with pass/fail and says nothing about what the world is _doing_. (Caveat
+  learned 2026-07-22: its 7200-tick window and "never _exactly_ 0" thresholds can bless a world
+  that `observe.js`'s longer horizon shows to be sick — e.g. a predator tier down to one survivor.)
+- `observe.js` — the observatory (Node only): the reporting harness invariant 7 demands.
+  Loads `shim.js` + real `sim.js`, ticks **20,000** steps (`node observe.js [ticks]` to override),
+  and _prints_ the step-2 report rather than asserting: integrity (throws/NaN), per-tier
+  population min/max/mean/CV with a motion verdict, safety-net firings, per-1k flow rates,
+  an age histogram, per-gene drift for **both** species with edge-pin (⚑) flags, a boredom
+  check (tick 1k vs the end), and coarse 48×16 ASCII maps of vegetation density and creature
+  life. Exit 0 = a clean reading; exit 1 = the sim threw or NaN leaked. It shares `shim.js`
+  with `smoke.js` but not its purpose: numbers to judge, not a green checkmark.
 - Core objects:
   - **genome**: `{ speed, size, sense, metabo, hue }` — shared shape, different ranges per
     species (hunters are faster, keener-sensed, and hued in a hot red/orange band).
@@ -364,6 +404,26 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — the observatory opens (observe.js)
+
+**Observed:** invariant 7 demands the world stay _observable_, yet the only headless tool was
+`smoke.js`, which returns pass/fail and had never once printed a gene average — so for its whole
+life this world's genome, spatial structure and long-horizon behaviour were literally unmeasured.
+This run built **`observe.js`**: it boots the real sim through a now-shared `shim.js`, ticks
+20,000 steps, and prints numbers to _read_ — per-tier population min/max/mean, safety-net
+firings, per-1k flow rates, an age histogram, per-gene drift for _both_ species with
+edge-pin flags, a boredom check (tick 1k vs 20k), and coarse ASCII maps of the meadow and its
+life. On first light it found what 20 assertions structurally couldn't: the world is
+**bistable** — some seeds settle into a predator arms-race (hunters at their cap, motes racing
+the speed ceiling, a green meadow) and others into a predator near-collapse (hunters bled to a
+_single survivor_ while grazers overpopulate and graze the meadow to **zero biomass**), yet
+because hunters never hit _exactly_ zero the smoke test blesses both as "self-sustaining." It
+also caught mote **sense collapsing in every run** (47→~17), quietly refuting the code's own
+comment that predation "selects for sense" — mote fear uses a fixed `fearRange`, not the sense
+gene, so nothing selects on it. A visitor watching long enough now has _words_ for what they see,
+and the next run has evidence-backed targets instead of a past session's guesses. (Category:
+tooling — rotated off two ecology-heavy runs; does not consume the Expedition counter.)
 
 ### 2026-07-22 — [Expedition] the hunters arrive (a three-tier food chain)
 
@@ -446,13 +506,21 @@ Built the whole static page and the first working simulation from nothing: motes
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
 
-- **[Blocking] `observe.js` — the microscope.** Invariant 7 says the world must stay
-  observable and right now it isn't: `smoke.js` asserts, it doesn't report, so no run has ever
-  read an actual gene average off this world. Build a dependency-free reporting harness that
-  reuses the DOM shim, boots the real `sim.js`, ticks it, and prints the step-2 report —
-  per-tier population curves, reseed/extinction events, per-gene drift for **both** species
-  with edge-pinning flags, births/deaths/kills per 1k ticks, and an ASCII density grid.
-  **Until this exists it is every run's first job**, and it doesn't consume the Expedition.
+- **[Build] Wire mote fear to the `sense` gene** _(evidence-backed, high value)_. `observe.js`
+  shows mote `sense` collapsing in every run because nothing selects on it: fear detection uses a
+  fixed `fearRange` (sim.js line 415, `thD2 = FEAR2`), so a keen-sensed mote spots a hunter no
+  sooner than a blind one — directly contradicting the comment on line 414. Make the threat
+  radius scale with `m.g.sense` (e.g. `min(fearRange, k·sense)` or fear range = `sense`), fix the
+  now-false comment, and re-observe: sense should stop cratering and predation should gain a real
+  second selective axis. Likely a _prerequisite_ for Arc III having any divergence to detect.
+- **[Expedition] Name the regime, then let a collapse recover** _(ambitious — not sure I can land
+  a clean recovery mechanism)_. `observe.js` revealed the world coin-flips between a predator
+  arms-race and a grazer-haven at tick 0 and then stays there — an invisible RNG lottery. Turn it
+  into legible, moving dynamics: (1) detect and _display_ the current regime live ("regime:
+  grazer-haven — predators failing", from rolling predator density / kill-rate), and (2) add a
+  mechanism that lets a near-collapsed predator tier claw back — pack convergence on shared prey,
+  refuge terrain, or a hunger-driven boldness that raises strike rate when starving — so the two
+  regimes become _phases the world travels between_ rather than a fate sealed by the founding seed.
 - **[Expedition] Emergent species detector.** _(ambitious — not sure I can land it
   cleanly.)_ Cluster the live gene pool each sample (e.g. on speed×metabo×size) and,
   when two or more clusters stay separated for long enough, name them and show a "N

@@ -12,38 +12,11 @@
 
 "use strict";
 
-// ---- a tiny DOM + canvas shim ------------------------------------------------
-// Every 2d-context method is a no-op; measureText returns a zero width. Canvases
-// carry the real pixel dimensions sim.js reads. getElementById invents elements
-// on demand (buttons, HUD spans, the speed input) with harmless stubs.
-const noopCtx = new Proxy({}, {
-  get(_t, prop) {
-    if (prop === "measureText") return () => ({ width: 0 });
-    return () => {};
-  },
-  set() { return true; },
-});
-
-const canvases = {
-  world: { width: 960, height: 540 },
-  chart: { width: 960, height: 140 },
-  chart2: { width: 960, height: 120 },
-};
-for (const c of Object.values(canvases)) c.getContext = () => noopCtx;
-
-const stubEl = () => ({ addEventListener() {}, textContent: "", value: "2", style: {} });
-const cache = {};
-
-global.document = {
-  getElementById(id) {
-    if (canvases[id]) return canvases[id];
-    return cache[id] || (cache[id] = stubEl());
-  },
-  addEventListener() {},   // the sim attaches a keydown handler for the overlay
-};
-global.requestAnimationFrame = () => 0; // never auto-runs the render loop; we drive step()
-
-// ---- load the real simulation -----------------------------------------------
+// ---- load the shared headless shim, then the real simulation ----------------
+// shim.js installs document/canvas/rAF as globals (see it for the details); it must
+// be required before sim.js, which reaches for them at load time. observe.js loads
+// the exact same shim, so both harnesses drive byte-identical internals.
+require("./shim.js");
 const sim = require("./sim.js");
 const { world, step, seed, biomass, CONFIG, GRID,
         draw, drawChart, drawCountChart, updateHud } = sim;

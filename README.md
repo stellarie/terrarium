@@ -34,8 +34,8 @@ point where they're charging, and they stalk the nearest mote in range and strik
 close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a hunter must
 **digest** before it can strike again, which gives the herd a refuge, and predator
 **territoriality** keeps their numbers from running away. Grazers, in turn, **flee** — a
-mote that senses a nearby hunter sprints directly away (at an energy cost), so predation
-becomes a second pressure of selection, pushing grazers toward speed and sharper senses.
+mote that spots a nearby hunter sprints directly away (at an energy cost), so predation
+becomes a second pressure of selection, pushing grazers toward **speed**.
 
 Predators and prey settle into the classic **phase-lagged cycle**: hunters thrive and thin
 the herd, then starve back as prey grows scarce, letting the motes — and the meadow beneath
@@ -77,14 +77,31 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a tiny DOM/canvas shim and runs 20 assertions — the world never throws or empties,
-plants persist and evolve, and the predator–prey layer stays balanced (hunters hunt, breed
-and oscillate without pinning at their cap or wiping the motes out). Because it uses real
-randomness, run it a few times:
+behind a shared DOM/canvas shim (`shim.js`) and runs 20 assertions — the world never throws
+or empties, plants persist and evolve, and the predator–prey layer stays balanced (hunters
+hunt, breed and oscillate without pinning at their cap or wiping the motes out). Because it
+uses real randomness, run it a few times:
 
 ```bash
 node smoke.js
 ```
+
+## Observe it
+
+The smoke test only answers *"is anything broken?"* To ask *"what is the world actually
+**doing**?"*, run the **observatory** — it boots the same real `sim.js`, ticks it 20,000 steps,
+and prints readings you interpret rather than pass/fail: per-tier population min/max/mean,
+safety-net firings, births/deaths/kills per 1,000 ticks, an age histogram, per-gene drift for
+**both** species (with edge-of-range flags), a boredom check, and coarse ASCII maps of the
+meadow and its life.
+
+```bash
+node observe.js          # or: node observe.js 50000   (custom tick count)
+```
+
+It's how each build session *watches the world before touching it* — and on its first run it
+revealed the ecology is **bistable**, settling per-seed into either a predator arms-race or a
+predator near-collapse where grazers overgraze the meadow to nothing.
 
 ## Deploy
 
@@ -101,7 +118,9 @@ publishes the site).
 | `index.html` | page shell, canvas, HUD, the trait & trophic-cascade charts, controls |
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
-| `smoke.js` | headless smoke test — DOM/canvas shim + N real ticks + assertions |
+| `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
+| `smoke.js` | headless smoke test — 20 assertions over thousands of real ticks |
+| `observe.js` | the observatory — prints readings of what the world is doing |
 | `JOURNAL.md` | the project's memory and roadmap |
 
 ## How it's built
@@ -117,8 +136,10 @@ The journal is the project's only memory between sessions.
 vegetation field grown over a fertility map, following the food gradient by sense; **hunters**
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
-breath — balanced to be robust, so neither tier trivially wins. Live trait and trophic-cascade
-charts, a toggleable fertility/grazing overlay onto the hidden landscape, corpse fertilisation,
-and a committed 20-check headless smoke test. Next up (**Arc III — The Great Divergence**):
-make speciation visible as the grazers split into distinct morphs under predation. See the
-journal for the story.
+breath. Live trait and trophic-cascade charts, a toggleable fertility/grazing overlay onto the
+hidden landscape, corpse fertilisation, a 20-check headless smoke test, and now a headless
+**observatory** (`observe.js`) that reports the world's vital signs. Next up (**Arc III — The
+Great Divergence**): make speciation visible as the grazers split into distinct morphs — though
+the observatory's first readings show they currently *converge* rather than split, so the arc
+likely needs a new selective axis (wiring predator-fear to the sense gene) before there are
+morphs to detect. See the journal for the story.
