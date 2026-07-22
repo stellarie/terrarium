@@ -33,17 +33,23 @@ world seed. Plenty for many, many sessions.
 
 ## Current Arc
 
-**Arc I — The Living Ground.** Food stops falling from the sky and starts _growing_.
-Plants seed, spread to neighbouring cells, and get grazed down, so the field develops
-patches, corridors, and bare ground — and motes start evolving against **space**, not
-just against an abundance dial.
+**Arc I — The Living Ground — ✅ COMPLETE (2026-07-22).** Food stopped falling from the
+sky and started _growing_: a spatial vegetation field over a fertility map, spreading by
+diffusion, grazed down, carving the meadow into patches and bare corridors. All three
+finish conditions met — food is a self-propagating process rather than a spawn rate,
+grazing visibly shapes the landscape, and the pop/biomass chart now shows a
+bloom→overgraze→crash→recover limit cycle the old uniform rain never could.
 
-_Finished when:_ food is a spatial, self-propagating process rather than a spawn rate;
-grazing visibly shapes the landscape; and the pop/food chart shows dynamics that the
-old uniform rain couldn't produce.
+**Arc II — The Predation Era.** A second organism that eats _motes_, not plants: a
+three-tier ecology (vegetation → grazers → hunters) with the classic predator–prey cycle
+riding on top of the grazer–plant one. Give predators their own genome and senses, and
+let the two species coevolve — grazers pressured to flee, predators to catch.
 
-_Runs since the last Expedition:_ **4** — there has never been one, so **the next run
-must be an Expedition.**
+_Finished when:_ predators are a self-sustaining population that visibly hunts motes; the
+charts show a phase-lagged predator–prey oscillation; and neither species trivially wins
+(no instant extinction, no unchecked runaway).
+
+_Runs since the last Expedition:_ **0** — this run was the Expedition that closed Arc I.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -170,19 +176,40 @@ the backlog.**
 
 - `index.html` — page shell, canvas, HUD, two chart canvases (`#chart`, `#chart2`), controls.
 - `style.css` — dark terrarium styling. CSS variables at the top.
-- `sim.js` — everything: one IIFE. Sections are commented: config, helpers,
-  entities, world state, `step()`, `draw()`, trait chart, population/food chart, HUD,
-  loop, controls.
+- `sim.js` — everything: one IIFE. Sections are commented: config, helpers, the
+  vegetation grid, seasons, entities, world state, vegetation dynamics, history sample,
+  `step()`, `draw()`, trait chart, population/biomass chart, HUD, loop, controls. Ends
+  with a Node-only `module.exports` hook (skipped in browsers) so the smoke test can
+  drive the real internals.
+- `smoke.js` — dependency-free headless smoke test: a tiny DOM/canvas shim loads the
+  real `sim.js`, runs 7200 ticks, and asserts no throw, the world never empties, plants
+  persist and fluctuate, genes drift, no NaN, and the render path doesn't throw. Run it
+  with `node smoke.js`; it is the parachute that makes Expeditions safe.
 - Core objects:
   - **genome**: `{ speed, size, sense, metabo, hue }`.
   - **mote**: `{ x, y, dir, energy, age, g: genome }`.
-  - **food**: `{ x, y, e }`.
-- `CONFIG` at the top of `sim.js` holds all the balance knobs — tune there.
-- `world.history` is a rolling buffer of samples `{ speed, size, sense, pop, food }`
-  taken every `CONFIG.sampleEvery` ticks; both charts read from it.
-- **Seasons:** a sine on the tick scales the food-spawn rate between 0.4× and 1.6× over
-  a 2400-tick period, with a day/night background tint and a HUD `season ×N.NN ↑/↓`
-  readout. The multiplier is _not_ yet stored in `history`.
+- **The vegetation field** (this replaced discrete food pellets in Arc I):
+  - `GRID` — a toroidal 64×36 lattice of `vegCell`-px cells (15px; divides 960×540 exactly).
+  - `world.fert` — static per-cell carrying capacity in `[fertMin, 1]` from a few random
+    sine gratings: the permanent lush/barren character of the map.
+  - `world.veg` — per-cell plant density; `world.vegNext` is the diffusion scratch buffer.
+  - Each tick: `growVeg` (logistic toward fertility, season-scaled), `spreadVeg`
+    (double-buffered Laplacian diffusion into bare cells), `sowSeeds` (a few random
+    sprouts). Motes graze the cell underfoot; corpses fertilise the cell they die on.
+  - Steering is chemotaxis: a mote samples `veg` at eight bearings out to `sense` range
+    and heads for the greenest, with hysteresis so it lingers to graze.
+- `CONFIG` at the top of `sim.js` holds all the balance knobs. The economy was tuned
+  **empirically via `smoke.js`** into a limit cycle: `vegEnergy` (grazing income) sits
+  near metabolic cost so scarcity really bites, and `vegGrowth` is slow enough that food
+  is genuinely limiting — together they make the population bloom, overgraze, crash, and
+  recover instead of pinning at `maxPop`. (Lesson: `vegEnergy` 46 → 5 was the pivotal
+  change; anything much higher makes food effectively free and the world pins at the cap.)
+- `world.history` is a rolling buffer of samples `{ speed, size, sense, pop, food }` —
+  `food` is now **total plant biomass** — taken every `CONFIG.sampleEvery` ticks; both
+  charts read from it.
+- **Seasons:** a sine on the tick scales plant *growth & seeding* (no longer a spawn
+  rate) by 0.4×–1.6× over a 2400-tick period, with a day/night background tint and a HUD
+  `season ×N.NN ↑/↓` readout.
 - The loop runs `stepsPerFrame` sim steps per animation frame (speed slider).
 
 This section describes the world as it currently is, not as it must stay. Rewrite it
@@ -191,6 +218,26 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — [Expedition] the ground comes alive (plants, not rain)
+
+Tore out the uniform food rain and replaced it with a living **vegetation field**: a
+64×36 grid of plants that grow logistically toward a fixed, patchy fertility map, spread
+by diffusion into bare ground, get grazed down by motes, and are re-fertilised by
+corpses — so a visitor now watches a green meadow instead of scattered specks, with the
+motes carving grazed corridors and bare barrens as they follow the vegetation gradient
+by `sense`. Because food is finally _spatial_ and finite, the economy now runs a real
+consumer–resource **limit cycle** — bloom → overgraze to bare earth → starvation crash →
+regrowth → bloom — which the pop/biomass chart shows swinging where the old world sat
+flat; this completes **Arc I**. The change was landed safely by first building the
+long-promised **headless smoke test** (`smoke.js`) and using it to sweep the balance
+knobs — the pivotal find was dropping `vegEnergy` from 46 to 5 so grazing income sits
+near metabolic cost, otherwise motes bred straight to the population cap and pinned
+there. Verified with `node --check` on both files and `smoke.js` (7200 ticks, all ten
+checks green, boom-bust confirmed, render path exercised); live pixels still want an
+interactive eyeball since this environment couldn't composite the file:// preview. HUD,
+charts, the seed button and page copy were relabelled from "food" to "plants", and the
+version badge is now **v1**.
 
 ### 2026-07-22 — the world breathes now (seasons)
 
@@ -215,19 +262,20 @@ Built the whole static page and the first working simulation from nothing: motes
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
 
-- **[Expedition] Plants, not rain.** Food grows from a smaller number of "seeds" that
-  spread to nearby cells, so grazing pressure and spatial patterns emerge. _This is the
-  centrepiece of Arc I._
-- **[Expedition] Predators.** A second species that eats motes instead of food.
-  Predator/prey cycles are the classic emergent payoff.
+- **[Expedition] Predators.** A second species that eats motes instead of plants.
+  Predator/prey cycles are the classic emergent payoff. _This is the centrepiece of
+  Arc II — the current arc._
+- **[Expedition] Emergent species detector.** _(ambitious — not sure I can land it
+  cleanly.)_ Cluster the live gene pool each sample (e.g. on speed×metabo×size) and,
+  when two or more clusters stay separated for long enough, name them and show a "N
+  species coexisting" readout, maybe tinting motes by morph. Turn "the population drifts"
+  into "the population _split_" — make speciation visible instead of merely implied.
+- **[Build] Fertility & grazing overlay.** A key that toggles a translucent view of the
+  hidden `fert` map (so you can see _why_ lush patches sit where they do) and/or a fading
+  "recently grazed" heat tint, making the spatial cause of the boom-and-bust directly
+  visible instead of inferred.
 - **[Expedition] Vision-based steering.** Replace "nearest food" with a couple of
   forward-facing sensors, edging toward tiny neural brains.
-- **[Build] Balance pass.** Long-run measurement (12k steps, 2026-07-22) shows the
-  economy self-regulates: population climbs to a food-limited plateau around ~300–360
-  while food stays grazed down to ~10–20 — bounded, not a runaway (the earlier 600-tick
-  "overpopulates and starves" read was just too short a window). It's _stable but flat_,
-  so tune `CONFIG` (food rate, metabolism, repro cost) toward livelier dynamics — real
-  swings and visible die-offs — using the pop/food chart to watch.
 - **[Build] Lineage.** Give each mote an id and parent id; add a simple family-tree /
   oldest-lineage readout.
 - **[Build] Save / share a world.** Serialize the seed + config to a URL hash.
@@ -238,8 +286,6 @@ freely. Add two per run, at least one ambitious.
   mean metabolism/speed lag the season (thrifty grazers ought to win lean winters) — a
   small phase-shift or correlation readout that makes "selection tracks the cycle"
   measurable, not just visible.
-- **[Build] Commit the headless harness.** Make the DOM/canvas shim a checked-in smoke
-  test so every future run can verify boldly instead of carefully.
 - **[Build] Season band on the pop/food chart.** Store each sample's food multiplier in
   `history` and tint the count chart's columns by it, so a boom or bust can be read
   directly against the seasonal cause driving it instead of inferred.
