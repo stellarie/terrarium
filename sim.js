@@ -59,6 +59,8 @@
     fertMin: 0.28,           // poorest ground's carrying capacity (richest is 1.0)
     corpseVeg: 0.6,          // vegetation a dead mote returns to the cell it fell on
     startVegFrac: 0.7,       // initial vegetation as a fraction of each cell's fertility
+    grazeDecay: 0.99,        // grazing-pressure heat fades ~1%/tick so the overlay shows
+                             // *recent* eating; view-only, nothing in the economy reads it
   };
 
   // Traits plotted on the live chart, each normalized to its full genetic range
@@ -185,11 +187,13 @@
     veg: new Float64Array(GRID.n),      // plant density per cell
     vegNext: new Float64Array(GRID.n),  // scratch buffer for the diffusion pass
     fert: new Float64Array(GRID.n),     // static carrying capacity per cell
+    graze: new Float64Array(GRID.n),    // decaying record of recent grazing (view only)
     tick: 0,
     born: 0,
     died: 0,
     paused: false,
     stepsPerFrame: 2,
+    overlay: 0,    // hidden-landscape lens: 0 off · 1 fertility map · 2 grazing pressure
     history: [],   // rolling samples of trait averages + counts
   };
 
@@ -197,6 +201,7 @@
     world.fert = buildFertility();
     world.veg = new Float64Array(GRID.n);
     world.vegNext = new Float64Array(GRID.n);
+    world.graze = new Float64Array(GRID.n);
     for (let i = 0; i < GRID.n; i++) world.veg[i] = world.fert[i] * CONFIG.startVegFrac;
     world.motes = [];
     world.tick = 0;
@@ -262,6 +267,14 @@
     }
   }
 
+  // Grazing pressure is a view-only leaky heat field: it fades a little each tick
+  // so the overlay shows *recent* eating. Motes add to it when they graze; nothing
+  // in the economy ever reads it back, so it can't perturb the world.
+  function decayGraze() {
+    const gz = world.graze, d = CONFIG.grazeDecay;
+    for (let i = 0; i < gz.length; i++) gz[i] *= d;
+  }
+
   // ---- history sample -----------------------------------------------------
   // One rolling sample records both the gene-pool shape (for the trait chart)
   // and the raw population/biomass counts (for the boom-and-bust chart).
@@ -292,6 +305,7 @@
     growVeg();
     spreadVeg();
     sowSeeds();
+    decayGraze();
 
     const newborns = [];
     for (let i = world.motes.length - 1; i >= 0; i--) {
@@ -327,6 +341,7 @@
         const bite = avail < CONFIG.vegGrazeRate ? avail : CONFIG.vegGrazeRate;
         world.veg[ci] = avail - bite;
         m.energy += bite * CONFIG.vegEnergy;
+        world.graze[ci] += bite;   // leave a fading mark for the grazing overlay
       }
 
       // reproduce
@@ -380,6 +395,9 @@
       }
     }
 
+    // an optional lens on the hidden landscape, painted over the meadow
+    drawOverlay();
+
     // motes
     for (const m of world.motes) {
       const glow = clamp(m.energy / CONFIG.reproEnergy, 0.25, 1);
@@ -394,6 +412,84 @@
       ctx.lineTo(m.x + Math.cos(m.dir) * (m.g.size + 3), m.y + Math.sin(m.dir) * (m.g.size + 3));
       ctx.stroke();
     }
+  }
+
+  // ---- world overlays -----------------------------------------------------
+  // View-only lenses on the hidden landscape, drawn translucently over the meadow
+  // and under the motes. Fertility exposes the permanent carrying-capacity bedrock
+  // (why lush patches sit where they do); grazing shows where motes have eaten
+  // lately. Neither touches the simulation — they only read state and paint.
+  const fertColor = (t) => `rgb(${40 + 215 * t | 0},${60 + 140 * t | 0},${120 - 55 * t | 0})`;
+  const grazeColor = (q) => `rgb(255,${210 - 150 * q | 0},${70 - 30 * q | 0})`;
+
+  function drawOverlay() {
+    const mode = world.overlay;
+    if (!mode) return;
+    const cell = CONFIG.vegCell, cols = GRID.cols, rows = GRID.rows;
+
+    if (mode === 1) {
+      const fert = world.fert, lo = CONFIG.fertMin, span = (1 - lo) || 1;
+      ctx.globalAlpha = 0.42;
+      for (let y = 0; y < rows; y++) {
+        const row = y * cols;
+        for (let x = 0; x < cols; x++) {
+          const t = clamp((fert[row + x] - lo) / span, 0, 1);
+          ctx.fillStyle = fertColor(t);
+          ctx.fillRect(x * cell, y * cell, cell, cell);
+        }
+      }
+      ctx.globalAlpha = 1;
+      overlayKey("fertility — the permanent lush/barren bedrock", "barren", "rich", fertColor);
+    } else if (mode === 2) {
+      const gz = world.graze;
+      let gmax = 0;
+      for (let i = 0; i < gz.length; i++) if (gz[i] > gmax) gmax = gz[i];
+      if (gmax >= 0.05) {
+        const inv = 1 / gmax;
+        for (let y = 0; y < rows; y++) {
+          const row = y * cols;
+          for (let x = 0; x < cols; x++) {
+            const q = gz[row + x] * inv;
+            if (q < 0.04) continue;
+            ctx.globalAlpha = 0.12 + 0.55 * q;
+            ctx.fillStyle = grazeColor(q);
+            ctx.fillRect(x * cell, y * cell, cell, cell);
+          }
+        }
+        ctx.globalAlpha = 1;
+      }
+      const caption = gmax >= 0.05
+        ? "grazing pressure — where motes have eaten lately"
+        : "grazing pressure — nobody's grazing yet";
+      overlayKey(caption, "cool", "hot", grazeColor);
+    }
+  }
+
+  // A caption plus a manual gradient key (thin strips, no canvas-gradient API so it
+  // stays trivially headless-safe) tucked into the world's top-left corner, so the
+  // active overlay explains itself.
+  function overlayKey(caption, loLabel, hiLabel, colorAt) {
+    ctx.font = "12px ui-sans-serif, system-ui, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    const cw = ctx.measureText(caption).width + 16;
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(10, 10, cw, 22);
+    ctx.fillStyle = "#e8eef6";
+    ctx.fillText(caption, 18, 22);
+
+    const bx = 18, by = 44, bw = 140, bh = 8, strips = 56, sw = bw / strips;
+    for (let i = 0; i < strips; i++) {
+      const t = i / (strips - 1);
+      ctx.fillStyle = colorAt(t);
+      ctx.fillRect(bx + t * (bw - sw), by, sw + 1, bh);
+    }
+    ctx.font = "11px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillStyle = "#aebccb";
+    ctx.fillText(loLabel, bx, by + bh + 9);
+    ctx.textAlign = "right";
+    ctx.fillText(hiLabel, bx + bw, by + bh + 9);
+    ctx.textAlign = "left";
   }
 
   // ---- trait chart --------------------------------------------------------
@@ -569,6 +665,20 @@
   document.getElementById("speed").addEventListener("input", (e) => {
     world.stepsPerFrame = parseInt(e.target.value, 10);
   });
+
+  // cycle the hidden-landscape overlay: off → fertility → grazing → off
+  const overlayNames = ["off", "fertility", "grazing"];
+  const btnOverlay = document.getElementById("btn-overlay");
+  function cycleOverlay() {
+    world.overlay = (world.overlay + 1) % overlayNames.length;
+    if (btnOverlay) btnOverlay.textContent = "overlay: " + overlayNames[world.overlay];
+  }
+  if (btnOverlay) btnOverlay.addEventListener("click", cycleOverlay);
+  if (typeof document.addEventListener === "function") {
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "o" || e.key === "O") cycleOverlay();
+    });
+  }
 
   // ---- go -----------------------------------------------------------------
   seed();

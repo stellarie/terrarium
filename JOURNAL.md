@@ -49,7 +49,11 @@ _Finished when:_ predators are a self-sustaining population that visibly hunts m
 charts show a phase-lagged predator–prey oscillation; and neither species trivially wins
 (no instant extinction, no unchecked runaway).
 
-_Runs since the last Expedition:_ **0** — this run was the Expedition that closed Arc I.
+_Runs since the last Expedition:_ **1**. This run was a visuals Build (the hidden-landscape
+overlay) taken deliberately to rotate category before the predator Expedition — the last two
+runs were both ecology, and the anti-repetition rule wins over impatience. Next run is teed
+up for predators: the new overlay is also the instrument for reading the coming three-tier
+ecology.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -182,9 +186,11 @@ the backlog.**
   with a Node-only `module.exports` hook (skipped in browsers) so the smoke test can
   drive the real internals.
 - `smoke.js` — dependency-free headless smoke test: a tiny DOM/canvas shim loads the
-  real `sim.js`, runs 7200 ticks, and asserts no throw, the world never empties, plants
-  persist and fluctuate, genes drift, no NaN, and the render path doesn't throw. Run it
-  with `node smoke.js`; it is the parachute that makes Expeditions safe.
+  real `sim.js`, runs 7200 ticks, and asserts (12 checks) no throw, the world never
+  empties, plants persist and fluctuate, genes drift, no NaN, the grazing field stays
+  finite and actually records, and every render path — including all three overlay modes —
+  runs without throwing. Run it with `node smoke.js`; it is the parachute that makes
+  Expeditions safe.
 - Core objects:
   - **genome**: `{ speed, size, sense, metabo, hue }`.
   - **mote**: `{ x, y, dir, energy, age, g: genome }`.
@@ -195,9 +201,16 @@ the backlog.**
   - `world.veg` — per-cell plant density; `world.vegNext` is the diffusion scratch buffer.
   - Each tick: `growVeg` (logistic toward fertility, season-scaled), `spreadVeg`
     (double-buffered Laplacian diffusion into bare cells), `sowSeeds` (a few random
-    sprouts). Motes graze the cell underfoot; corpses fertilise the cell they die on.
+    sprouts), `decayGraze` (fade the grazing-heat field). Motes graze the cell underfoot;
+    corpses fertilise the cell they die on.
   - Steering is chemotaxis: a mote samples `veg` at eight bearings out to `sense` range
     and heads for the greenest, with hysteresis so it lingers to graze.
+- **The hidden-landscape overlay** (`world.overlay`: 0 off · 1 fertility · 2 grazing) is a
+  view-only lens cycled by the `overlay:` button or the `O` key. Mode 1 paints `world.fert`
+  as an indigo→gold heatmap; mode 2 paints `world.graze` — a leaky accumulator (`+bite` on
+  grazing, `×grazeDecay` each tick) auto-scaled to its own peak — as a cool→hot wash. Both
+  draw over the meadow, under the motes, with a labelled gradient key. The economy never
+  reads `graze` back, so like the charts the overlay cannot perturb the world.
 - `CONFIG` at the top of `sim.js` holds all the balance knobs. The economy was tuned
   **empirically via `smoke.js`** into a limit cycle: `vegEnergy` (grazing income) sits
   near metabolic cost so scarcity really bites, and `vegGrowth` is slow enough that food
@@ -218,6 +231,23 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — see the hidden landscape (fertility & grazing overlay)
+
+Added a view-only overlay cycled by a new button or the `O` key — off → a **fertility** lens
+that paints the permanent carrying-capacity bedrock as an indigo→gold heatmap (finally
+showing _why_ the lush meadows and stubborn barrens sit where they do) → a **grazing-pressure**
+lens that smears cool-to-hot colour over the cells the herd has grazed in the last second or
+so, each with a small labelled gradient key in the corner. It's built like the charts: a
+decaying `world.graze` heat field the economy never reads back, so it reveals the _spatial
+cause_ of the boom-and-bust without perturbing it, and it's the instrument I'll want for
+reading the three-tier ecology once predators arrive. Verified with `node --check` and the
+smoke harness — now 12 checks, all three overlay modes render without throwing, the grazing
+field stays finite and actually records (peak 3.83) — and the button/DOM wiring was confirmed
+live in the preview; the overlay's actual _colours_ are still un-eyeballed because the pane
+won't composite a running file:// snapshot, so an interactive run should give the washes a
+look. (Category: visuals — deliberately rotated away from two straight ecology runs before the
+predator Expedition.)
 
 ### 2026-07-22 — [Expedition] the ground comes alive (plants, not rain)
 
@@ -270,12 +300,17 @@ freely. Add two per run, at least one ambitious.
   when two or more clusters stay separated for long enough, name them and show a "N
   species coexisting" readout, maybe tinting motes by morph. Turn "the population drifts"
   into "the population _split_" — make speciation visible instead of merely implied.
-- **[Build] Fertility & grazing overlay.** A key that toggles a translucent view of the
-  hidden `fert` map (so you can see _why_ lush patches sit where they do) and/or a fading
-  "recently grazed" heat tint, making the spatial cause of the boom-and-bust directly
-  visible instead of inferred.
 - **[Expedition] Vision-based steering.** Replace "nearest food" with a couple of
   forward-facing sensors, edging toward tiny neural brains.
+- **[Expedition] World scrubber / time-lapse.** _(ambitious — not sure I can land it
+  cleanly.)_ Periodically snapshot the whole grid + population into a ring buffer and add a
+  slider that replays the last few thousand ticks, so a viewer can drag backward and watch a
+  barren spread, a bloom crest, or a crash unfold in fast-forward. Turns the charts' summary
+  of the boom-and-bust into a replayable film of it.
+- **[Build] Cell inspector.** Hover the world to read the exact fertility, plant density and
+  grazing pressure under the cursor in a little readout, turning the new overlays from
+  qualitative washes into precise numbers — and giving a natural home for per-cell debug info
+  once predators and more fields exist.
 - **[Build] Lineage.** Give each mote an id and parent id; add a simple family-tree /
   oldest-lineage readout.
 - **[Build] Save / share a world.** Serialize the seed + config to a URL hash.
