@@ -98,11 +98,34 @@ speciation question directly, but it makes the predation pressure the arc depend
 glance — you can now see whether a given world even *has* persistent predators before asking whether
 they drove a split.
 
-_Runs since the last Expedition:_ **4** (sense Build, detector Build, boldness Build, regime Build).
-The Arc II Expedition remains the last one; Expedition becomes **mandatory next run** (the counter hits
-5), and the pivoted Arc III centrepiece — engineer genuine disruptive selection under predation — is
-the obvious candidate now that persistent-predator worlds are both common (boldness) and legible (this
-run).
+_Update (2026-07-22, the concealment Expedition — the arc's centrepiece attempt):_ Built the cover
+mechanic the pivoted arc called for — a **second** way to survive a hunter. A **small, slow** mote
+standing on **dense vegetation** is hard for a hunter to see or to grab: it *hides in the grass* (and
+freezes rather than bolting), opening a **hider** lifestyle beside the existing fast-keen **fleer**.
+Crucially, **speed breaks cover** — a moving mote is conspicuous — so the two tactics genuinely exclude
+each other; you cannot be both. Measured by a new with/without-hunters experiment (`observe.js
+--split-test`, 6×18k): predation drives the hider↔fleer axis **hard** — mean grazer speed **1.89 with
+hunters vs 0.88 without**, hideability **0.26 vs 0.78** — and the fast fleer morph is **predation-only**
+(arms-race seeds evolve 94–98% fleers; remove the hunters and the whole herd relaxes to slow, cheap
+hiders). Hunters **coevolved keener eyes** in response (sense **76→94 ↑**, where it used to drift down).
+BUT the arc's specific premise — *predation-driven within-world coexistence* — stays **refuted**: 0/6
+seeds split with hunters, and the world's own **bistability keeps picking one lifestyle per world**
+(arms-race→fleers, grazer-haven→hiders) rather than sustaining two at once. So the divergence is real,
+predation-driven, and now *visible* (every mote is ringed by its lifestyle) — but it is a **between-world**
+divergence set by the regime, not a within-world speciation. Landing true coexistence means straddling
+the bistability, which is the next Expedition, not this one.
+
+_Finish-condition status after this run:_ (1) split into 2+ stable clusters — **not met** (one cloud per
+world; but its *position* on the hider–fleer axis is predation-set). (2) world labels/tints the split —
+**met, and better than asked**: motes are tinted by *lifestyle* continuously, so the divergence shows in
+every world, not only on a rare cluster split. (3) driven by predation, collapses when hunters vanish —
+**met for the lifestyle axis**: predation sets the strategy and removing it collapses the herd to one
+(hiders), proven headlessly. The arc is substantially advanced but not complete; its stubborn core is the
+bistability, not a missing mechanic.
+
+_Runs since the last Expedition:_ **0** — this run *was* the Expedition (concealment). The next runs
+return to Build/Repair tiers; the standing candidate for the following Expedition is "straddle the
+bistability" (below in the backlog) — the only path left to genuine within-world coexistence.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -114,45 +137,46 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — one `observe.js` 20,000-tick pass + three 12k regime-census runs**
-(post the regime-readout Build). The bistability persists and is now **named live**: across the four
-fresh runs, three landed in **arms-race** (hunters mean **62–75**) and one in **grazer-haven** (mean
-**5.0**) — the ~1-in-4 here is a small sample, not a re-measurement of the ~40% collapse rate.
+**Last observed: 2026-07-22 — one `observe.js` 20,000-tick pass + one `--split-test` 6×18k sweep + 6
+`smoke.js` seeds** (post the concealment Expedition). Concealment changed *what the genes do* under
+predation but left the world's health intact: no throw, no NaN, safety nets silent, hunters
+self-sustaining, `smoke.js` green at **34 checks** across all 6 seeds.
 
-- **THE BISTABILITY (headline finding, persists — now legible).** Still two RNG-chosen attractors:
-  _arms-race_ (hunters toward the **75 cap**, motes race the speed ceiling, meadow lush) vs.
-  _grazer-haven_ (hunters bleed to ~5, grazers overpopulate & starve, meadow grazed toward **0
-  biomass**). NEW this run: the world **reports which one it is in**, live — the regime readout spent
-  **85–92%** of ticks in arms-race on rich seeds (1 phase-flip each, as the founding boom settles) and
-  **98%** in grazer-haven on the collapse seed (0 flips). Root cause of collapse unchanged: a
-  **prey-quality death spiral** (few hunters → overpopulated motes → bare meadow → energy-poor prey →
-  unprofitable kills), not a speed problem.
-- **motes:** min **31–38** (the 0→6 reseed net _never_ fired), max **600**, mean **384–448**,
-  CV ~34–43% — always oscillates.
-- **hunters:** collapse seed min **5** / max **17** / mean **5–11**; rich seeds climb to the **75 cap**
-  (mean 42–75). Never _exactly_ zero; `smoke.js` blesses both.
-- **plants (biomass):** min **0–7** / max **~1390–1411** / mean **240** (collapse) up to **454** (rich),
-  CV ~89–139%. Still grazed to near-zero in the grazer-haven regime.
-- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1) in every fresh run. Arms-race: `speed`
-  piled at the HIGH edge (~2.37, BC ~0.59 skew — pre-existing, no valley), `size` low (~2.26), `sense`
-  a broad hump (~47, **sd ~12**), `metabo` low (~0.69). No morph split seen this batch.
-- **mote gene drift (founder→final):** speed **1.0→2.4 ↑**, size **3.4→2.3 ↓**, **sense regime-coupled
-  ~47 (rich)**, metabo **1.0→0.69 ↓** (near the 0.6 floor but **not clamp-pinned** — [6] flags none).
-  Hunter drift: speed 1.7→2.1 ↑, size 4.8→5.6 ↑, sense 74→61 ↓, metabo 1.0→0.84 ↓.
-- **flow /1k ticks (rich seed):** predation is the dominant mote death — ~**80% predation / 20%
-  starvation** in an arms-race seed (was ~21% predation in the last observed *collapse* seed; the split
-  is regime-coupled, so read it alongside the regime label, not on its own).
-- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and the end every run; the 20k
-  pass caught a live predator recovery (hunters **18→75**, biomass 245→659) between the two windows.
-- **live pixels:** ❗ **still cannot be eyeballed in an autonomous run** — the browser pane won't
-  composite without a human present. The new regime HUD chip and transition banner are
-  headless-correct (they render without throwing under the shim) but their actual colours want an
-  interactive eyeball, as does last run's pale/white-hot hunter tint.
+- **THE BISTABILITY (still the headline, and now the arc's obstacle).** Two RNG-chosen attractors
+  persist: _arms-race_ (hunters at the **75 cap**, motes race the speed ceiling) vs. _grazer-haven_
+  (hunters bleed to ~1–8, grazers overpopulate). NEW meaning this run: each attractor now selects a
+  **different grazer lifestyle** — arms-race → fast **fleers**, grazer-haven → slow **hiders** — so the
+  bistability is exactly what blocks within-world coexistence. Collapse cause unchanged (prey-quality
+  death spiral).
+- **THE HIDER↔FLEER AXIS (new, and strongly predation-driven).** `--split-test` 6×18k: **WITH hunters**
+  mean grazer speed **1.89** (range 1.55–2.38), hideability **0.26**; arms-race seeds go 94–98% fleer.
+  **WITHOUT hunters** speed **0.88** (0.64–1.09), hideability **0.78**, 80–95% hider, ~0% fleer. So the
+  fleer lifestyle is **predation-only**; remove predators and the herd collapses to slow cheap hiders.
+- **motes:** min **34**, max **568**, mean **348**, CV ~38% — oscillates (the 0→6 net never fired).
+- **hunters:** rich seed climbs to the **75 cap** (mean **49**, CV ~53%); across the sweep, final
+  hunters ranged 1–75. Never _exactly_ zero this run; `smoke.js` still blesses it.
+- **plants (biomass):** min **2**, max **1270**, mean **400**, CV ~86% — still grazed to near-zero in
+  grazer-haven regions.
+- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1) with **and** without hunters — 0/6
+  within-world 2-morph splits either way. Predation *shifts* the cloud (fleer end), it does not *split*
+  it. (The crowding size-split of earlier runs is transient; it had resolved by 18k here.)
+- **mote gene drift (founder→final, arms-race seed):** speed **1.0→2.33 ↑**, size **3.4→2.99 ↓**, sense
+  **46→42.8 ↓**, metabo **1.0→0.69 ↓** (not clamp-pinned — [6] flags none).
+- **hunter gene drift — the coevolution:** speed **1.4→2.0 ↑**, size **4.6→5.2 ↑**, **sense 76→94 ↑**
+  (REVERSED from the pre-concealment ↓: predators now evolve keener eyes to find hidden prey), metabo →0.69.
+- **flow /1k ticks (arms-race seed):** **85% predation / 15% starvation** — predation still dominates
+  mote death; regime-coupled, so read it beside the regime label.
+- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and the end; the 20k pass caught
+  a predator recovery (hunters 13→75, biomass 235→639).
+- **live pixels:** ❗ **still un-eyeballed — attempted again this run and it failed** (the pane returned
+  "not compositing frames" without a human present). The new lifestyle rings, the freeze behaviour, and
+  every prior visual are headless-correct (smoke's render check passes with the rings) but their actual
+  colours want an interactive eyeball. Seven+ runs deferred now — stating it plainly per the note to self.
 
-_previously:_ (2026-07-22, hunger-boldness Build, 30-seed A/B) THE BISTABILITY, collapse ~40% of seeds
-(down from ~67%); motes min ~37 / max ~579 / mean ~369; hunters collapse mean 7 / rich to 75 cap,
-median final ≈31; plants min 0 / mean 190–780; grazers one broad cloud (k=1), size-split k=2 ~1 in 5
-collapse seeds — **crowding, not predation**; no gene clamp-pinned; collapse = prey-quality death spiral.
+_previously:_ (2026-07-22, regime-readout Build) THE BISTABILITY named live; motes min 31–38 / max 600 /
+mean 384–448; hunters collapse mean 5–11, rich to 75 cap; plants min 0–7 / mean 240–454; grazers one broad
+cloud (k=1); mote sense regime-coupled ~47; hunter sense 74→61 ↓ (pre-concealment); ~80% predation in
+arms-race; no gene clamp-pinned; collapse = prey-quality death spiral.
 
 ---
 
@@ -333,9 +357,10 @@ the backlog.**
   (`#chart`, `#chart2`), controls.
 - `style.css` — dark terrarium styling. CSS variables at the top; `.stat.wide` widens the regime chip.
 - `sim.js` — everything: one IIFE. Sections are commented: config, helpers (incl. toroidal
-  distance/bearing), the vegetation grid, seasons, entities (motes _and_ hunters), world
-  state, vegetation dynamics, **morph detection**, **regime detection**, history sample, `step()`
-  (grazers, then hunters), `draw()`, trait chart, trophic-cascade chart, HUD, loop, controls. Ends
+  distance/bearing and **`hideability`/`concealment`**), the vegetation grid, seasons, entities
+  (motes _and_ hunters), world state, vegetation dynamics, **morph detection**, **regime detection**,
+  history sample, `step()` (grazers with the freeze/flee choice, then hunters with cover-aware sight),
+  `draw()` (motes ringed by lifestyle), trait chart, trophic-cascade chart, HUD, loop, controls. Ends
   with a Node-only `module.exports` hook (skipped in browsers) so both harnesses drive the real internals.
 - `shim.js` — the shared headless DOM/canvas shim (Node only). Installs `document`, the three
   canvases (carrying real pixel dims), stub elements and a no-op `requestAnimationFrame` as
@@ -343,11 +368,13 @@ the backlog.**
   `require('./shim.js')` before `sim.js`, so they drive byte-identical internals. (Extracted
   2026-07-22 from `smoke.js`'s formerly-inline copy, so the two can't drift.)
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **30 checks** — no throw, the world never empties,
+  runs 7200 ticks (3 seasons), and asserts **34 checks** — no throw, the world never empties,
   plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records; and
   for the predator layer: hunters catch prey, breed, oscillate, stay self-sustaining (rarely
   extinct), never nearly wipe the motes out (min ≥ 10) and are never pinned at their cap; the
-  morph detector is honest on synthetic pools; **the regime readout names each attractor
+  morph detector is honest on synthetic pools; **the concealment mechanic is monotone — a small,
+  slow mote outhides a middling one, which outhides a big fast fleer, all in cover, and nobody
+  hides on bare ground** (4 deterministic checks); **the regime readout names each attractor
   correctly on synthetic history windows (grazer-haven / arms-race / recovering / declining) and
   its Schmitt-trigger hysteresis holds the prior state in the ambiguous band**; plus every render
   path — all three overlay modes, both charts, hunters and kill-flashes — runs without throwing.
@@ -368,7 +395,12 @@ the backlog.**
   hunter count behind that call, the fraction of ticks spent in each state, and how many times the
   world flipped between attractors (so the bistability is _counted_, not eyeballed). Exit 0 = a clean
   reading; exit 1 = the sim threw or NaN leaked. Shares `shim.js` with `smoke.js` but not its
-  purpose: numbers to judge, not a green checkmark.
+  purpose: numbers to judge, not a green checkmark. **`node observe.js --split-test [seeds] [ticks]`**
+  runs a different experiment entirely (Arc III): N worlds **with** hunters vs N with hunters removed
+  (none seeded, `hunterReseedPrey`→∞), printing each world's evolved grazer strategy — mean genes and
+  the hider/fleer tactic mix — plus a verdict on whether predation drives the divergence. Unpaired
+  (no seeded RNG yet), so it's read as a spread across seeds; it is how the predation→lifestyle claim
+  is proven headlessly.
 - **The morph detector** (`classifyMorphs`, exported) — the arc's instrument. It normalizes the
   live grazers' `speed·size·sense·metabo` into [0,1]⁴, runs a deterministic (RNG-free) Lloyd
   2-means, then gates the split on a genuine **valley**: it projects onto the axis joining the
@@ -427,10 +459,29 @@ the backlog.**
     and speed. (Verified 2026-07-22: sense holds ~45 in predator-rich seeds and sinks only when
     the hunters themselves collapse; before this, a fixed `fearRange` meant sense was inert and
     cratered in every run.)
-  - **The hunt:** each hunter always stalks the nearest mote in sense range (steering toward
-    it), but can only **strike** when its digestion timer `cool` is 0. A catch (within
-    `size+size+huntRange`) absorbs a share of the prey's energy, kills the mote (`world.eaten++`),
-    drops a fading **kill-flash** into `world.sparks`, and resets `cool = huntCooldown`.
+  - **The hunt:** each hunter always stalks the nearest **visible** mote in sense range (steering
+    toward it), but can only **strike** when its digestion timer `cool` is 0. A catch (within
+    `size+size+huntRange`, shrunk by cover — see below) absorbs a share of the prey's energy, kills
+    the mote (`world.eaten++`), drops a fading **kill-flash** into `world.sparks`, resets
+    `cool = huntCooldown`.
+  - **Concealment / the two lifestyles** (Arc III — added 2026-07-22) — the second way to survive a
+    hunter, and the axis predation now visibly splits the herd along. `hideability(g)` is a genome's
+    intrinsic capacity to hide, `small × slow` in `[0,1]` (small body = inconspicuous; slow gene =
+    able to hold still — **speed breaks cover**, which is the trade-off that forces a mote to *choose*
+    fleeing or hiding, not both). `concealment(m)` multiplies that by the veg density underfoot
+    (`coverStrength` max, zero on bare ground), cached each tick as `m._cover`. The hunt reads it:
+    a concealed mote shrinks the hunter's effective **sight** range toward it (`sense·(1−c)`) and its
+    **strike** radius (`×(1−c·coverStrikeShield)`), so a small, slow mote in dense grass is invisible
+    until a hunter is nearly on top of it. The grazer reads it too: a threatened mote with
+    `concealment ≥ coverFreeze` **freezes** (`coverFreezeSpeed`× speed, cheap, keeps cover) instead
+    of the panic sprint. `draw()` rings every mote by `hideability` — leaf-green hider → amber fleer,
+    fading toward the ambiguous middle — so the lifestyle is visible in every world. **Measured
+    effect** (`--split-test`, 6×18k): predation drives the axis hard (speed 1.89 with hunters vs 0.88
+    without; hideability 0.26 vs 0.78), the fleer is predation-only, and hunters coevolved keener eyes
+    to counter hiders (sense 76→94 ↑). It did **not** create within-world coexistence — the bistability
+    still picks one lifestyle per world — so the arc's "predation-driven speciation" premise stays
+    refuted; this is a *between-world*, regime-set divergence. Pure selection pressure: nothing in the
+    economy reads `hideability` back for anything but the hunt's sight and the freeze choice.
   - **Why it's stable** (tuned empirically across ~25 `smoke.js` seeds): three stacked
     stabilisers keep it off the knife-edge of double-extinction. (1) A post-kill **cooldown**
     caps each hunter's kill rate, giving prey a refuge; decoupling _stalking_ from _striking_
@@ -478,6 +529,38 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — [Expedition] two ways to survive a hunter (concealment, and the hider/fleer split)
+
+**Observed:** every past reading showed the grazers as **one broad cloud** under predation, because the
+world offered exactly one answer to a hunter — flee fast, sense keen — so everyone converged on it and
+the arc's whole premise (predation *splits* the herd) had nothing to bite on. This Expedition gave the
+world a **second** answer: **concealment**. A **small, slow** mote standing on **dense vegetation** is
+hard for a hunter to see or to grab — it *hides in the grass*, and when a predator nears it **freezes**
+(hunkers, cheap, keeps cover) instead of bolting. The trade-off that makes this a real choice: **speed
+breaks cover** — a moving body is conspicuous — so a mote cannot be both a fast **fleer** and a hidden
+**hider**; it must specialise. A visitor now sees this immediately: every mote wears a **lifestyle halo**
+— leaf-green for a hider, amber for a fleer, faint for the mediocre middle — so a lush grazer-haven fills
+with green motes lurking in cover while a predator arms-race fills with amber motes streaking the open,
+and you can watch hunters give up on prey that vanish into the meadow and coevolve **keener eyes** to
+counter them (hunter sense drifted **76→94 ↑**, reversing its old decline). A new instrument proves the
+link: `observe.js --split-test` runs the world **with vs. without hunters** and reports the strategy each
+evolves — predation drives the hider↔fleer axis hard (mean grazer speed **1.89 with hunters vs 0.88
+without**, hideability **0.26 vs 0.78**), and the fast fleer is **predation-only** (remove the hunters and
+the whole herd collapses to slow, cheap hiders — the arc's "collapses when hunters vanish", demonstrated
+headlessly for the lifestyle axis). **The honest result:** predation now clearly *sets the grazers'
+lifestyle*, but it still **unifies** the herd rather than splitting it — 0/6 seeds show within-world
+2-morph coexistence with hunters (and crowding, not predation, is what produced the transient splits of
+earlier runs). The obstacle is the world's own **bistability**: each world tips into one regime and that
+regime picks **one** lifestyle, so the divergence is real and predation-driven but lives **between**
+worlds, not within one. So the arc is substantially advanced — a genuine new mechanic, a visible new
+identity, and a clean predation→lifestyle proof — but its centrepiece (two morphs coexisting in one
+world) remains open, now clearly blocked by the bistability rather than by a missing mechanism. Verified:
+`node --check` on all four `.js`; `smoke.js` green at **34 checks** across **6 seeds** (4 new deterministic
+concealment assertions); a full `observe.js` reading (no throw, no NaN, no gene newly edge-pinned, safety
+nets silent, hunters self-sustaining) and the 6×18k split-test above; no runtime network calls. Live
+pixels remain un-eyeballed — attempted again, the pane won't composite without a human. (An Expedition, so
+the counter resets to 0; category: ecology/biology — rotated off last run's observability/UI.)
 
 ### 2026-07-22 — the world names its own weather (live regime readout)
 
@@ -707,20 +790,37 @@ freely. Add two per run, at least one ambitious.
   at lower prey density, and whether it interacts with speciation — a schooling grazer morph and a
   scattering one are different answers to a pack. Risk: packs either never form or over-harvest and
   crash the prey; landing a legible, stable middle is the whole challenge.
-- **[Build] Tint motes by morph** _(the visible other half of the detector)_. `classifyMorphs`
-  already assigns each grazer to a cluster; expose that per-mote label and, when `world.morphs.k`
-  is 2, colour the two morphs distinctly on the field so the split is _visible_, not just a HUD
-  number. The logic is headless-verifiable; the colours themselves want an interactive eyeball.
-  This finishes the "see the split" finish-condition around the crowding-driven size split that
-  _actually happens_.
-- **[Expedition] Disruptive selection under predation** _(ambitious — the arc's pivoted
-  centrepiece; the detector says the old premise is wrong, so build a world where it's right)_.
-  Engineer two genuinely viable anti-predator strategies so a _predation_-driven split forms —
-  e.g. a trade-off where "small & hide in dense veg" and "large-sensed & flee fast" are each
-  locally optimal but the intermediate is worst (a fitness valley) — then use `classifyMorphs`
-  to show a stable 2-morph coexistence that **collapses back to one morph when hunters are
-  removed**. Risk: disruptive selection is hard to make stable; it usually just picks one winner.
-  _This, not the old detector item, is now the centrepiece of Arc III._
+- **[Build] Retired: "Tint motes by morph."** Superseded and improved this run — motes are now ringed
+  by *lifestyle* (`hideability`) continuously, so the divergence shows in **every** world, not only on
+  a rare detector cluster split. Tinting by the detector's discrete cluster would only fire when
+  `world.morphs.k===2`, which the bistability makes vanishingly rare; the continuous lifestyle ring is
+  the better answer to "see the split."
+- **[Build] Retired: "Disruptive selection under predation" (the concealment half).** Built this run —
+  the concealment mechanic gives motes two viable, mutually-exclusive anti-predator tactics (hide vs
+  flee, with speed breaking cover). It made predation *drive the lifestyle axis* clearly and proved it
+  headlessly (`--split-test`). What it did **not** do is produce within-world 2-morph coexistence — the
+  bistability keeps each world on one lifestyle. That remaining half is now its own item below.
+- **[Expedition] Straddle the bistability → real within-world coexistence** _(ambitious — the arc's
+  true, still-open centrepiece; every attempt so far dies on the same rock)_. The concealment run
+  proved the mechanic works but the world's arms-race/grazer-haven **bistability** is what forbids two
+  lifestyles at once: each world tips one way and that regime picks a single answer. To get genuine
+  coexistence the predation pressure must be **heterogeneous within a single world** so hiding and
+  fleeing are each locally optimal *somewhere at the same time*. Candidate mechanisms: make hunters
+  **spatially clumped** (packs/territories → some regions are arms-race, others refugia, permanently,
+  within one map), or give the **fertility map** dense-cover cores that stay lush (hider strongholds)
+  beside open barrens (fleer country), and check `classifyMorphs` finally reports a stable k=2 that
+  **collapses to k=1 when hunters are removed**. Risk: this is the hard problem the whole arc keeps
+  hitting — spatial structure may just average out again. But it is now the *only* path left to the
+  arc's finish condition, and the instruments (`--split-test`, the morph detector, lifestyle rings)
+  are all in place to judge it.
+- **[Build] Cover-contested cores (frequency-dependent hiding).** A stepping stone toward the above:
+  make hiding **negative-frequency-dependent** so it can't simply take over a haven world. When many
+  hiders crowd one lush core they graze its veg — and thus their own cover — down; strengthen that
+  coupling (e.g. hiding motes still nibble, or cover regrows slower under heavy grazing) so a crowded
+  hider patch loses concealment and fleeing re-invades, while a sparse one stays safe. If the fitnesses
+  of the two tactics **cross** as their frequencies change, coexistence becomes possible without the
+  full spatial-heterogeneity Expedition. Headless-verifiable via `--split-test` and the tactic-mix
+  columns; measure whether the mix stabilises at an interior point instead of 0% or 100%.
 - **[Build] Retired: "emergent species detector."** Built this run — the detector exists and
   works. What replaced it in the backlog is the two items above (make the split _visible_, and
   make a _predation_-driven split actually happen).

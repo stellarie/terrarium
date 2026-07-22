@@ -94,6 +94,32 @@
                               // sooner — predation now selects on sense (see step()).
     panicBoost: 1.6,          // speed multiplier while fleeing (burns more energy, too)
 
+    // Concealment (Arc III — The Great Divergence) — cover as a SECOND way to survive
+    // a hunter, so predation can split the herd instead of merely pushing it. A small
+    // mote standing on dense vegetation is hard for a hunter to see or to catch: it
+    // "hides in the grass." That opens two viable anti-predator strategies — fast,
+    // keen *fleers* that outrun hunters in the open, and small, dull *hiders* that
+    // vanish into cover — with the mediocre middle (too big to hide, too slow to flee)
+    // as the fitness valley between them. Concealment needs BOTH dense veg underfoot
+    // AND a small body; it shrinks the range at which a hunter detects and strikes the
+    // mote, and it lets a well-hidden mote FREEZE rather than bolt (cheap, keeps cover).
+    coverStrength: 0.92,      // max concealment: a small mote in lush cover drops a
+                              // hunter's effective sight/strike range to ~8% toward it
+    coverSizeHide: 2.4,       // body size at/below which a mote is fully "small" (hides best)
+    coverSizeSeen: 4.3,       // body size at/above which it is too big to hide at all
+    // …and it must hold STILL: a fast mote is conspicuous, so speed breaks cover. This is
+    // the trade-off that forces the herd to CHOOSE — you cannot be both a fast fleer and a
+    // hidden hider, so selection splits rather than collapsing to one small-and-fast winner.
+    coverSpeedHide: 1.05,     // speed gene at/below which a mote is fully "slow" (still enough)
+    coverSpeedSeen: 2.2,      // speed gene at/above which motion gives it away — no hiding
+    coverVegMin: 0.06,        // veg density below this is bare ground — no cover at all
+    coverFreeze: 0.55,        // concealment at/above which a threatened mote FREEZES in
+                              // place (hunkers, no panic sprint) instead of fleeing — the
+                              // visible hider tactic, and it avoids breaking cover
+    coverFreezeSpeed: 0.12,   // speed multiplier while frozen (barely a twitch)
+    coverStrikeShield: 0.6,   // how much concealment also shrinks the catch radius (0..1),
+                              // so a hidden mote is hard to grab even once a hunter is close
+
     // Hunger-driven boldness — the recovery valve for a collapsing predator tier.
     // observe.js showed the world is bistable: ~half of seeds fall into a "grazer
     // haven" where hunters bleed to a handful, motes overpopulate, and the meadow is
@@ -187,6 +213,31 @@
     return cy * cols + cx;
   }
   const vegAtPoint = (x, y) => world.veg[cellIndex(x, y)];
+
+  // A genome's intrinsic capacity to hide, in [0, 1] — its *lifestyle*, independent of
+  // where it is standing. Hiding needs a small body (inconspicuous) AND a slow gene
+  // (able to hold still — motion gives you away). 1 = a perfect hider genotype, 0 = a
+  // pure fleer. This is the axis predation can split the herd along, and draw() tints
+  // each mote by it so the two lifestyles are visible whether or not the pool has
+  // formally clustered.
+  function hideability(g) {
+    const small = clamp(
+      (CONFIG.coverSizeSeen - g.size) / (CONFIG.coverSizeSeen - CONFIG.coverSizeHide), 0, 1);
+    const slow = clamp(
+      (CONFIG.coverSpeedSeen - g.speed) / (CONFIG.coverSpeedSeen - CONFIG.coverSpeedHide), 0, 1);
+    return small * slow;
+  }
+
+  // How hidden a mote is from hunters RIGHT NOW, in [0, coverStrength]: its lifestyle
+  // capacity to hide, times the density of the vegetation it is actually standing in
+  // (no cover on bare ground). The hunt reads this to shrink its sight and strike range
+  // toward a concealed mote; the grazer reads it to decide whether to freeze or bolt.
+  function concealment(m) {
+    const veg = world.veg[cellIndex(m.x, m.y)];
+    if (veg <= CONFIG.coverVegMin) return 0;
+    const cover = veg > 1 ? 1 : veg;                       // lush cells hide best
+    return CONFIG.coverStrength * cover * hideability(m.g);
+  }
 
   // Fertility: a smooth patchy carrying-capacity map from a few random sine
   // gratings, normalized into [fertMin, 1]. This is what gives the world a
@@ -655,8 +706,18 @@
         if (d2 < thD2) { thD2 = d2; thx = hu.x; thy = hu.y; threat = true; }
       }
 
+      // two ways to answer a threat, and a mote's genes decide which it can use. A mote
+      // in good cover FREEZES — it hunkers, keeps still, and vanishes into the veg (the
+      // hider tactic); bolting would only break cover and burn sprint energy it doesn't
+      // need. A mote in the open BOLTS away and sprints (the fleer tactic). Small motes
+      // on dense veg get to hide; big or exposed motes must run for it.
+      let hiding = false;
       if (threat) {
-        m.dir = torusAngle(thx, thy, m.x, m.y); // bearing away from the hunter
+        if (concealment(m) >= CONFIG.coverFreeze) {
+          hiding = true;                            // hunker down and stay hidden
+        } else {
+          m.dir = torusAngle(thx, thy, m.x, m.y);   // bearing away from the hunter
+        }
       } else {
         // steer toward the greenest direction within sense range (chemotaxis):
         // probe eight bearings; head for the best if it beats the current cell.
@@ -672,8 +733,10 @@
         else if (Math.random() < 0.08) m.dir += rand(-0.6, 0.6); // idle wander
       }
 
-      // move — a fleeing mote sprints (and pays for it in the burn below)
-      const v = m.g.speed * (threat ? CONFIG.panicBoost : 1);
+      // move — a bolting mote sprints (and pays for it in the burn below); a hiding
+      // mote barely twitches, so it stays put in its cover and pays almost nothing
+      const v = hiding ? m.g.speed * CONFIG.coverFreezeSpeed
+                       : m.g.speed * (threat ? CONFIG.panicBoost : 1);
       m.x = wrap(m.x + Math.cos(m.dir) * v, W);
       m.y = wrap(m.y + Math.sin(m.dir) * v, H);
 
@@ -690,6 +753,10 @@
         m.energy += bite * CONFIG.vegEnergy;
         world.graze[ci] += bite;   // leave a fading mark for the grazing overlay
       }
+
+      // cache how hidden this mote now is (post-move, post-graze) so the hunters can
+      // read it without recomputing per predator–prey pair — cover is what the hunt sees
+      m._cover = concealment(m);
 
       // reproduce
       if (m.energy >= CONFIG.reproEnergy && world.motes.length + newborns.length < CONFIG.maxPop) {
@@ -726,15 +793,22 @@
       // a starving hunter digests faster, so its next strike comes sooner
       if (h.cool > 0) h.cool -= 1 + CONFIG.hunterBoldDigest * bold;
 
-      // always stalk the nearest mote in sense range — a sated hunter keeps tracking
-      // (and scaring) the herd, it simply can't strike again until it has digested.
-      // Decoupling stalking from striking makes the cooldown a clean cap on kill rate
-      // instead of stranding digesting hunters in empty ground where they'd starve.
-      let best = -1, bestD2 = h.g.sense * h.g.sense;
+      // always stalk the nearest VISIBLE mote in sense range — a sated hunter keeps
+      // tracking (and scaring) the herd, it simply can't strike again until it has
+      // digested. Decoupling stalking from striking makes the cooldown a clean cap on
+      // kill rate instead of stranding digesting hunters in empty ground. A concealed
+      // mote (small, in cover) shrinks the hunter's effective sight toward it toward
+      // zero, so a well-hidden grazer is invisible until the hunter is almost on top of
+      // it — the hider's whole defence, and why predation can now select two ways.
+      const senseR2 = h.g.sense * h.g.sense;
+      let best = -1, bestD2 = senseR2;
       for (let j = 0; j < world.motes.length; j++) {
         const p = world.motes[j];
         const d2 = torusD2(h.x, h.y, p.x, p.y);
-        if (d2 < bestD2) { bestD2 = d2; best = j; }
+        if (d2 >= bestD2) continue;                 // farther than the nearest seen: skip
+        const c = p._cover || 0;                    // 0 for a mote born this tick
+        const eff = c > 0 ? senseR2 * (1 - c) * (1 - c) : senseR2;
+        if (d2 < eff) { bestD2 = d2; best = j; }
       }
       if (best >= 0) {
         const prey = world.motes[best];
@@ -755,7 +829,10 @@
       // strike: if digestion is done and the target is now within a body-length, eat it
       if (best >= 0 && h.cool <= 0) {
         const prey = world.motes[best];
-        const cr = h.g.size + prey.g.size + CONFIG.huntRange + CONFIG.hunterBoldReach * bold;
+        // cover shrinks the catch window too: even once a hunter closes, a hidden mote
+        // is hard to pin down in the veg, so hiding protects the last body-length as well
+        const shield = 1 - (prey._cover || 0) * CONFIG.coverStrikeShield;
+        const cr = (h.g.size + prey.g.size + CONFIG.huntRange + CONFIG.hunterBoldReach * bold) * shield;
         if (torusD2(h.x, h.y, prey.x, prey.y) < cr * cr) {
           h.energy += (prey.energy > 0 ? prey.energy : 0) * CONFIG.huntAssimilation + CONFIG.huntBonus;
           h.cool = CONFIG.huntCooldown;   // digest before the next strike
@@ -840,13 +917,27 @@
     // an optional lens on the hidden landscape, painted over the meadow
     drawOverlay();
 
-    // motes
+    // motes — each ringed by its lifestyle so the two anti-predator strategies are
+    // visible at a glance: a committed hider (small, slow) wears a cool leaf-green halo
+    // and melts into the meadow; a committed fleer (fast) wears a hot amber halo and
+    // reads as alert and exposed; the mediocre middle is faintly, muddily ringed.
     for (const m of world.motes) {
       const glow = clamp(m.energy / CONFIG.reproEnergy, 0.25, 1);
+      const H = hideability(m.g);                       // 1 = hider, 0 = fleer
       ctx.beginPath();
       ctx.arc(m.x, m.y, m.g.size, 0, TAU);
       ctx.fillStyle = `hsl(${m.g.hue.toFixed(0)} 65% ${(40 + glow * 24).toFixed(0)}%)`;
       ctx.fill();
+      // lifestyle halo: hue slides leaf-green (hider) → amber (fleer); it fades toward
+      // the ambiguous middle so a genuinely split herd shows crisp two-colour rings
+      const ringHue = 40 + (135 - 40) * H;
+      const commit = Math.abs(H - 0.5) * 2;             // 0 at the middle, 1 at an extreme
+      ctx.strokeStyle = `hsl(${ringHue.toFixed(0)} 78% 58% / ${(0.28 + 0.5 * commit).toFixed(2)})`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, m.g.size + 1.6, 0, TAU);
+      ctx.stroke();
+      ctx.lineWidth = 1;
       // a little heading whisker
       ctx.strokeStyle = `hsl(${m.g.hue.toFixed(0)} 65% 72% / 0.5)`;
       ctx.beginPath();
@@ -1217,6 +1308,7 @@
       world, step, seed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime,
+      concealment, hideability, cellIndex,
     };
   }
 })();

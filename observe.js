@@ -20,10 +20,21 @@
 
 require("./shim.js");
 const sim = require("./sim.js");
-const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs } = sim;
+const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs, hideability } = sim;
+
+const ARGS = process.argv.slice(2);
+const W = 960, H = 540;
+
+// A dedicated experiment (not the normal single-world report): does PREDATION drive
+// the hider/fleer divergence? Run N worlds with hunters against N with hunters removed,
+// and compare the grazer strategy each evolves. Fires on `node observe.js --split-test`.
+if (ARGS.includes("--split-test") || ARGS.includes("--divergence")) {
+  const nums = ARGS.filter((a) => !a.startsWith("--")).map((x) => parseInt(x, 10)).filter((x) => x > 0);
+  splitTest(nums[0] || 6, nums[1] || 15000);
+  process.exit(0);
+}
 
 const TICKS = Math.max(1000, parseInt(process.argv[2], 10) || 20000);
-const W = 960, H = 540;
 
 // The mutation clamps from sim.js — the *true* range each gene can drift within, so
 // "pinned at the edge" means pinned at a clamp, not merely at a founder bound. Keep
@@ -344,3 +355,95 @@ function regimeReport() {
 }
 
 process.exit(threw || nanFlags.length ? 1 : 0);
+
+// ---- the predation-divergence experiment ------------------------------------
+// Run one world to a settled state and read the grazers' evolved anti-predator
+// strategy: mean genes, and the *tactic mix* — what fraction became hiders (high
+// hideability: small + slow, vanish into cover) vs fleers (low: fast, outrun in the
+// open). hideability is the very axis draw() tints motes by, so this measures exactly
+// what a viewer sees. Throws are caught so one sick seed can't abort the whole sweep.
+function runOneWorld(ticks) {
+  let threw = null;
+  try { seed(); for (let t = 0; t < ticks; t++) step(); }
+  catch (e) { threw = e; }
+  const pop = world.motes, n = pop.length || 1;
+  let sp = 0, sz = 0, se = 0, Hs = 0, hid = 0, fle = 0;
+  for (const m of pop) {
+    sp += m.g.speed; sz += m.g.size; se += m.g.sense;
+    const Hh = hideability(m.g); Hs += Hh;
+    if (Hh > 0.55) hid++; else if (Hh < 0.20) fle++;
+  }
+  const cls = classifyMorphs(pop);
+  return { threw, n: pop.length, speed: sp / n, size: sz / n, sense: se / n,
+           H: Hs / n, hiderPct: (100 * hid) / n, fleerPct: (100 * fle) / n,
+           k: cls.k, gene: cls.gene, hunters: world.hunters.length };
+}
+
+// The centrepiece proof for Arc III: is the grazers' hider/fleer divergence DRIVEN by
+// predation? Compare N worlds with hunters against N with hunters removed entirely (none
+// seeded, none allowed to drift back). If predation is the cause, the fast *fleer*
+// lifestyle — being built to outrun a predator — should appear ONLY when predators exist,
+// and the strategy should vary far more across predator worlds (the arms-race / grazer-
+// haven bistability picking different answers) than across the relaxed predator-free ones.
+// Unpaired (there is no seeded RNG yet — see the backlog), so read the SPREAD across seeds,
+// never a single row.
+function splitTest(seeds, ticks) {
+  const pz = (s, w) => String(s).padStart(w);
+  const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : "NaN");
+  const bar = "─".repeat(71);
+  console.log("\n" + "═".repeat(71));
+  console.log("  TERRARIUM — PREDATION-DIVERGENCE TEST");
+  console.log(`  ${seeds} worlds × ${ticks} ticks per condition · unpaired (read the spread, not a row)`);
+  console.log("  Q: does predation DRIVE the hider↔fleer split, or would grazers diverge anyway?");
+  console.log("═".repeat(71));
+
+  const baseStart = CONFIG.hunterStart, baseReseed = CONFIG.hunterReseedPrey;
+  const conditions = [
+    { name: "WITH HUNTERS  (the world as shipped)", setup() {} },
+    { name: "NO HUNTERS  (predators removed, none reseeded)",
+      setup() { CONFIG.hunterStart = 0; CONFIG.hunterReseedPrey = 1e9; } },
+  ];
+  const summary = {};
+  for (const cond of conditions) {
+    CONFIG.hunterStart = baseStart; CONFIG.hunterReseedPrey = baseReseed;  // reset to baseline
+    cond.setup();
+    console.log(`\n  ${cond.name}`);
+    console.log("  seed   n   speed  size  sense    H   hider%  fleer%  morphs   hunters");
+    const rows = [];
+    for (let s = 0; s < seeds; s++) {
+      const r = runOneWorld(ticks);
+      rows.push(r);
+      const morph = r.k >= 2 ? `2·${r.gene || "?"}` : "1";
+      console.log(`  ${pz(s + 1, 3)} ${pz(r.n, 5)}  ${pz(f2(r.speed), 5)} ${pz(f2(r.size), 5)} ` +
+        `${pz(f2(r.sense), 5)} ${pz(f2(r.H), 5)}  ${pz(r.hiderPct.toFixed(0), 5)}  ${pz(r.fleerPct.toFixed(0), 5)}  ` +
+        `${morph.padEnd(6)}  ${pz(r.hunters, 5)}${r.threw ? "  THREW" : ""}`);
+    }
+    const spd = rows.map((r) => r.speed);
+    const mean = (f) => rows.reduce((s, r) => s + f(r), 0) / rows.length;
+    summary[cond.name] = {
+      rows, spdMin: Math.min(...spd), spdMax: Math.max(...spd),
+      meanSpeed: mean((r) => r.speed), meanH: mean((r) => r.H),
+      morph2: rows.filter((r) => r.k >= 2).length,
+    };
+    const su = summary[cond.name];
+    console.log(`  → mean speed ${f2(su.meanSpeed)} (range ${f2(su.spdMin)}–${f2(su.spdMax)})  ·  ` +
+      `mean hideability ${f2(su.meanH)}  ·  within-world 2-morph ${su.morph2}/${seeds}`);
+  }
+  CONFIG.hunterStart = baseStart; CONFIG.hunterReseedPrey = baseReseed;  // restore
+
+  const wH = summary[conditions[0].name], nH = summary[conditions[1].name];
+  console.log("\n  " + bar);
+  console.log("  VERDICT");
+  console.log(`   • predation & flee-speed: mean grazer speed ${f2(wH.meanSpeed)} WITH hunters ` +
+    `vs ${f2(nH.meanSpeed)} without — ${wH.meanSpeed > nH.meanSpeed + 0.15 ?
+      "predators push the herd toward the FLEER end (built to run); remove them and it relaxes to slow, cheap hiders" :
+      "no clear speed signal this sweep (short run? add ticks/seeds)"}.`);
+  console.log(`   • predation & hiding: mean hideability ${f2(wH.meanH)} WITH vs ${f2(nH.meanH)} without — ` +
+    `${nH.meanH > wH.meanH + 0.05 ? "without a predator to outrun, grazers default to the small-slow hider genotype" :
+      "similar"}.`);
+  console.log(`   • predation & COEXISTENCE (the arc's hypothesis): within-world 2-morph splits ` +
+    `${wH.morph2}/${seeds} WITH vs ${nH.morph2}/${seeds} without — ${wH.morph2 > nH.morph2 ?
+      "splits need predators (arc supported!)" :
+      "predation does NOT drive coexistence; splits appear WITHOUT it (crowding-driven) — the arc's premise stays refuted"}.`);
+  console.log("  " + bar + "\n");
+}
