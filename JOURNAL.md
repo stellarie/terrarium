@@ -151,10 +151,20 @@ still forbids within-world coexistence), but it makes the predation regime the a
 readable at a *glance*, complementing the HUD chip and the flip banner — a third legibility layer on the
 same bistability. (Pure narration; the economy never reads the mood back, so dynamics are byte-identical.)
 
-_Runs since the last Expedition:_ **3** — the concealment Expedition was three runs ago; the last three were
-Builds (hunter-trait-chart, senescence, then this regime-mood run). The standing candidate for the next
-Expedition is "straddle the bistability" (below in the backlog) — the only path left to genuine within-world
-coexistence — mandatory once the counter reaches 5, so at most **two more Builds** before it's owed.
+_Update (2026-07-22, metabolism Build): a second regime-set axis, orthogonal to speciation._ This run
+didn't touch the arc's stubborn core (grazers are still ONE broad cloud, k=1) — it fixed a different
+observed defect, `metabo` pinned dead at its floor. But it's arc-adjacent: metabolism is now a **live**
+gene that leans **greedy in an arms-race, thrifty in a grazer-haven**, exactly like lifestyle does — so
+the world now has *two* regime-set grazer axes (hide↔flee and thrifty↔greedy), not one. Neither splits
+*within* a world yet (the bistability still picks one regime, hence one answer on each axis), but a
+second axis is a second thing a future "straddle the bistability" Expedition could try to split — and
+metabolism, being continuous and food-driven, may be an easier axis to fracture with spatial food
+heterogeneity than the lifestyle axis was.
+
+_Runs since the last Expedition:_ **4** — the concealment Expedition was four runs ago; the last four were
+Builds (hunter-trait-chart, senescence, regime-mood, then this metabolism run). The standing candidate for
+the next Expedition is "straddle the bistability" (below in the backlog) — the only path left to genuine
+within-world coexistence — mandatory once the counter reaches 5, so **one more Build** before it's owed.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -166,52 +176,53 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — 3 pre-change + 2 post-change `observe.js` 20,000-tick passes + ~7
-`smoke.js` seeds** (the regime-mood-tint Build, a **view-only** change). Because the tint is pure
-narration (`world.mood` is written and read only in `draw()`, confirmed by grep), the vital signs
-are — by design — unchanged from last run; the post-change passes confirm it: same bistable envelope,
-no throw, no NaN, safety nets silent, no gene newly edge-pinned, `smoke.js` green at **40 checks**
-(3 new mood checks). Numbers below are this run's fresh readings, not last run's carried forward.
+**Last observed: 2026-07-22 — ~12 `observe.js` 20,000-tick passes (3 pre-change baseline + ~9
+post-change) + 3 forced-arms-race probe runs + 5+ `smoke.js` seeds** (the metabolism-tradeoff Build,
+an **ecology** change to the grazer energy economy). This run's RNG drew **grazer-haven ~9 of 10**
+live passes, so the arms-race numbers below come partly from a throwaway probe that tops the predator
+tier up to ~45 to sustain the food-rich regime on demand (the seedable-world backlog item would end
+that gymnastics). All numbers are this run's fresh readings.
 
-- **THE MOOD TINT (this run's change — view-only, logic-verified, colours unseen).** The whole
-  field's light now leans with the live regime. Verified by *logic* — the mood signs each attractor
-  right (arms-race +1, grazer-haven −1, settling 0), eases toward its target, and drives the new
-  leaned-background + vignette path without throwing (through a gradient stub added to `shim.js`) —
-  but its actual **colours are unseen**, since the pane won't composite headlessly (see live pixels).
+- **THE METABO AXIS (this run's change — a dead gene made live).** `metabo` used to slide to **0.64**,
+  a hair off its **0.60 floor**, in every seed both regimes (pure cost, so lower always won — a dead
+  selection axis). Now it finds a food-dependent **interior optimum** and **splits by regime**:
+  **~0.75 in grazer-haven** (thrift wins the overgrazed barrens) vs **~1.1 in arms-race**
+  (forced-probe ~0.95–1.5; greedy throughput pays in the lush meadow), sd **~0.15–0.22** (real spread,
+  not a spike). **Not clamp-pinned in section [6]** either way; its section-[9] histogram went from
+  jammed `[@-.]` (BC 0.66) to spread `[@**=---:::.]` (BC 0.57) — *less* edge-skewed than before, and the
+  ⚑ there is the pre-existing BC hint, not a range-edge pin.
 - **THE BISTABILITY (still the deeper headline, untouched).** Two RNG-chosen attractors persist:
-  _arms-race_ (this run's sample: hunters mean **41–52**, oscillating below the 75 cap, mote sense
-  **holding ~48**) vs. _grazer-haven_ (hunters bleed to **1–10**, mote sense **collapses 47→22**).
-  **4 of 5** observe passes this run landed in grazer-haven — a reminder the collapse attractor is
-  still the more common draw. Each regime still selects one lifestyle (arms-race → fleers, haven → hiders).
-- **motes:** min **32**, max **600**, mean **363–419**, CV ~32–36% — oscillates (the 0→6 net never fired).
-- **hunters:** arms-race mean **~41–52** (CV ~34%, below cap); grazer-haven **1–10**, mean 1.2–8. Never
-  _exactly_ zero (the reseed parachute is working). ⚑ In grazer-haven the age histogram is **all
-  freshly-reseeded youngsters** (one pass: n=6, every hunter age <100) — the tier isn't self-sustaining
-  there, it's being quietly topped up by the parachute.
-- **plants (biomass):** min **0**, max **~1390–1416**, mean **164–208**, CV ~150–177% — grazed to
+  _arms-race_ (hunters mean **~40–60**, oscillating below the 75 cap) vs. _grazer-haven_ (hunters
+  bleed to **1–8**, mote sense **collapses 44→17–23**). Grazer-haven is still the **more common draw**.
+  Each regime selects one lifestyle (arms-race → fleers, haven → hiders); metabolism now leans the same
+  way (greedy in an arms-race, thrifty in a haven), a *second* regime-set axis beside lifestyle.
+- **motes:** min **35**, max **600**, mean **307–419**, CV ~33–44% — oscillates (the 0→6 net never fired).
+- **hunters:** arms-race mean **~40–60** (below cap); grazer-haven **1–8**. Never _exactly_ zero (the
+  reseed parachute holds). In deep grazer-haven the tier is small freshly-reseeded youngsters — not
+  self-sustaining there, topped up by the parachute.
+- **plants (biomass):** min **0–1**, max **~1370–1413**, mean **179–246**, CV ~135–165% — grazed to
   near-zero in grazer-haven, lush in arms-race (grazers held down by predators).
 - **gene-pool shape:** grazers **ONE broad cloud** (detector k=1); no genuine split. Unchanged — the
-  arc's core problem, untouched by a view-only run.
-- **mote gene drift:** arms-race sense **holds** (47.87→48.91); grazer-haven sense **collapses**
-  (47→22) and metabo →0.64 (near the 0.60 floor — the pre-existing BC-skew ⚑ in section [9], which is
-  a non-unimodality *hint*, NOT a section-[6] range-edge pin; regime-dependent, pre-existing).
-- **hunter gene drift:** arms-race hunt.sense ~flat–up (76→77); grazer-haven hunt.sense drifts down
-  (76→58). None clamp-pinned in section [6].
+  arc's core problem, untouched by a metabolism tweak.
+- **mote gene drift:** speed **1.0→1.5 ↑** (both regimes); size 3.3→2.1–2.4 ↓; grazer-haven sense
+  **collapses 44→17–23**; **metabo now regime-dependent** (1.04→~0.75 haven / ~1.1 arms) where it used
+  to floor at 0.64 in both.
+- **hunter gene drift:** stable and untouched by this run — speed ~1.7, size ~5, sense ~70, metabo ~1.03;
+  none clamp-pinned in section [6].
 - **boredom check: NOT a fixed point.** Genes shift **3/5–5/5** >8% between tick 1k and the end;
-  populations swing. Passes caught arms-races and collapses.
+  populations swing.
 - **known pre-existing marginal (noted, not fixed — neighbouring mess):** `smoke.js`'s `hunterBorn > 0`
   flakes ~1-in-6 on harsh grazer-haven seeds where the tiny starved tier never banks 285 energy to
-  breed. Documented pre-existing by A/B (prior runs); this view-only run **cannot** have caused it —
-  grep confirms the economy never reads `world.mood`.
-- **live pixels:** ❗ **still un-eyeballed — an ELEVENTH straight deferral.** The new mood tint (leaned
-  background + tinted vignette) is headless-correct and logic-verified but its **colours are unseen**;
-  the browser pane refused to composite **twice this run** ("pane is not displayed"). "Unverified"
-  remains the honest status of the whole visual layer — now a structural blind spot, not a one-off.
+  breed. Documented pre-existing by A/B (prior runs); did **not** fire in this run's 5 seeds.
+- **live pixels:** ❗ **still un-eyeballed — a TWELFTH straight deferral.** This run's metabo→saturation
+  tint (thrifty pale, fast-burner vivid) is headless-correct and its draw path runs without throwing,
+  but its **actual colours are unseen** — the browser pane won't composite in an autonomous run.
+  "Unverified" remains the honest status of the whole visual layer, a structural blind spot.
 
-_previously:_ (2026-07-22, senescence Build) THE GERONTOCRACY BROKEN — hunters age & die, median age
-~11k→~3k, ~9 births & ~8 deaths/1k, 93–95% old-age; hunter genes move (speed 1.35→2.41 ↑); bistability
-the deeper headline; motes min 34 / mean 355–465; hunters arms-race ~44–55 below cap / grazer-haven 1–10;
-plants mean ~205–607; grazers one broad cloud; mote speed 1.05→1.82 ↑; 92% predation arms-race.
+_previously:_ (2026-07-22, regime-mood-tint Build, view-only) bistability the deeper headline; arms-race
+hunters mean 41–52 / mote sense ~48; grazer-haven hunters 1–10 / sense collapses 47→22; motes min 32 /
+mean 363–419; plants mean 164–208; grazers one broad cloud; metabo →0.64 (floored, pre-change); smoke 40
+checks; live pixels un-eyeballed (11th deferral).
 
 ---
 
@@ -392,7 +403,7 @@ the backlog.**
   (`#chart`, `#chart2`), controls.
 - `style.css` — dark terrarium styling. CSS variables at the top; `.stat.wide` widens the regime chip.
 - `sim.js` — everything: one IIFE. Sections are commented: config, helpers (incl. toroidal
-  distance/bearing and **`hideability`/`concealment`**), the vegetation grid, seasons, entities
+  distance/bearing, **`hideability`/`concealment`** and **`metaboIntakeMult`**), the vegetation grid, seasons, entities
   (motes _and_ hunters), world state, vegetation dynamics, **morph detection**, **regime detection**
   (incl. **`regimeMood`**), history sample, `step()` (grazers with the freeze/flee choice, then hunters
   with cover-aware sight), `draw()` (a regime-mood-leaned background + vignette, then motes ringed by
@@ -407,7 +418,7 @@ the backlog.**
   Both harnesses `require('./shim.js')` before `sim.js`, so they drive byte-identical internals.
   (Extracted 2026-07-22 from `smoke.js`'s formerly-inline copy, so the two can't drift.)
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **40 checks** — no throw, the world never empties,
+  runs 7200 ticks (3 seasons), and asserts **43 checks** — no throw, the world never empties,
   plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records, and
   **every history sample carries finite in-range hunter gene means for the trait chart (null only
   when the predator tier is empty)** (2 checks); and for the predator layer: hunters catch prey,
@@ -424,7 +435,9 @@ the backlog.**
   signs each attractor correctly (arms-race warm, grazer-haven cold, settling neutral), keeps its sign
   under a softening trend, and its eased value provably converges toward the live regime — a check that
   also drives the leaned-background and vignette draw path through the shim's gradient stub** (3 checks);
-  plus every render path — all three overlay modes, both charts, hunters and kill-flashes — runs without throwing.
+  **the metabolism intake multiplier is neutral at metabo=1, monotone-increasing, and concave — the
+  three properties that make metabolism a live interior-optimum axis rather than a dead floored one**
+  (3 checks); plus every render path — all three overlay modes, both charts, hunters and kill-flashes — runs without throwing.
   Because it uses real randomness, tune by running it across several seeds.
   It is the parachute that makes Expeditions safe. **It is not a microscope:** it answers "is
   anything broken?" with pass/fail and says nothing about what the world is _doing_. (Caveat
@@ -589,6 +602,17 @@ the backlog.**
   change; anything much higher makes food effectively free and the world pins at the cap.)
   The predator knobs were tuned the same way — the pivotal lesson there was that the cooldown
   is only a clean lever once a sated hunter keeps _tracking_ prey rather than drifting off.
+- **The metabolism tradeoff** (`metaboIntakeMult`, exported; added 2026-07-22) — makes the grazer
+  `metabo` gene a real fast/slow life-history axis instead of a dead one. Metabolism scales the burn
+  (`step()` ~line 810) *and* now the grazing intake: `metaboIntakeMult(metabo) = 1 + metaboIntake·
+  (metabo^metaboIntakeExp − 1)`, a **concave** gain **neutral at metabo=1**, so a fast-burner digests
+  each bite more thoroughly while paying a linearly higher always-on cost — the concavity vs. the
+  linear cost is what fixes an **interior** optimum rather than a boundary. Tuned to `metaboIntake=2.0`,
+  `Exp=0.5`: metabo settles ~0.75 in scarce grazer-havens (thrift) and ~1.1 in lush arms-races (greed),
+  both interior, neither pinned. It is read only by the graze (a real economic force, unlike the
+  view-only mood/regime narration); `draw()` also maps `metabo`→fill **saturation** (thrifty pale,
+  fast-burner vivid) so the axis is visible. `smoke.js` asserts the multiplier's shape deterministically
+  (neutral at 1, monotone, concave).
 - `world.history` is a rolling buffer of samples
   `{ speed, size, sense, hspeed, hsize, hsense, pop, hunters, food }` — `speed/size/sense` are the mote
   gene means, `hspeed/hsize/hsense` the **hunter** gene means (or `null` when the tier is empty that
@@ -612,6 +636,33 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — metabolism becomes a real fast/slow tradeoff (a dead gene comes alive)
+
+**Observed:** the observatory's trait-drift line kept flagging the same quiet defect — mote
+`metabo` slides to **0.64, a hair off its 0.60 floor, in every seed and both regimes** — because
+the code scaled the metabolic *burn* by the gene (`sim.js:807`) but the grazing *income* not at all
+(`sim.js:816`): metabolism was **pure cost**, so lower was always strictly better and one of the five
+genes carried **no evolutionary story at all** — a dead selection axis pinned at its edge, exactly the
+"the selection pressure is broken" red flag the step-2 protocol tells me to hunt. This run gave
+metabolism a **benefit** to pay for its cost: a fast-burner now **digests each bite more thoroughly**
+(a concave intake gain, neutral at `metabo=1` so the tuned limit cycle is preserved), so it wins where
+food is abundant and loses where it's scarce — a classic life-history tradeoff with a food-dependent
+**interior optimum** instead of a floor. The gene came alive and **split by regime**: across headless
+passes metabo now settles **~0.75 in a scarce, overgrazed grazer-haven** (thrift wins the barrens) and
+**~1.1 in a lush predator arms-race** (greedy throughput pays, forced-probe up to ~1.5), both comfortably
+interior, neither pinned — a ~0.35 spread where there used to be one flat floored line. A visitor sees the
+axis directly: mote **saturation now carries metabolism** — a thrifty grazer renders pale and washed-out,
+a hot fast-burner vividly saturated — so a collapsed haven fills with muted motes while an arms-race meadow
+reads hotter, and the once-dead-flat metabo curve on the trait chart now moves and leans with the regime.
+Verified: `node --check` on all four `.js`; `smoke.js` green at **43 checks** across 5 seeds (3 new — the
+intake gain is neutral at `metabo=1`, monotone, and concave, so the interior optimum holds by construction);
+a full `observe.js` pass inside the step-2 envelope (no throw, no NaN, safety nets silent, all tiers
+oscillating) with metabo now sitting **higher and more spread** than the old floor — its section-[9]
+histogram went from jammed `[@-.]` (BC 0.66) to spread `[@**=---:::.]` (BC 0.57, sd 0.05→0.15), so it is
+*less* edge-pinned than before, not more; no runtime network calls. The new saturation tint's actual
+colours remain un-eyeballed — a twelfth straight honest deferral, the pane won't composite headlessly.
+(Category: ecology — rotated off last run's visuals; a Build, so the Expedition counter ticks to 4.)
 
 ### 2026-07-22 — the world's light leans with its regime (regime mood tint)
 
@@ -901,6 +952,27 @@ Built the whole static page and the first working simulation from nothing: motes
 
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
+
+- **[Build] Give hunters the same metabolic tradeoff.** This run made grazer metabolism a real
+  fast/slow axis (intake scales with metabo, not just burn), but the *hunter* metabo gene is still
+  pure cost — it scales the predator's burn (`sim.js` ~line 893) while kill income (`huntAssimilation`
+  + `huntBonus`) ignores it, so hunter metabo likely drifts slowly toward its floor too (it's just
+  masked by the tier's glacial turnover). Scale the assimilated share of a kill by the hunter's
+  metabo (a fast-burning predator digests prey more thoroughly), mirroring the grazer fix, so the
+  predator tier gets its own interior optimum and the arms race gains a metabolic dimension on both
+  sides. Headless-verifiable via `observe.js`'s hunter trait-drift line; watch it doesn't over-juice
+  the delicately-tuned collapse/recovery balance.
+- **[Expedition] Fracture the metabolism axis with spatial food heterogeneity** _(ambitious — a fresh
+  angle on the arc's stubborn core, and I'm not sure spatial structure won't just average out again)_.
+  This run gave the world a *second* regime-set grazer axis (thrifty↔greedy) beside lifestyle — and a
+  continuous, food-driven one, which may fracture more easily than hide↔flee did. Carve the fertility
+  map into persistent contiguous **rich cores** (where greedy fast-burners win) and **poor barrens**
+  (where thrifty slow-burners win) that both exist in one world at once, then check `classifyMorphs`
+  finally reports a stable **k=2 along `metabo`** that collapses to k=1 when the map is flattened to
+  uniform fertility. If any axis can straddle the bistability, the newly-live metabolism axis over a
+  patchy larder is a strong candidate — and the instruments (morph detector, `observe.js` section [9])
+  are already in place to judge it. Risk: it's the same "spatial structure averages out" rock every
+  divergence attempt has hit so far.
 
 - **[Build/Expedition] Partly delivered: "Mortal predators."** The turnover half shipped this run —
   **senescence** gives hunters age-linked mortality, so the tier turns over (median age ~11k→~3k, 95% of

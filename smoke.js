@@ -173,6 +173,20 @@ world.veg[coverCell] = 0;                         // bare ground: nobody hides
 check(concealment(hider) === 0, `on bare ground even a perfect hider has zero cover (${concealment(hider)})`);
 world.veg[coverCell] = savedVeg;                  // restore so nothing downstream is perturbed
 
+// the metabolism tradeoff: a fast-burner digests each bite more thoroughly (higher
+// intake multiplier) while paying a linearly higher always-on burn, so metabolism finds
+// a food-dependent interior optimum instead of sliding to its floor. Assert the intake
+// gain's SHAPE deterministically — it decides whether the axis is live or dead, and must
+// be (a) neutral at metabo=1 so the tuned economy is preserved, (b) monotone increasing,
+// and (c) concave (diminishing returns), which is what balances the linear cost interior.
+const { metaboIntakeMult } = sim;
+check(Math.abs(metaboIntakeMult(1) - 1) < 1e-9,
+      `metabolism intake is neutral at metabo=1 (${metaboIntakeMult(1).toFixed(4)})`);
+check(metaboIntakeMult(0.6) < metaboIntakeMult(1) && metaboIntakeMult(1) < metaboIntakeMult(1.8),
+      `metabolism intake rises with metabo (${metaboIntakeMult(0.6).toFixed(2)} < ${metaboIntakeMult(1).toFixed(2)} < ${metaboIntakeMult(1.8).toFixed(2)})`);
+check((metaboIntakeMult(1.0) - metaboIntakeMult(0.6)) > (metaboIntakeMult(1.8) - metaboIntakeMult(1.4)),
+      `metabolism intake is concave — diminishing returns (the interior-optimum guarantee)`);
+
 // the morph detector must be HONEST: one broad cloud reads as one morph (a naive
 // 2-means would always split), a genuinely two-cluster pool reads as two. Test both
 // with deterministic synthetic pools so this check never flakes on real randomness.

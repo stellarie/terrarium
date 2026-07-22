@@ -28,6 +28,15 @@ blooms again. A slow **seasonal cycle** breathes over the top of it, swinging pl
 growth between lean winters and abundant summers and tinting the world toward day and
 night.
 
+A mote's **metabolism** gene is a real gamble, not just a tax. A faster burner spends more
+energy every moment just to live — but it also **digests each bite more thoroughly**, so it
+thrives where food is plentiful and starves where it's scarce. That makes a **fast-vs-slow**
+split you can watch evolve: a lush **arms-race** meadow (grazers held down by predators, so
+plants run rampant) breeds **greedy fast-burners**, while a starving, overgrazed
+**grazer-haven** breeds **thrifty slow-burners**. It shows in the motes themselves — a thrifty
+grazer renders **pale and washed-out**, a hot fast-burner **vividly saturated** — so you can
+read a herd's metabolic character straight off the field.
+
 ## The predators
 
 **Hunters** are a second creature that eats motes instead of plants — the top of the food

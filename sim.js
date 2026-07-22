@@ -56,6 +56,21 @@
     vegEnergy: 5,            // energy gained per unit of vegetation eaten (tuned: grazing
                              // income sits near metabolic cost, so scarcity really bites and
                              // the population limit-cycles instead of pinning at maxPop)
+    // Metabolism is a real fast/slow tradeoff, not just a tax. A high-metabo mote burns
+    // more every tick (the per-tick metabolic cost in step()) BUT also digests each bite more thoroughly
+    // (the intake gain below), so a fast burner wins where food is abundant and a thrifty
+    // one wins where it's scarce — metabolism finds a food-dependent INTERIOR optimum
+    // instead of sliding to its floor. (It used to scale only the burn, so lower was
+    // always strictly better: a dead selection axis pinned at 0.6 in every seed.) The gain
+    // is neutral at metabo=1 so the tuned limit cycle above is preserved, and concave
+    // (exponent <1, diminishing returns) so it balances the linear cost at an interior point.
+    // Tuned via observe.js to 2.0: metabo then settles ~0.75 in scarce grazer-haven worlds
+    // (thrift wins the overgrazed barrens) and ~1.1 in lush arms-race worlds (greedy fast
+    // throughput pays) — a clear regime split, both interior, neither pinned. Weaker (1.5)
+    // left it hugging the floor; stronger (2.5) held it near 1.0 even in scarcity, erasing
+    // the thrift story.
+    metaboIntake: 2.0,       // strength of metabolism's digestive gain on energy per bite
+    metaboIntakeExp: 0.5,    // concavity of that gain (0.5 = sqrt: strong diminishing returns)
     fertMin: 0.28,           // poorest ground's carrying capacity (richest is 1.0)
     corpseVeg: 0.6,          // vegetation a dead mote returns to the cell it fell on
     startVegFrac: 0.7,       // initial vegetation as a fraction of each cell's fertility
@@ -271,6 +286,15 @@
     if (veg <= CONFIG.coverVegMin) return 0;
     const cover = veg > 1 ? 1 : veg;                       // lush cells hide best
     return CONFIG.coverStrength * cover * hideability(m.g);
+  }
+
+  // Metabolism's benefit side: the multiplier on energy gained per bite. Concave and
+  // neutral at metabo=1, so a fast burner (metabo>1) digests each bite a little more
+  // thoroughly while paying a linearly higher always-on burn — a classic fast/slow
+  // life-history tradeoff whose optimum depends on how much food is around. Exported so
+  // smoke.js can assert its shape deterministically; nothing but the graze reads it.
+  function metaboIntakeMult(metabo) {
+    return Math.max(0, 1 + CONFIG.metaboIntake * (Math.pow(metabo, CONFIG.metaboIntakeExp) - 1));
   }
 
   // Fertility: a smooth patchy carrying-capacity map from a few random sine
@@ -813,7 +837,7 @@
       if (avail > 0) {
         const bite = avail < CONFIG.vegGrazeRate ? avail : CONFIG.vegGrazeRate;
         world.veg[ci] = avail - bite;
-        m.energy += bite * CONFIG.vegEnergy;
+        m.energy += bite * CONFIG.vegEnergy * metaboIntakeMult(m.g.metabo);
         world.graze[ci] += bite;   // leave a fading mark for the grazing overlay
       }
 
@@ -1010,9 +1034,13 @@
     for (const m of world.motes) {
       const glow = clamp(m.energy / CONFIG.reproEnergy, 0.25, 1);
       const H = hideability(m.g);                       // 1 = hider, 0 = fleer
+      // saturation carries the metabolic life-history: a thrifty grazer (low metabo) is
+      // pale and washed-out, a hot fast-burner is vividly saturated — the fast/slow axis
+      // made visible, on a channel that doesn't fight the hue gene or the lifestyle ring
+      const sat = 42 + 46 * clamp((m.g.metabo - 0.6) / 1.2, 0, 1);
       ctx.beginPath();
       ctx.arc(m.x, m.y, m.g.size, 0, TAU);
-      ctx.fillStyle = `hsl(${m.g.hue.toFixed(0)} 65% ${(40 + glow * 24).toFixed(0)}%)`;
+      ctx.fillStyle = `hsl(${m.g.hue.toFixed(0)} ${sat.toFixed(0)}% ${(40 + glow * 24).toFixed(0)}%)`;
       ctx.fill();
       // lifestyle halo: hue slides leaf-green (hider) → amber (fleer); it fades toward
       // the ambiguous middle so a genuinely split herd shows crisp two-colour rings
@@ -1445,7 +1473,7 @@
       world, step, seed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
-      concealment, hideability, cellIndex,
+      concealment, hideability, metaboIntakeMult, cellIndex,
     };
   }
 })();
