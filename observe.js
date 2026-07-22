@@ -20,7 +20,7 @@
 
 require("./shim.js");
 const sim = require("./sim.js");
-const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs, hideability } = sim;
+const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs, hideability, predationShare } = sim;
 
 const ARGS = process.argv.slice(2);
 const W = 960, H = 540;
@@ -163,6 +163,25 @@ line(`    hunter deaths  : ${pad(per1k(world.hunterDied), 6)}  (${world.hunterDi
 line(`    hunter aged-out: ${pad(per1k(world.hunterAged), 6)}  (${world.hunterAged})  ${world.hunterDied ? Math.round((100 * world.hunterAged) / world.hunterDied) : 0}% of hunter deaths were old age`);
 const totMoteLoss = world.died + world.eaten;
 line(`    mote deaths split: ${totMoteLoss ? Math.round((100 * world.eaten) / totMoteLoss) : 0}% predation / ${totMoteLoss ? Math.round((100 * world.died) / totMoteLoss) : 0}% starvation`);
+// the death-balance chart's live signal: the windowed predation share across the
+// recent history buffer — does the top-down/bottom-up balance actually swing, and
+// which force is doing the killing at the end? (0 = all hunger, 1 = all hunters)
+{
+  const win = CONFIG.predWindow;
+  const shares = [];
+  for (let i = 0; i < world.history.length; i++) {
+    const s = predationShare(world.history, i, win);
+    if (s != null) shares.push(s);
+  }
+  if (shares.length) {
+    const sorted = shares.slice().sort((a, b) => a - b);
+    const med = sorted[sorted.length >> 1];
+    const last = predationShare(world.history, world.history.length - 1, win);
+    const pct = (x) => (x == null ? "—" : Math.round(x * 100) + "%");
+    line(`    death-balance   : predation share swings ${pct(sorted[0])}–${pct(sorted[sorted.length - 1])} (median ${pct(med)}), ` +
+         `ending ${last == null ? "in a still moment" : pct(last) + " predation"}`);
+  }
+}
 
 line("\n[5] AGE  (ticks lived, sampled at the final tick)");
 ageReport("motes", world.motes);

@@ -19,7 +19,8 @@
 require("./shim.js");
 const sim = require("./sim.js");
 const { world, step, seed, biomass, CONFIG, GRID,
-        draw, drawChart, drawCountChart, updateHud, classifyMorphs, classifyRegime, regimeMood } = sim;
+        draw, drawChart, drawCountChart, drawArmsChart, updateHud,
+        classifyMorphs, classifyRegime, regimeMood, predationShare } = sim;
 
 // ---- assertions --------------------------------------------------------------
 let failures = 0;
@@ -187,6 +188,27 @@ check(metaboIntakeMult(0.6) < metaboIntakeMult(1) && metaboIntakeMult(1) < metab
 check((metaboIntakeMult(1.0) - metaboIntakeMult(0.6)) > (metaboIntakeMult(1.8) - metaboIntakeMult(1.4)),
       `metabolism intake is concave — diminishing returns (the interior-optimum guarantee)`);
 
+// the death-balance chart's metric must be HONEST — it counts the actual deaths, so
+// an all-predation window reads 1, an all-starvation window reads 0, a 50/50 window
+// reads 0.5, an empty window reads null (band breaks, never lies), and it pools ONLY
+// the trailing `win` samples. Deterministic synthetic history, so it can't flake.
+const shHist = [
+  { de: 9, dd: 1 }, { de: 8, dd: 2 },     // (older samples, must be ignored by a win=3 pool)
+  { de: 0, dd: 5 }, { de: 0, dd: 3 }, { de: 0, dd: 2 },  // last 3: pure starvation
+];
+check(predationShare([{ de: 4, dd: 0 }], 0, 10) === 1,
+      `predation share reads 1 when only hunters kill`);
+check(predationShare([{ de: 0, dd: 4 }], 0, 10) === 0,
+      `predation share reads 0 when only hunger kills`);
+check(predationShare([{ de: 3, dd: 3 }], 0, 10) === 0.5,
+      `predation share reads 0.5 on an even split`);
+check(predationShare([{ de: 0, dd: 0 }], 0, 10) === null,
+      `predation share is null when nothing died (the band breaks, not lies)`);
+check(predationShare(shHist, shHist.length - 1, 3) === 0,
+      `predation share pools only the trailing window (older predation-heavy samples ignored)`);
+check(Math.abs(predationShare([{ de: 6, dd: 2 }, { de: 2, dd: 0 }], 1, 10) - 0.8) < 1e-9,
+      `predation share pools counts across the window (8 predation / 10 total = 0.8)`);
+
 // the morph detector must be HONEST: one broad cloud reads as one morph (a naive
 // 2-means would always split), a genuinely two-cluster pool reads as two. Test both
 // with deterministic synthetic pools so this check never flakes on real randomness.
@@ -256,7 +278,7 @@ try {
   world.sparks.push({ x: 100, y: 100, life: 0.5 }); // ensure the kill-flash branch runs
   for (const ov of [0, 1, 2]) { world.overlay = ov; draw(); }
   world.overlay = 0;
-  drawChart(); drawCountChart(); updateHud();
+  drawChart(); drawCountChart(); drawArmsChart(); updateHud();
 } catch (e) { renderThrew = e; }
 check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays) / charts / hud render without throwing");
 

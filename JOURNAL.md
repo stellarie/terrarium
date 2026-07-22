@@ -161,10 +161,22 @@ second axis is a second thing a future "straddle the bistability" Expedition cou
 metabolism, being continuous and food-driven, may be an easier axis to fracture with spatial food
 heterogeneity than the lifestyle axis was.
 
-_Runs since the last Expedition:_ **4** — the concealment Expedition was four runs ago; the last four were
-Builds (hunter-trait-chart, senescence, regime-mood, then this metabolism run). The standing candidate for
-the next Expedition is "straddle the bistability" (below in the backlog) — the only path left to genuine
-within-world coexistence — mandatory once the counter reaches 5, so **one more Build** before it's owed.
+_Update (2026-07-22, death-balance Build): a legibility layer on the predation *force*, not the split._
+This run didn't touch the arc's stubborn core (grazers are still ONE broad cloud, k=1). It added the
+third chart — the **predation share of mote deaths** over time — which reads honestly which force limits
+the herd: **the hunters (top-down)** or **hunger (bottom-up)**. That's arc-adjacent, not arc-central: it
+makes the *grip* of the predation regime visible (you can now see whether hunters are even a killing force
+before asking whether they drove a split), but it doesn't advance within-world coexistence. Notably, the
+run began as an attempt at the backlog's "chart the arms-race gap" and **falsified that idea** — a gene-gap
+index read *backwards* from the ecology (normalized speed inverts absolute speed; hunters win by ambush,
+not legs) — so the honest, deaths-counted chart replaced it. The instruments the *real* Expedition needs
+(morph detector, `--split-test`, lifestyle rings, and now a per-sample death record) are all in place.
+
+_Runs since the last Expedition:_ **5** — the concealment Expedition was five runs ago; the last five were
+Builds (hunter-trait-chart, senescence, regime-mood, metabolism, this death-balance chart). **An Expedition
+is now OWED next run.** The standing candidate is "straddle the bistability" (below in the backlog) — the
+only path left to genuine within-world coexistence; the freshly-added cause-of-death record even hints at a
+spatial angle on it (a starvation-vs-predation *map*, below).
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -176,53 +188,51 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — ~12 `observe.js` 20,000-tick passes (3 pre-change baseline + ~9
-post-change) + 3 forced-arms-race probe runs + 5+ `smoke.js` seeds** (the metabolism-tradeoff Build,
-an **ecology** change to the grazer energy economy). This run's RNG drew **grazer-haven ~9 of 10**
-live passes, so the arms-race numbers below come partly from a throwaway probe that tops the predator
-tier up to ~45 to sustain the food-rich regime on demand (the seedable-world backlog item would end
-that gymnastics). All numbers are this run's fresh readings.
+**Last observed: 2026-07-22 — 5+ pre-change baseline `observe.js` 20,000-tick passes (3 in step-2 +
+death-share probes) + 2 post-change passes + 5 `smoke.js` seeds** (the death-balance-chart Build, a
+**dataviz/instrumentation** change — the economy never reads the new death-tally fields, so dynamics
+are **byte-identical**; the differing numbers below are the RNG draw, not the change). This run's RNG
+drew **grazer-haven in every live pass**, so arms-race figures below carry from prior runs / probes.
+All numbers are this run's fresh readings unless noted.
 
-- **THE METABO AXIS (this run's change — a dead gene made live).** `metabo` used to slide to **0.64**,
-  a hair off its **0.60 floor**, in every seed both regimes (pure cost, so lower always won — a dead
-  selection axis). Now it finds a food-dependent **interior optimum** and **splits by regime**:
-  **~0.75 in grazer-haven** (thrift wins the overgrazed barrens) vs **~1.1 in arms-race**
-  (forced-probe ~0.95–1.5; greedy throughput pays in the lush meadow), sd **~0.15–0.22** (real spread,
-  not a spike). **Not clamp-pinned in section [6]** either way; its section-[9] histogram went from
-  jammed `[@-.]` (BC 0.66) to spread `[@**=---:::.]` (BC 0.57) — *less* edge-skewed than before, and the
-  ⚑ there is the pre-existing BC hint, not a range-edge pin.
+- **THE DEATH-BALANCE (this run's new vital sign).** The predation share of recent mote deaths,
+  pooled over a ~300-tick trailing window. The **whole-run** split is **19–31% predation / 69–81%
+  starvation**, but the *windowed* share swings its **full 2–100% range (median ~67–80%)** — it rides
+  warm (predation the killer) between crashes and plunges cool (starvation) during overgraze die-offs,
+  so the new chart genuinely moves, it isn't a flat line. This is the honest replacement for a gene-gap
+  "who's winning" index that measured **backwards** (see the Log): it counts the actual deaths.
 - **THE BISTABILITY (still the deeper headline, untouched).** Two RNG-chosen attractors persist:
-  _arms-race_ (hunters mean **~40–60**, oscillating below the 75 cap) vs. _grazer-haven_ (hunters
-  bleed to **1–8**, mote sense **collapses 44→17–23**). Grazer-haven is still the **more common draw**.
-  Each regime selects one lifestyle (arms-race → fleers, haven → hiders); metabolism now leans the same
-  way (greedy in an arms-race, thrifty in a haven), a *second* regime-set axis beside lifestyle.
-- **motes:** min **35**, max **600**, mean **307–419**, CV ~33–44% — oscillates (the 0→6 net never fired).
-- **hunters:** arms-race mean **~40–60** (below cap); grazer-haven **1–8**. Never _exactly_ zero (the
-  reseed parachute holds). In deep grazer-haven the tier is small freshly-reseeded youngsters — not
-  self-sustaining there, topped up by the parachute.
-- **plants (biomass):** min **0–1**, max **~1370–1413**, mean **179–246**, CV ~135–165% — grazed to
-  near-zero in grazer-haven, lush in arms-race (grazers held down by predators).
+  _arms-race_ (hunters mean **~40–60**, below the 75 cap) vs. _grazer-haven_ (hunters bleed to **1–8**,
+  mote sense **collapses 44→17–27**). Grazer-haven the **more common draw** (all live passes this run).
+  Each regime still picks one lifestyle (arms-race → fleers, haven → hiders) and one metabolism (greedy
+  vs thrifty); a death-balance chart doesn't touch that — it just makes the predation *grip* legible.
+- **motes:** min **34**, max **600**, mean **~378**, CV ~39% — oscillates (the 0→6 net never fired).
+- **hunters:** grazer-haven **1–8** this run (arms-race ~40–60 historically). Never _exactly_ zero
+  (parachute holds); **0–2 phase flips** per run. In deep haven a small reseeded tier, not self-sustaining.
+- **plants (biomass):** min **0–1**, max **~1385**, mean **~267**, CV ~128% — grazed near-zero in a haven.
 - **gene-pool shape:** grazers **ONE broad cloud** (detector k=1); no genuine split. Unchanged — the
-  arc's core problem, untouched by a metabolism tweak.
-- **mote gene drift:** speed **1.0→1.5 ↑** (both regimes); size 3.3→2.1–2.4 ↓; grazer-haven sense
-  **collapses 44→17–23**; **metabo now regime-dependent** (1.04→~0.75 haven / ~1.1 arms) where it used
-  to floor at 0.64 in both.
-- **hunter gene drift:** stable and untouched by this run — speed ~1.7, size ~5, sense ~70, metabo ~1.03;
-  none clamp-pinned in section [6].
-- **boredom check: NOT a fixed point.** Genes shift **3/5–5/5** >8% between tick 1k and the end;
-  populations swing.
-- **known pre-existing marginal (noted, not fixed — neighbouring mess):** `smoke.js`'s `hunterBorn > 0`
-  flakes ~1-in-6 on harsh grazer-haven seeds where the tiny starved tier never banks 285 energy to
-  breed. Documented pre-existing by A/B (prior runs); did **not** fire in this run's 5 seeds.
-- **live pixels:** ❗ **still un-eyeballed — a TWELFTH straight deferral.** This run's metabo→saturation
-  tint (thrifty pale, fast-burner vivid) is headless-correct and its draw path runs without throwing,
-  but its **actual colours are unseen** — the browser pane won't composite in an autonomous run.
-  "Unverified" remains the honest status of the whole visual layer, a structural blind spot.
+  arc's core, untouched by a chart.
+- **mote gene drift:** speed **1.0→1.44 ↑**; size 3.1→2.0 ↓; grazer-haven sense **collapses 46.8→26.5**;
+  metabo 1.0→~0.79 (thrift in the haven).
+- **hunter gene drift:** speed 1.6→2.14 ↑; size ~4.5–5.3; sense drifts 72→55 (undirected in a haven,
+  tiny tier); **metabo wanders 1.09→1.47 up one pass, →0.63 down another** — pure-cost + glacial turnover,
+  a dead axis awaiting the "hunter metabolic tradeoff" backlog fix. None clamp-pinned in section [6].
+- **flow per 1k:** births ~160–192, starved ~114–119, eaten ~27–53; hunter births ~0.3–1.0; aged-out
+  **36–52%** of hunter deaths.
+- **boredom check: NOT a fixed point.** Genes shift **5/5** >8% between tick 1k and the end; pops swing.
+- **known pre-existing marginal (noted, not fixed):** `smoke.js`'s `hunterBorn > 0` flakes ~1-in-6 on
+  harsh grazer-haven seeds where the starved tier never banks enough to breed. Did **not** fire in this
+  run's 5 seeds.
+- **live pixels:** ❗ **still un-eyeballed — a 13TH straight deferral**, but a *less blind* one: the page
+  loaded in a real Chromium with **zero console errors** and the new `chart3` canvas is present at
+  **960×96**, so the code runs in a browser and the layout is structurally correct. What's unseen is the
+  band's **actual warm/cool colours** — `requestAnimationFrame` stays suspended while the pane isn't
+  composited, so `draw()` never fires and `getImageData` reads a blank buffer. Structural blind spot.
 
-_previously:_ (2026-07-22, regime-mood-tint Build, view-only) bistability the deeper headline; arms-race
-hunters mean 41–52 / mote sense ~48; grazer-haven hunters 1–10 / sense collapses 47→22; motes min 32 /
-mean 363–419; plants mean 164–208; grazers one broad cloud; metabo →0.64 (floored, pre-change); smoke 40
-checks; live pixels un-eyeballed (11th deferral).
+_previously:_ (2026-07-22, metabolism-tradeoff Build, ecology) bistability the deeper headline; metabo
+made live, splits by regime (~0.75 haven / ~1.1 arms), no longer floored; grazers one broad cloud;
+motes mean 307–419, hunters 1–8 / 40–60, plants mean 179–246; smoke 43 checks; live pixels un-eyeballed
+(12th deferral).
 
 ---
 
@@ -399,18 +409,18 @@ the backlog.**
 
 ## Architecture (as of 2026-07-22)
 
-- `index.html` — page shell, canvas, HUD (incl. the `s-regime` chip), two chart canvases
-  (`#chart`, `#chart2`), controls.
+- `index.html` — page shell, canvas, HUD (incl. the `s-regime` chip), three chart canvases
+  (`#chart` trait, `#chart2` trophic cascade, `#chart3` death-balance), controls.
 - `style.css` — dark terrarium styling. CSS variables at the top; `.stat.wide` widens the regime chip.
 - `sim.js` — everything: one IIFE. Sections are commented: config, helpers (incl. toroidal
   distance/bearing, **`hideability`/`concealment`** and **`metaboIntakeMult`**), the vegetation grid, seasons, entities
   (motes _and_ hunters), world state, vegetation dynamics, **morph detection**, **regime detection**
   (incl. **`regimeMood`**), history sample, `step()` (grazers with the freeze/flee choice, then hunters
   with cover-aware sight), `draw()` (a regime-mood-leaned background + vignette, then motes ringed by
-  lifestyle), trait chart, trophic-cascade chart, HUD, loop, controls. Ends
+  lifestyle), trait chart, trophic-cascade chart, **death-balance chart**, HUD, loop, controls. Ends
   with a Node-only `module.exports` hook (skipped in browsers) so both harnesses drive the real internals.
-- `shim.js` — the shared headless DOM/canvas shim (Node only). Installs `document`, the three
-  canvases (carrying real pixel dims), stub elements and a no-op `requestAnimationFrame` as
+- `shim.js` — the shared headless DOM/canvas shim (Node only). Installs `document`, the four
+  canvases (`world`, `chart`, `chart2`, `chart3` — carrying real pixel dims), stub elements and a no-op `requestAnimationFrame` as
   globals, so a bare `require('./sim.js')` boots the real world under Node. Every 2d-context method
   is a no-op **except** `measureText` (returns zero width) and `createLinear/RadialGradient` (return a
   stub with a no-op `addColorStop`), so `draw()`'s gradient paths — the trait chart's fades and the new
@@ -418,7 +428,7 @@ the backlog.**
   Both harnesses `require('./shim.js')` before `sim.js`, so they drive byte-identical internals.
   (Extracted 2026-07-22 from `smoke.js`'s formerly-inline copy, so the two can't drift.)
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **43 checks** — no throw, the world never empties,
+  runs 7200 ticks (3 seasons), and asserts **49 checks** — no throw, the world never empties,
   plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records, and
   **every history sample carries finite in-range hunter gene means for the trait chart (null only
   when the predator tier is empty)** (2 checks); and for the predator layer: hunters catch prey,
@@ -437,7 +447,10 @@ the backlog.**
   also drives the leaned-background and vignette draw path through the shim's gradient stub** (3 checks);
   **the metabolism intake multiplier is neutral at metabo=1, monotone-increasing, and concave — the
   three properties that make metabolism a live interior-optimum axis rather than a dead floored one**
-  (3 checks); plus every render path — all three overlay modes, both charts, hunters and kill-flashes — runs without throwing.
+  (3 checks); **the death-balance metric `predationShare` is honest by construction — it reads 1 when
+  only hunters kill, 0 when only hunger does, 0.5 on an even split, null when nothing died, and pools
+  only its trailing window** (6 checks); plus every render path — all three overlay modes, all three
+  charts, hunters and kill-flashes — runs without throwing.
   Because it uses real randomness, tune by running it across several seeds.
   It is the parachute that makes Expeditions safe. **It is not a microscope:** it answers "is
   anything broken?" with pass/fail and says nothing about what the world is _doing_. (Caveat
@@ -448,7 +461,9 @@ the backlog.**
   and _prints_ the step-2 report rather than asserting: [1] integrity (throws/NaN), [2] per-tier
   population min/max/mean/CV with a motion verdict, [3] safety-net firings, [4] per-1k flow rates
   (incl. **hunter aged-out deaths** and what fraction of hunter mortality is old age — the
-  senescence turnover made legible), [5] an age histogram, [6] per-gene drift for **both** species
+  senescence turnover made legible — plus a **death-balance line**: the windowed predation share's
+  swing range/median/endpoint across the history buffer, so the new chart's dynamics are counted, not
+  eyeballed), [5] an age histogram, [6] per-gene drift for **both** species
   with edge-pin (⚑) flags, [7] a
   boredom check (tick 1k vs the end), [8] coarse 48×16 ASCII maps of vegetation and life, and
   **[9] gene-pool shape** — for each grazer gene its sd, a 24-bin histogram, a bimodality
@@ -614,10 +629,11 @@ the backlog.**
   fast-burner vivid) so the axis is visible. `smoke.js` asserts the multiplier's shape deterministically
   (neutral at 1, monotone, concave).
 - `world.history` is a rolling buffer of samples
-  `{ speed, size, sense, hspeed, hsize, hsense, pop, hunters, food }` — `speed/size/sense` are the mote
+  `{ speed, size, sense, hspeed, hsize, hsense, pop, hunters, food, de, dd }` — `speed/size/sense` are the mote
   gene means, `hspeed/hsize/hsense` the **hunter** gene means (or `null` when the tier is empty that
-  sample), `food` is **total plant biomass** — taken every `CONFIG.sampleEvery` ticks; both charts read
-  from it. The upper **trait chart** now plots *both* gene pools: the three grazer genes as solid lines
+  sample), `food` is **total plant biomass**, and `de`/`dd` are the **predation / starvation deaths in
+  that sample's window** (deltas of `world.eaten` / `world.died`) — taken every `CONFIG.sampleEvery`
+  ticks; all three charts read from it. The upper **trait chart** plots *both* gene pools: the three grazer genes as solid lines
   and the three hunter genes as **dashed** lines, each normalized to its own species' clamp range, so the
   coevolutionary arms race is legible on both sides (the legend shows each gene as a `grazer·hunter`
   pair, and a `null` breaks the dashed line into a gap rather than plunging it to the floor). The lower
@@ -625,6 +641,19 @@ the backlog.**
   and hunters, each normalised to its _own_ recent peak (their magnitudes span orders of
   magnitude), so all three fill the panel and the eye can follow a bloom rippling up the food
   chain with a lag at each tier. The legend still shows each tier's absolute current count.
+- **The death-balance chart** (`#chart3`, `drawArmsChart` + `predationShare`, exported; added 2026-07-22) —
+  the third chart, a diverging band above/below a central 50/50 line answering *what is killing the herd
+  right now*: **warm above** = the hunters are (predation, top-down control, an arms-race), **cool below**
+  = hunger is (starvation, bottom-up/food-limited, a grazer-haven). `predationShare(hist, i, win)` pools
+  the predation (`de`) and starvation (`dd`) deaths over a trailing `CONFIG.predWindow` (10 samples ≈ 300
+  ticks) and returns predation / (predation + starvation), or `null` if nothing died (the band breaks
+  rather than lying). The metric is **honest by construction** — it counts actual deaths, so it tracks
+  the regime and can't read backwards the way a gene-gap "who's-winning" index did (that idea was tried
+  this run and refuted; see the Log). Pure view: nothing in the economy reads `de`/`dd` back, so it's
+  byte-identical to before. It rides warm between crashes and plunges cool during overgraze die-offs, so
+  the boom-bust and the bistability both read off it. `smoke.js` asserts the metric's values and windowing
+  deterministically; `observe.js` [4] reports its swing range. Its colours are the one un-eyeballed part
+  (the pane won't composite headlessly, as with every visual layer).
 - **Seasons:** a sine on the tick scales plant _growth & seeding_ (no longer a spawn
   rate) by 0.4×–1.6× over a 2400-tick period, with a day/night background tint and a HUD
   `season ×N.NN ↑/↓` readout.
@@ -636,6 +665,29 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — what's killing the herd: a death-balance chart (predation vs. hunger)
+
+**Observed:** three fresh `observe.js` passes all drew grazer-haven, and the thing the arc most
+wants legible — the coevolution — was the hardest thing on the page to read: the trait chart stacks
+six faint lines, so judging "who's winning the arms race" means differencing two by eye. I first
+built the obvious fix, a single "who leads the chase" gene-gap line, and my own probe **falsified it
+twice**: normalizing each species' speed to its own range *inverts absolute speed* (a mote at 1.6
+out-reads a hunter at 2.0), so a thriving 68-hunter arms-race showed the herd "ahead" and collapsed
+havens showed hunters "ahead" — backwards from the ecology, since hunters win by ambush, not legs.
+So I dropped the gene-gap and pointed the new third chart at something honest **by construction**:
+the predation share of recent mote deaths. A visitor now watches a diverging band — **warm when the
+hunters are doing the killing** (arms-race, top-down control), **cool when hunger is** (grazer-haven,
+food-limited) — that rides warm between crashes and plunges cool during overgraze die-offs, so the
+boom-bust and the regime read at a glance without touching a gene (measured to swing its full 2–100%
+range across a run, median ~67–80%). Pure instrumentation: the economy never reads the new death
+fields, so dynamics are byte-identical. Verified: `node --check` ×4; `smoke.js` green at **49 checks**
+across 5 seeds (6 new — the share reads 1/0/0.5/null right and pools only its trailing window); two
+clean 20k `observe.js` passes with a new death-balance line; no runtime network calls; a clean
+real-browser load (zero console errors, canvas 960×96). Live colours still un-eyeballed — the pane
+won't composite headlessly, a 13th deferral (though this run confirmed the real-browser load and
+correct dims). (Category: dataviz — rotated off ecology; a Build. The Expedition counter reaches
+**5 — an Expedition is now owed next run**.)
 
 ### 2026-07-22 — metabolism becomes a real fast/slow tradeoff (a dead gene comes alive)
 
@@ -989,11 +1041,29 @@ freely. Add two per run, at least one ambitious.
   brief mark where an old hunter drops (distinct from a kill-flash) — so a viewer can *see* the tier
   turning over, not just infer it from the chart. Pairs with the existing "cause-of-death readout" idea.
   Pure view layer over counters that already exist; headless-verifiable that the tallies sum correctly.
-- **[Build] Chart the arms-race gap directly.** The two-species chart makes the eye compare two lines to
-  judge "who's winning" right now; compute one derived series instead — e.g. normalized
-  (hunter\_sense − mote\_sense), or a speed ratio — and plot it as a single line crossing a zero baseline,
-  turning the chart's *implicit* story into an explicit "predators ahead / prey ahead" readout. Pure
-  function of `world.history`, so fully headless-verifiable; a natural follow-on to this run.
+- **[Build] Retired (attempted & falsified): "Chart the arms-race gap directly."** Tried this run as a
+  single "who leads the chase" gene-gap line — and the probe **refuted it twice**: normalizing each
+  species' speed to its own clamp range *inverts absolute speed* (a mote at 1.6 out-norms a hunter at
+  2.0), so a thriving arms-race read "prey ahead" and a collapsed haven read "predators ahead" — exactly
+  backwards, because hunters win by **ambush, not legs** (the journal already knew "a panicking mote
+  outruns any lone hunter"). No single gene-gap scalar honestly captures "who's winning" here. Replaced
+  by the **death-balance chart** (the predation share of mote deaths), which is honest by construction
+  because it counts the actual deaths. Lesson kept: a derived "who's winning" series must be validated
+  against the ecology before shipping, not assumed from gene means.
+- **[Build] Split the HUD "died" tally by cause + a cool mark where a mote starves.** Now that `de`/`dd`
+  (predation vs. starvation deaths) are recorded per history sample, surface the split in the HUD (like
+  the hunter aged/starved readout) and drop a distinct *cool* fading mark where a mote starves — vs. the
+  warm kill-flash where one is eaten — so the death-balance chart's story is also visible **in the field**,
+  not only in the panel. View layer over counters that already exist; headless-verifiable the tallies sum.
+- **[Expedition] A cause-of-death *map* — where the herd starves vs. gets eaten** _(ambitious — I'm not
+  sure the spatial signal is legible enough to cluster)_. Accumulate starvation-death and predation-death
+  *locations* into two decaying fields (built like the grazing overlay the economy never reads back), and
+  add an overlay mode that paints them cool/warm over the meadow. If starvation clusters in the overgrazed
+  barrens and predation in the hunters' territories, the map would expose the **spatial heterogeneity** the
+  "straddle the bistability" arc keeps needing — showing directly where a hider stronghold (safe, food-poor)
+  and a fleer country (dangerous, food-rich) could each be locally optimal *at the same time*. Turns the
+  temporal death-balance into a map that might finally point at within-world coexistence. Risk: deaths may
+  be too diffuse to form legible clusters, and it overlaps the pending speciation Expedition.
 - **[Build] Perception upkeep — give `sense` an explicit cost** _(follow-on to the fear fix)_.
   Sense now has a survival _benefit_ (spot hunters sooner) but no explicit _cost_, so in the most
   predator-dense seeds it could in principle creep toward the 120 ceiling (not yet observed — it
