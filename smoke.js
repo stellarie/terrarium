@@ -128,6 +128,29 @@ check(gmax > 0, `grazing pressure was recorded for the overlay (peak ${gmax.toFi
 // history is being recorded for the charts
 check(world.history.length > 10, `history buffer filled for the charts (${world.history.length} samples)`);
 
+// the trait chart now tracks BOTH gene pools: every sample carries the hunter gene
+// means (finite when hunters exist, null when the tier is empty), so the dashed
+// predator curves have data to draw and a collapse leaves a gap, not a false plunge.
+{
+  let hFinite = 0, hNull = 0, hBad = false;
+  for (const s of world.history) {
+    if (!("hspeed" in s) || !("hsize" in s) || !("hsense" in s)) { hBad = true; break; }
+    const anyNull = s.hspeed === null || s.hsize === null || s.hsense === null;
+    if (anyNull) {
+      // null is only legal when the whole tier is genuinely empty that sample
+      if (!(s.hspeed === null && s.hsize === null && s.hsense === null)) hBad = true;
+      hNull++;
+    } else {
+      if (!finite(s.hspeed) || !finite(s.hsize) || !finite(s.hsense)) hBad = true;
+      // within the hunter clamp ranges
+      if (s.hspeed < 0.6 || s.hspeed > 3.2 || s.hsense < 24 || s.hsense > 170) hBad = true;
+      hFinite++;
+    }
+  }
+  check(!hBad, "hunter gene means recorded for the trait chart (finite in range, all-null only when empty)");
+  check(hFinite > 0, `hunter curves have real data to plot (${hFinite} samples with hunters, ${hNull} empty)`);
+}
+
 // concealment (Arc III): a mote hides from hunters only when it is small AND slow AND
 // standing on dense vegetation — the trade-off that lets predation split the herd into
 // hiders and fleers. Test the mechanic deterministically by planting motes on a cell
