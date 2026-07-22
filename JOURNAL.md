@@ -89,6 +89,9 @@ Keep changes small enough that each session ends with a strictly better, working
 
 ## Log
 
+### 2026-07-22 — the world breathes now (seasons)
+Added a slow seasonal cycle: a sine on the tick scales the food-spawn rate between 0.4× and 1.6× over a 2400-tick period, with a subtle day/night background tint in the world and a HUD `season ×N.NN ↑/↓` readout so the phase is legible. This directly answers the "stable but flat" balance note — a headless run over 2.5 cycles (6000 ticks, zero exceptions, world never emptied) shows steady-state population now genuinely oscillating ~232–447 instead of sitting flat, and lagging the food peaks the way a real consumer–resource system does (avg pop is higher at winter trough than summer peak). Verified with `node --check` and the headless harness; live pixels still want an interactive eyeball since the file:// preview pins a stale snapshot, and a natural next step is to draw the season band onto the pop/food chart.
+
 ### 2026-07-22 — see the boom & bust (population + food chart)
 Added a second live chart beneath the trait chart that plots population and food counts over time on a shared auto-scaled axis, so the economy's boom-and-bust is finally visible instead of guessed — the rolling sampler (renamed `sampleTraits`→`sample`) now records `pop`/`food` alongside the gene averages, and a new `drawCountChart()` mirrors the trait renderer. It's purely additive: it only reads world state, so like the trait chart it can't perturb the economy. Verified with `node --check` and a headless DOM/canvas harness that ran the real `sim.js` for ~12k steps with zero exceptions and unchanged dynamics — but the new panel's live pixels weren't eyeballed (the file:// preview pinned a stale pre-edit snapshot of `sim.js`, so a future interactive run should confirm the visuals), and that same run corrected an old belief: the economy self-regulates to a food-limited plateau (~300–360 motes, food grazed to ~10–20) rather than overpopulating and starving.
 
@@ -118,8 +121,14 @@ Ordered roughly by how much they'd add. Pick one per session.
   cycles are the classic emergent payoff.
 - **Vision-based steering.** Replace "nearest food" with a couple of forward-facing
   sensors, edging toward tiny neural brains.
-- **Seasons / day-night.** Global food rate oscillates; watch traits track the cycle.
 - **Save / share a world.** Serialize the seed + config to a URL hash.
+- **Season band on the pop/food chart.** Store each sample's food multiplier in
+  `history` and tint the count chart's columns by it, so a boom or bust can be read
+  directly against the seasonal cause driving it instead of inferred.
+- **Trait-vs-season correlation.** Now that food oscillates, measure whether mean
+  metabolism/speed lag the season (thrifty grazers ought to win lean winters) — a small
+  phase-shift or correlation readout that makes "selection tracks the cycle" measurable,
+  not just visible.
 - **Toggle chart series.** Click a legend swatch to hide/show that line on either
   chart, so you can isolate one trait or watch pop-vs-food alone; keep the on/off
   flags in a tiny UI-state object.

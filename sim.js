@@ -40,6 +40,8 @@
     maxPop: 600,
     sampleEvery: 30,         // ticks between trait-history samples
     historyCap: 240,         // how many samples the trait chart keeps
+    seasonPeriod: 2400,      // ticks per full seasonal cycle (summer→winter→summer)
+    seasonAmplitude: 0.6,    // food-rate swing; <1 so lean winters never fully starve
   };
 
   // Traits plotted on the live chart, each normalized to its full genetic range
@@ -65,6 +67,14 @@
   function mutate(v, amt, lo, hi) {
     return clamp(v + rand(-amt, amt), lo, hi);
   }
+
+  // ---- seasons ------------------------------------------------------------
+  // A slow global cycle makes the economy breathe: summers of plenty, lean
+  // winters. seasonWave is a sine in [-1, 1] driven by the tick; seasonFood
+  // turns it into a food-spawn multiplier kept above zero by the amplitude clamp.
+  const seasonWave = () =>
+    Math.sin((world.tick / CONFIG.seasonPeriod) * Math.PI * 2);
+  const seasonFood = () => 1 + CONFIG.seasonAmplitude * seasonWave();
 
   // ---- entities -----------------------------------------------------------
   function makeGenome(parent) {
@@ -164,8 +174,8 @@
   function step() {
     world.tick++;
 
-    // spawn food
-    let toSpawn = CONFIG.foodSpawnPerTick;
+    // spawn food — scaled by the season so plenty and scarcity ebb and flow
+    let toSpawn = CONFIG.foodSpawnPerTick * seasonFood();
     while (toSpawn > 0 && world.food.length < CONFIG.maxFood) {
       if (toSpawn >= 1 || Math.random() < toSpawn) world.food.push(makeFood());
       toSpawn -= 1;
@@ -238,7 +248,13 @@
 
   // ---- render -------------------------------------------------------------
   function draw() {
-    ctx.fillStyle = "#060a0f";
+    // background shifts subtly with the season: darker/cooler in winter,
+    // a touch lighter and warmer at the height of summer.
+    const p = (seasonWave() + 1) / 2; // 0 = deep winter, 1 = high summer
+    const r = Math.round(6 + 12 * p);
+    const g = Math.round(10 + 10 * p);
+    const b = Math.round(15 + 11 * p);
+    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
     ctx.fillRect(0, 0, W, H);
 
     // food
@@ -394,6 +410,7 @@
     food: document.getElementById("s-food"),
     born: document.getElementById("s-born"),
     died: document.getElementById("s-died"),
+    season: document.getElementById("s-season"),
   };
   function updateHud() {
     el.tick.textContent = world.tick;
@@ -401,6 +418,9 @@
     el.food.textContent = world.food.length;
     el.born.textContent = world.born;
     el.died.textContent = world.died;
+    // food multiplier, with an arrow for whether we're warming toward summer
+    const rising = Math.cos((world.tick / CONFIG.seasonPeriod) * Math.PI * 2) >= 0;
+    el.season.textContent = `×${seasonFood().toFixed(2)} ${rising ? "↑" : "↓"}`;
   }
 
   // ---- loop ---------------------------------------------------------------
