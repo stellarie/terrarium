@@ -71,6 +71,10 @@ let moteZeroTicks = 0, hunterEmptyTicks = 0;
 let hunterEpisodes = 0, curEmpty = 0, longestEmpty = 0;   // hunter extinction stretches
 let prevHunters = world.hunters.length;
 let earlySnap = null;           // boredom check: a window around tick ~1000
+// regime census: how long the live readout spent in each attractor, and how often
+// it tipped between them (the bistability, finally counted rather than eyeballed)
+const regimeTicks = { settling: 0, "arms-race": 0, "grazer-haven": 0 };
+let recoveringTicks = 0, regimeFlips = 0, prevRegime = "settling";
 let threw = null;
 
 const t0 = Date.now();
@@ -84,6 +88,13 @@ try {
     else { if (curEmpty > longestEmpty) longestEmpty = curEmpty; curEmpty = 0; }
     if (prevHunters > 0 && hn === 0) hunterEpisodes++;   // a fresh extinction stretch begins
     prevHunters = hn;
+
+    const rs = world.regime.state;                       // step() refreshes this each sample
+    regimeTicks[rs] = (regimeTicks[rs] || 0) + 1;
+    if (rs === "grazer-haven" && world.regime.trend === "recovering") recoveringTicks++;
+    if ((rs === "arms-race" || rs === "grazer-haven") &&
+        (prevRegime === "arms-race" || prevRegime === "grazer-haven") && rs !== prevRegime) regimeFlips++;
+    prevRegime = rs;
 
     if (t === 1000) {
       earlySnap = { pop: p, hunters: hn, bio: b,
@@ -158,6 +169,9 @@ lifeMap();
 
 line("\n[9] GENE-POOL SHAPE  (the mean hides the shape — has the grazer pool SPLIT?)");
 shapeReport();
+
+line("\n[10] REGIME  (which bistable attractor this seed settled in — the live, hysteretic readout)");
+regimeReport();
 
 line();
 line(threw ? "READING ABORTED — the sim threw (see [1])." :
@@ -313,6 +327,20 @@ function shapeReport() {
     : "ONE broad cloud — no genuine split";
   line(`    morph detector: ${verdict}`);
   line("    (⚑ = BC>0.555, a hint of non-unimodality; the detector needs a real valley, not just skew)");
+}
+
+// The bistability, named and counted. A single unseeded run only visits ONE of the
+// two attractors, so this says *which* one (no more decoding hunter counts by hand)
+// and how long the readout held each state — a run that flips is the interesting one.
+function regimeReport() {
+  const r = world.regime;
+  const pct = (n) => ((100 * n) / TICKS).toFixed(0);
+  line(`    settled in : ${r.label}`);
+  line(`    hunters    : mean ${fmt(r.hmean, 1)} over the last ${CONFIG.regimeWindow} history samples`);
+  line(`    time in    : arms-race ${pad(pct(regimeTicks["arms-race"]), 3)}%  ·  ` +
+       `grazer-haven ${pad(pct(regimeTicks["grazer-haven"]), 3)}%  ·  settling ${pad(pct(regimeTicks.settling), 3)}%`);
+  line(`    recovering : ${pad(pct(recoveringTicks), 3)}% of ticks (a predator tier visibly clawing back)`);
+  line(`    phase flips: ${regimeFlips} (attractor → attractor over the run)`);
 }
 
 process.exit(threw || nanFlags.length ? 1 : 0);

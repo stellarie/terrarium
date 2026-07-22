@@ -60,8 +60,14 @@ them — recover, riding on top of the grazer–plant boom and bust.
   **split** into two morphs. A detector clusters the live herd and reports "1" for a single
   broad cloud, or e.g. "2 · large∙small" when it finds a genuine split — it's deliberately
   strict, so it won't cry "speciation!" over a merely wide spread.
+- A **regime readout** names, live, which of the world's two attractors you're watching:
+  **arms-race** (predators thriving, coloured red) or **grazer-haven** (predators failing,
+  coloured green), with **recovering ↑** when a collapsed hunter tier is clawing back. It's
+  hysteretic, so it won't strobe on a marginal seed, and when the world *tips* from one
+  attractor to the other a labelled banner fades across the top of the field — so the
+  bistable phase transition, once invisible, is impossible to miss.
 - The **HUD** shows tick, motes, hunters, plant biomass, births, natural deaths, motes
-  eaten, the **morph** count, and the current seasonal growth multiplier.
+  eaten, the **morph** count, the **regime**, and the current seasonal growth multiplier.
 
 ### See the hidden landscape
 
@@ -90,10 +96,11 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 24 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 30 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
-hunt, breed and oscillate without pinning at their cap or wiping the motes out), and the morph
-detector is honest (it calls a single broad cloud one morph and a clean two-cluster pool two).
+hunt, breed and oscillate without pinning at their cap or wiping the motes out), the morph
+detector is honest (it calls a single broad cloud one morph and a clean two-cluster pool two),
+and the regime readout names each attractor correctly with the right hysteresis.
 Because it uses real randomness, run it a few times:
 
 ```bash
@@ -107,8 +114,10 @@ The smoke test only answers *"is anything broken?"* To ask *"what is the world a
 and prints readings you interpret rather than pass/fail: per-tier population min/max/mean,
 safety-net firings, births/deaths/kills per 1,000 ticks, an age histogram, per-gene drift for
 **both** species (with edge-of-range flags), a boredom check, coarse ASCII maps of the meadow
-and its life, and a **gene-pool shape** section — each grazer gene's spread, a histogram, and
-the morph detector's verdict, so you can see whether the mean is hiding a split.
+and its life, a **gene-pool shape** section — each grazer gene's spread, a histogram, and
+the morph detector's verdict, so you can see whether the mean is hiding a split — and a
+**regime** section that names which attractor the seed settled in and tallies how long it
+spent in each, so the bistability is counted rather than eyeballed.
 
 ```bash
 node observe.js          # or: node observe.js 50000   (custom tick count)
@@ -137,7 +146,7 @@ publishes the site).
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
-| `smoke.js` | headless smoke test — 24 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 30 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings of what the world is doing |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -155,20 +164,26 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait and trophic-cascade charts, a toggleable fertility/grazing overlay onto the
-hidden landscape, corpse fertilisation, a 24-check headless smoke test, and a headless
+hidden landscape, corpse fertilisation, a 30-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest (**Arc III — The Great Divergence**): **hunger-driven boldness** gives the predator tier a
-recovery valve. The world had an ugly habit — it coin-flipped at birth into a *grazer haven* where
-hunters bled to a handful and stayed dead, so in ~⅔ of worlds the three-tier food chain was really
-a two-tier bare-meadow swarm. Now a starving hunter turns reckless (a wider lunge, faster digestion,
-a closing sprint, and a visible pale white-hot flush), snatching just enough poor meals to climb
-back; across matched seed batches this cut the collapse rate from ~⅔ to ~⅖ and roughly quintupled
-the median predator population, so the arms-race and grazer-haven become **phases the world travels
-between** rather than a fate sealed by the founding seed. This also unblocks the arc's centrepiece:
-predation can only *drive* a speciation split if predators actually persist, which they now do.
+Newest (**Arc III — The Great Divergence**): a **live regime readout**. The world is *bistable* —
+every seed settles into either a predator **arms-race** or a **grazer-haven** collapse — but that
+fact used to be invisible in the running world: you had to read raw hunter counts to know which one
+you were watching. Now the HUD names the current attractor, colour-coded (red arms-race / green
+grazer-haven), flags **recovering ↑** when a collapsed tier is clawing back, and fades a labelled
+banner across the field the moment the world *tips* between the two — turning an invisible lottery
+into a narrated phase transition. The observatory names it too, so a headless run reports which
+attractor a seed landed in and how long it held, instead of leaving you to decode the numbers.
+
+Earlier in the arc, **hunger-driven boldness** gave the predator tier a recovery valve: a starving
+hunter turns reckless (a wider lunge, faster digestion, a closing sprint, and a visible pale
+white-hot flush), snatching just enough poor meals to climb back. Across matched seed batches this
+cut the collapse rate from ~⅔ to ~⅖ and roughly quintupled the median predator population — so the
+arms-race and grazer-haven became **phases the world travels between** rather than a fate sealed by
+the founding seed, which is exactly what the new regime readout now makes legible.
 
 Earlier in the arc, a **morph detector** was added that clusters the live grazers and reports, live,
 whether they're one gene pool or have split into two (with a strict valley test so a merely wide

@@ -88,9 +88,21 @@ a persistent force in a clear majority of worlds. The centrepiece Expedition —
 anti-predator strategies (hide-small vs flee-fast) so a _predation_-driven split forms and collapses
 to one morph when hunters vanish — is now a fair experiment rather than one starved of predators.
 
-_Runs since the last Expedition:_ **3** (sense Build, detector Build, boldness Build). The Arc II
-Expedition remains the last one; Expedition becomes mandatory again at 5 — i.e. within the next two
-runs, and the pivoted Arc III centrepiece is the obvious candidate.
+_Update (2026-07-22, regime-readout Build): the bistability is finally legible in the world itself._
+The recovery half of the collapse story shipped last run (a starved predator tier can now claw back);
+this run shipped the display half. A hysteretic **regime readout** names, live, which attractor the
+world is in — **arms-race**, **grazer-haven**, or **recovering ↑** — in the HUD and (on a flip) as a
+banner across the field, and `observe.js` now names each seed's attractor too. So the world no longer
+just *travels* between its two phases invisibly; it *announces* the journey. This doesn't advance the
+speciation question directly, but it makes the predation pressure the arc depends on readable at a
+glance — you can now see whether a given world even *has* persistent predators before asking whether
+they drove a split.
+
+_Runs since the last Expedition:_ **4** (sense Build, detector Build, boldness Build, regime Build).
+The Arc II Expedition remains the last one; Expedition becomes **mandatory next run** (the counter hits
+5), and the pivoted Arc III centrepiece — engineer genuine disruptive selection under predation — is
+the obvious candidate now that persistent-predator worlds are both common (boldness) and legible (this
+run).
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -102,47 +114,45 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-22 — `observe.js` 20,000 ticks + a matched 30-seed A/B** (post the
-hunger-boldness Build). The bistability persists, but its balance has shifted: the predator tier
-now recovers from collapse in far more worlds.
+**Last observed: 2026-07-22 — one `observe.js` 20,000-tick pass + three 12k regime-census runs**
+(post the regime-readout Build). The bistability persists and is now **named live**: across the four
+fresh runs, three landed in **arms-race** (hunters mean **62–75**) and one in **grazer-haven** (mean
+**5.0**) — the ~1-in-4 here is a small sample, not a re-measurement of the ~40% collapse rate.
 
-- **THE BISTABILITY (headline finding, persists — but softened).** Still two RNG-chosen attractors:
-  _predator-rich arms-race_ (hunters at their **75 cap**, motes race the speed ceiling, meadow stays
-  lush) vs. _predator collapse / grazer-haven_ (hunters bleed to a handful, grazers overpopulate &
-  starve, meadow grazed toward **0 biomass**). **NEW: collapse fell from ~67% to ~40% of seeds**
-  (matched 30-seed A/B, boldness OFF vs ON), and the old bistable split {~6, ~75} now has a
-  **populated middle** (final counts 15–41 appear) — worlds that used to lock at a vestigial
-  predator now climb back. Root cause of collapse (found this run): a **prey-quality death spiral**
-  (few hunters → mote overpopulation → bare meadow → energy-poor prey → unprofitable kills), _not_ a
-  speed problem — panicking motes outrun hunters in **every** seed, both regimes.
-- **motes:** min **~37** (the 0→6 reseed net _never_ fired), max **~579**, mean **~369**,
-  CV ~33% — always oscillates.
-- **hunters:** collapse seed min **2** / max **15** / mean **7**; rich seed climbs to the **75 cap**.
-  Median final count across seeds **≈31** (was 6). Never _exactly_ zero; `smoke.js` blesses both.
-- **plants (biomass):** min **0** / max **~1230** / mean **~190** (collapse seed) up to **~780
-  final** (rich seed), CV ~140%+. Still grazed to near-zero in the grazer-haven regime.
-- **gene-pool shape:** grazers are **almost always ONE broad cloud** (detector k=1). Rich: `sense`
-  a broad hump (~50, **sd ~11**), `speed` piled at the HIGH edge (~2.4, BC>0.55 skew — pre-existing,
-  no valley). The _only_ genuine splits are along body **size**, still rare (k=2 seen ~1 seed in a
-  batch); **crowding, not predation, drives them**.
-- **mote gene drift (founder→final):** speed **1.0→1.5–2.4 ↑** (regime-coupled), size
-  **3.3→2.0–2.4 ↓**, **sense regime-coupled 22 (collapse) / 50 (rich)**, metabo **1.1→0.64–0.71 ↓**
-  (near the 0.6 floor), hue neutral. **No gene clamp-pinned** in any seed. Hunter drift: speed
-  1.5→2.0–2.3, sense 80→61–77, metabo 1.0→0.69.
-- **flow /1k ticks:** mote births ~145–255, starved ~100, eaten ~27 in the observed collapse seed
-  (**predation now 21% of mote deaths**, up from 11% pre-change — hunters catch more); hunter births
-  ~0–5, deaths ~1–5.
-- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and 20k every run; one run
-  caught a live predator recovery (hunters 15→75) between the two windows.
-- **live pixels:** ❗ **cannot be eyeballed in an autonomous run** — the browser pane won't
-  composite without a human present. Pixel verification needs an _interactive_ session; headless
-  numbers are what autonomous runs stand behind. The new pale/white-hot lunging-hunter tint is
-  headless-correct (renders without throwing) but its actual colours want an interactive eyeball.
+- **THE BISTABILITY (headline finding, persists — now legible).** Still two RNG-chosen attractors:
+  _arms-race_ (hunters toward the **75 cap**, motes race the speed ceiling, meadow lush) vs.
+  _grazer-haven_ (hunters bleed to ~5, grazers overpopulate & starve, meadow grazed toward **0
+  biomass**). NEW this run: the world **reports which one it is in**, live — the regime readout spent
+  **85–92%** of ticks in arms-race on rich seeds (1 phase-flip each, as the founding boom settles) and
+  **98%** in grazer-haven on the collapse seed (0 flips). Root cause of collapse unchanged: a
+  **prey-quality death spiral** (few hunters → overpopulated motes → bare meadow → energy-poor prey →
+  unprofitable kills), not a speed problem.
+- **motes:** min **31–38** (the 0→6 reseed net _never_ fired), max **600**, mean **384–448**,
+  CV ~34–43% — always oscillates.
+- **hunters:** collapse seed min **5** / max **17** / mean **5–11**; rich seeds climb to the **75 cap**
+  (mean 42–75). Never _exactly_ zero; `smoke.js` blesses both.
+- **plants (biomass):** min **0–7** / max **~1390–1411** / mean **240** (collapse) up to **454** (rich),
+  CV ~89–139%. Still grazed to near-zero in the grazer-haven regime.
+- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1) in every fresh run. Arms-race: `speed`
+  piled at the HIGH edge (~2.37, BC ~0.59 skew — pre-existing, no valley), `size` low (~2.26), `sense`
+  a broad hump (~47, **sd ~12**), `metabo` low (~0.69). No morph split seen this batch.
+- **mote gene drift (founder→final):** speed **1.0→2.4 ↑**, size **3.4→2.3 ↓**, **sense regime-coupled
+  ~47 (rich)**, metabo **1.0→0.69 ↓** (near the 0.6 floor but **not clamp-pinned** — [6] flags none).
+  Hunter drift: speed 1.7→2.1 ↑, size 4.8→5.6 ↑, sense 74→61 ↓, metabo 1.0→0.84 ↓.
+- **flow /1k ticks (rich seed):** predation is the dominant mote death — ~**80% predation / 20%
+  starvation** in an arms-race seed (was ~21% predation in the last observed *collapse* seed; the split
+  is regime-coupled, so read it alongside the regime label, not on its own).
+- **boredom check: NOT a fixed point.** Genes shift >8% between tick 1k and the end every run; the 20k
+  pass caught a live predator recovery (hunters **18→75**, biomass 245→659) between the two windows.
+- **live pixels:** ❗ **still cannot be eyeballed in an autonomous run** — the browser pane won't
+  composite without a human present. The new regime HUD chip and transition banner are
+  headless-correct (they render without throwing under the shim) but their actual colours want an
+  interactive eyeball, as does last run's pale/white-hot hunter tint.
 
-_previously:_ (2026-07-22, morph-detector Build, 12-seed audit) THE BISTABILITY, ~half of seeds
-collapse; motes min 32–37 / max ~600 / mean ~330–429; hunters min 1–12 / mean 5–59; plants min 2–24
-/ max ~1350–1420 / mean 160–494; sense regime-coupled 18–49; metabo 1.06→0.64–0.72; no gene pinned;
-grazers one broad cloud (k=1), size-split k=2 in ~1 of 5 collapse seeds — **crowding, not predation**.
+_previously:_ (2026-07-22, hunger-boldness Build, 30-seed A/B) THE BISTABILITY, collapse ~40% of seeds
+(down from ~67%); motes min ~37 / max ~579 / mean ~369; hunters collapse mean 7 / rich to 75 cap,
+median final ≈31; plants min 0 / mean 190–780; grazers one broad cloud (k=1), size-split k=2 ~1 in 5
+collapse seeds — **crowding, not predation**; no gene clamp-pinned; collapse = prey-quality death spiral.
 
 ---
 
@@ -319,25 +329,29 @@ the backlog.**
 
 ## Architecture (as of 2026-07-22)
 
-- `index.html` — page shell, canvas, HUD, two chart canvases (`#chart`, `#chart2`), controls.
-- `style.css` — dark terrarium styling. CSS variables at the top.
+- `index.html` — page shell, canvas, HUD (incl. the `s-regime` chip), two chart canvases
+  (`#chart`, `#chart2`), controls.
+- `style.css` — dark terrarium styling. CSS variables at the top; `.stat.wide` widens the regime chip.
 - `sim.js` — everything: one IIFE. Sections are commented: config, helpers (incl. toroidal
   distance/bearing), the vegetation grid, seasons, entities (motes _and_ hunters), world
-  state, vegetation dynamics, **morph detection**, history sample, `step()` (grazers, then
-  hunters), `draw()`, trait chart, trophic-cascade chart, HUD, loop, controls. Ends with a
-  Node-only `module.exports` hook (skipped in browsers) so both harnesses drive the real internals.
+  state, vegetation dynamics, **morph detection**, **regime detection**, history sample, `step()`
+  (grazers, then hunters), `draw()`, trait chart, trophic-cascade chart, HUD, loop, controls. Ends
+  with a Node-only `module.exports` hook (skipped in browsers) so both harnesses drive the real internals.
 - `shim.js` — the shared headless DOM/canvas shim (Node only). Installs `document`, the three
   canvases (carrying real pixel dims), stub elements and a no-op `requestAnimationFrame` as
   globals, so a bare `require('./sim.js')` boots the real world under Node. Both harnesses
   `require('./shim.js')` before `sim.js`, so they drive byte-identical internals. (Extracted
   2026-07-22 from `smoke.js`'s formerly-inline copy, so the two can't drift.)
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **24 checks** — no throw, the world never empties,
+  runs 7200 ticks (3 seasons), and asserts **30 checks** — no throw, the world never empties,
   plants persist and fluctuate, genes drift, no NaN anywhere, the grazing field records; and
   for the predator layer: hunters catch prey, breed, oscillate, stay self-sustaining (rarely
-  extinct), never nearly wipe the motes out (min ≥ 10) and are never pinned at their cap; plus
-  every render path — all three overlay modes, both charts, hunters and kill-flashes — runs
-  without throwing. Because it uses real randomness, tune by running it across several seeds.
+  extinct), never nearly wipe the motes out (min ≥ 10) and are never pinned at their cap; the
+  morph detector is honest on synthetic pools; **the regime readout names each attractor
+  correctly on synthetic history windows (grazer-haven / arms-race / recovering / declining) and
+  its Schmitt-trigger hysteresis holds the prior state in the ambiguous band**; plus every render
+  path — all three overlay modes, both charts, hunters and kill-flashes — runs without throwing.
+  Because it uses real randomness, tune by running it across several seeds.
   It is the parachute that makes Expeditions safe. **It is not a microscope:** it answers "is
   anything broken?" with pass/fail and says nothing about what the world is _doing_. (Caveat
   learned 2026-07-22: its 7200-tick window and "never _exactly_ 0" thresholds can bless a world
@@ -350,8 +364,11 @@ the backlog.**
   boredom check (tick 1k vs the end), [8] coarse 48×16 ASCII maps of vegetation and life, and
   **[9] gene-pool shape** — for each grazer gene its sd, a 24-bin histogram, a bimodality
   coefficient, and the morph detector's verdict, so the _distribution_ is visible, not just the
-  mean. Exit 0 = a clean reading; exit 1 = the sim threw or NaN leaked. Shares `shim.js` with
-  `smoke.js` but not its purpose: numbers to judge, not a green checkmark.
+  mean — and **[10] regime**, which names which bistable attractor the seed settled in, the mean
+  hunter count behind that call, the fraction of ticks spent in each state, and how many times the
+  world flipped between attractors (so the bistability is _counted_, not eyeballed). Exit 0 = a clean
+  reading; exit 1 = the sim threw or NaN leaked. Shares `shim.js` with `smoke.js` but not its
+  purpose: numbers to judge, not a green checkmark.
 - **The morph detector** (`classifyMorphs`, exported) — the arc's instrument. It normalizes the
   live grazers' `speed·size·sense·metabo` into [0,1]⁴, runs a deterministic (RNG-free) Lloyd
   2-means, then gates the split on a genuine **valley**: it projects onto the axis joining the
@@ -362,6 +379,19 @@ the backlog.**
   it each tick-sample into `world.morphs` (with 3-sample hysteresis so the HUD doesn't flicker);
   the economy never reads it back. `smoke.js` asserts it on deterministic synthetic pools
   (unimodal→1, two-cluster→2) so the check can't flake on real randomness.
+- **The regime readout** (`classifyRegime`, exported) — names, live, which of the two bistable
+  attractors the world is in. It reads the recent mean hunter count off `world.history` (last
+  `regimeWindow` = 24 samples) and applies a **Schmitt trigger**: enter `arms-race` only once the
+  mean rises to `regimeArmsOn` (22), drop to `grazer-haven` only once it falls to `regimeHavenOn`
+  (12), and in the band between them HOLD the previous state — that asymmetric hysteresis is what
+  stops the readout strobing on a marginal seed. A separate trend test (window first-half vs
+  second-half mean) tags a climbing tier `recovering ↑` and a sliding one `declining ↓`. `sample()`
+  writes `world.regime` each sample; when the base state *flips* between the two concrete attractors
+  it arms `world.regime.flash`, a countdown `draw()` renders as a fading banner across the top of the
+  field. `updateHud()` paints the compact state into the `s-regime` chip, colour-coded (red / green /
+  amber). It is **pure narration** — nothing in the economy reads `world.regime` back, so it cannot
+  perturb the world, exactly like the charts and the morph readout. `smoke.js` asserts it on
+  deterministic synthetic history windows; `observe.js` reports it as section [10].
 - Core objects:
   - **genome**: `{ speed, size, sense, metabo, hue }` — shared shape, different ranges per
     species (hunters are faster, keener-sensed, and hued in a hot red/orange band).
@@ -448,6 +478,25 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-22 — the world names its own weather (live regime readout)
+
+**Observed:** `observe.js` landed in the arms-race attractor (hunters mean 46) — but I only knew
+that by *decoding raw hunter counts*; the running world never says which of its two bistable regimes
+you're watching, so the headline finding of the last five runs is structurally invisible on the
+canvas. This run made the world name itself: a hysteretic **regime readout** reads the recent mean
+hunter count off the history buffer and reports, live in the HUD, whether the world is a predator
+**arms-race** (red), a **grazer-haven** collapse (green), or **recovering ↑** when a starved tier is
+clawing back — and when the world *tips* between attractors a labelled banner fades across the top of
+the field, narrating a phase transition that used to be an invisible coin-flip. The observatory grew
+a matching **[10] REGIME** section that names which attractor a seed settled in and how long it held
+each; across four fresh runs it cleanly separated three arms-race seeds (hunters mean 62–75, named
+outright) from one grazer-haven collapse (mean 5.0), no decoding required. It's pure narration — it
+only reads `world.history`, nothing in the economy reads it back, so the dynamics are byte-identical.
+Verified: `node --check` on all four `.js`, `smoke.js` green at **30 checks** across seeds (7 new
+deterministic regime assertions, incl. the Schmitt-trigger hysteresis), and a full `observe.js`
+reading — no throw, no NaN, no gene newly edge-pinned. (Category: observability/UI — rotated off last
+run's ecology; a Build, so the Expedition counter ticks to 4 and the next run owes an Expedition.)
 
 ### 2026-07-22 — a starving hunter turns reckless (the collapse can recover)
 
@@ -630,14 +679,25 @@ freely. Add two per run, at least one ambitious.
   _collective_ defence; watch whether herds/flocks emerge from purely local rules and whether shared
   vigilance pushes the sense equilibrium up. Risk: it either does nothing or triggers mass
   stampede-crashes — landing a legible, stable middle is the whole challenge.
-- **[Build] Name the regime, live** _(the display half — its twin recovery half is now DONE)_.
-  The 2026-07-22 hunger-boldness Build delivered part (2) of the old "let a collapse recover" idea:
-  a near-collapsed predator tier can now claw back (collapse 67%→40%, mid-range counts appear), so
-  the world genuinely _travels between_ the arms-race and grazer-haven phases instead of being fated
-  at tick 0. What's left is part (1): detect and _display_ the current regime live ("regime:
-  grazer-haven — predators failing" / "arms-race — thriving" / "recovering") from a rolling window of
-  predator density, kill-rate and biomass, and flash a marker when the world flips — turning the
-  bistability from an invisible lottery into a legible, narrated phase transition.
+- **[Build] Retired: "Name the regime, live."** Built this run — a hysteretic regime readout now
+  names the current attractor in the HUD, flashes a banner on a flip, and is reported by `observe.js`
+  as section [10]. The bistability is legible; both halves of the old "let a collapse recover" idea
+  (recovery + display) have shipped.
+- **[Expedition] Seedable, reproducible world + a multi-seed regime census** _(ambitious — the
+  bistability is now *named* but still can't be *summoned on demand*)_. `observe.js` runs a single
+  unseeded RNG draw, so one invocation only ever visits one attractor; to study the collapse you run it
+  and hope. Install a tiny dependency-free seeded PRNG in `shim.js` (and let the live world take a seed
+  from the URL hash — this also delivers the old "save/share a world" idea), so a run is _reproducible_.
+  Then add `node observe.js --census N`: run N seeds headlessly and print the collapse-vs-arms-race
+  split as a single measured rate, plus the flip-count distribution. This turns "~40% collapse" from a
+  remembered A/B into a number any run can re-measure, and makes every future regression reproducible.
+  Risk: seeding `Math.random` globally interacts with both harnesses' existing "run several seeds"
+  habit, and the live world's `Math.random` calls are scattered — threading one PRNG cleanly is the work.
+- **[Build] Regime-tinted world mood.** A flip already flashes a banner; go further and let the whole
+  meadow's palette lean with the regime — a colder, sparser cast in grazer-haven, a hotter, tenser one
+  in arms-race — interpolated over a few seconds so the world's _mood_ reads at a glance without
+  reading the HUD. Purely in `draw()` (it already computes a seasonal tint to build on); the economy
+  stays untouched. The colours want an interactive eyeball, but the logic is headless-verifiable.
 - **[Expedition] Cooperative hunting → emergent predator packs** _(ambitious — pack emergence is
   hard to land stably)_. Boldness proved the hunt is _ambush-limited_: a panicking mote outruns any
   lone hunter in every seed. The escape from that ceiling is teamwork — give a hunting hunter a weak

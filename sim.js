@@ -114,6 +114,18 @@
                               // (costs energy via the metabolic bill — a real gamble)
 
     sparkFade: 0.045,         // per-tick fade of a kill-flash marker (view only)
+
+    // Regime readout — naming, live, which of the two bistable attractors the world
+    // is currently in. observe.js showed the ecology is bistable (a predator arms-race
+    // vs. a grazer-haven collapse) but that fact was invisible in the running world:
+    // you had to read raw hunter counts to know which one you were watching. A Schmitt
+    // trigger on the recent mean hunter count (asymmetric thresholds → hysteresis, so it
+    // won't flicker in the ambiguous middle band) plus a trend test that catches a tier
+    // clawing back turns the invisible lottery into a labelled, narrated phase transition.
+    regimeWindow: 24,         // history samples (~720 ticks) the readout averages over
+    regimeArmsOn: 22,         // mean hunters at/above which the world reads "arms-race"
+    regimeHavenOn: 12,        // mean hunters at/below which it reads "grazer-haven"
+    regimeFlashTicks: 150,    // how long the on-canvas transition banner lingers after a flip
   };
 
   // Traits plotted on the live chart, each normalized to its full genetic range
@@ -308,6 +320,9 @@
     morphs: { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 }, // live morph readout
     _morphPendK: 1, // hysteresis: proposed k awaiting confirmation
     _morphPendN: 0, // consecutive samples agreeing on the proposed k
+    // which bistable attractor the world is in, read live off the history buffer
+    regime: { state: "settling", trend: "steady", label: "settling — reading the world…",
+              hmean: 0, flash: 0, flashText: "" },
   };
 
   function seed() {
@@ -329,6 +344,8 @@
     world.morphs = { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 };
     world._morphPendK = 1;
     world._morphPendN = 0;
+    world.regime = { state: "settling", trend: "steady", label: "settling — reading the world…",
+                     hmean: 0, flash: 0, flashText: "" };
     for (let i = 0; i < CONFIG.startMotes; i++) {
       world.motes.push(makeMote(rand(0, W), rand(0, H)));
     }
@@ -519,6 +536,49 @@
     return { k: 2, n, gene: MORPH_GENES[gi].key, n0, n1, sep: ulen };
   }
 
+  // ---- regime detection ---------------------------------------------------
+  // Which of the two bistable attractors is the world in right now? A pure reading
+  // off the history buffer's recent hunter counts. The base state is a Schmitt
+  // trigger — enter "arms-race" only once the mean rises to regimeArmsOn, drop to
+  // "grazer-haven" only once it falls to regimeHavenOn, and in the ambiguous band
+  // between them HOLD the previous state (that hysteresis is what stops the readout
+  // strobing on a marginal seed). A separate trend test compares the window's first
+  // half to its second so a predator tier clawing back out of collapse reads as
+  // "recovering" and a thriving one sliding down reads as "destabilising". Nothing in
+  // the economy ever reads world.regime back — it is pure narration, like the charts.
+  function classifyRegime(history, prev) {
+    if (!history || history.length < 8) {
+      return { state: "settling", trend: "steady", label: "settling — reading the world…", hmean: 0 };
+    }
+    const win = Math.min(CONFIG.regimeWindow, history.length);
+    const s = history.slice(history.length - win);
+    let sum = 0;
+    for (let i = 0; i < win; i++) sum += s[i].hunters;
+    const hmean = sum / win;
+
+    // trend: mean of the window's first half vs its second half
+    const half = Math.max(1, win >> 1);
+    let early = 0, late = 0;
+    for (let i = 0; i < half; i++) early += s[i].hunters;
+    for (let i = win - half; i < win; i++) late += s[i].hunters;
+    const hEarly = early / half, hLate = late / half;
+    const slope = hLate - hEarly;
+    const thr = Math.max(2, hEarly * 0.25);       // ignore small wobble; demand a real move
+    const trend = slope > thr ? "recovering" : slope < -thr ? "declining" : "steady";
+
+    // base state with hysteresis (a Schmitt trigger on the mean hunter count)
+    let state;
+    if (hmean >= CONFIG.regimeArmsOn) state = "arms-race";
+    else if (hmean <= CONFIG.regimeHavenOn) state = "grazer-haven";
+    else if (prev === "arms-race" || prev === "grazer-haven") state = prev;
+    else state = hmean >= (CONFIG.regimeArmsOn + CONFIG.regimeHavenOn) / 2 ? "arms-race" : "grazer-haven";
+
+    const label = state === "arms-race"
+      ? (trend === "declining" ? "arms-race — thriving, but destabilising ↓" : "arms-race — predators thriving")
+      : (trend === "recovering" ? "grazer-haven — predators clawing back ↑" : "grazer-haven — predators failing");
+    return { state, trend, label, hmean };
+  }
+
   // ---- history sample -----------------------------------------------------
   // One rolling sample records both the gene-pool shape (for the trait chart)
   // and the raw population/biomass counts (for the boom-and-bust chart).
@@ -548,6 +608,23 @@
     if (cls.k === world._morphPendK) world._morphPendN++;
     else { world._morphPendK = cls.k; world._morphPendN = 1; }
     if (world._morphPendN >= 3 || cls.k === world.morphs.k) world.morphs = cls;
+
+    // update the live regime readout on the same cadence. When the base attractor
+    // flips between the two concrete states, arm a transition banner (a settling→state
+    // transition isn't a flip — the world was never in the other attractor to leave).
+    const rg = classifyRegime(world.history, world.regime.state);
+    const both = (a, b) => (a === "arms-race" || a === "grazer-haven") &&
+                           (b === "arms-race" || b === "grazer-haven");
+    if (both(rg.state, world.regime.state) && rg.state !== world.regime.state) {
+      world.regime.flash = CONFIG.regimeFlashTicks;
+      world.regime.flashText = rg.state === "arms-race"
+        ? "→ arms-race — the predators surge back"
+        : "→ grazer-haven — the predators are failing";
+    }
+    world.regime.state = rg.state;
+    world.regime.trend = rg.trend;
+    world.regime.label = rg.label;
+    world.regime.hmean = rg.hmean;
   }
 
   // ---- simulation step ----------------------------------------------------
@@ -731,6 +808,9 @@
       if (s.life <= 0) world.sparks.splice(i, 1);
     }
 
+    // let a regime-transition banner age out (view only)
+    if (world.regime.flash > 0) world.regime.flash--;
+
     if (world.tick % CONFIG.sampleEvery === 0) sample();
   }
 
@@ -807,6 +887,26 @@
       ctx.strokeStyle = `rgba(255,${(90 + 130 * sp.life) | 0},${(70 * sp.life) | 0},${(sp.life * 0.85).toFixed(3)})`;
       ctx.lineWidth = 2;
       ctx.stroke();
+    }
+
+    // regime-transition banner — when the world tips from one attractor to the other,
+    // a labelled marker fades across the top so the phase change is impossible to miss
+    if (world.regime.flash > 0) {
+      const a = clamp(world.regime.flash / CONFIG.regimeFlashTicks, 0, 1);
+      const txt = world.regime.flashText;
+      ctx.save();
+      ctx.font = "bold 16px ui-sans-serif, system-ui, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      const bw = ctx.measureText(txt).width + 30, bh = 30, bx = (W - bw) / 2, by = 14;
+      ctx.globalAlpha = a * 0.72;
+      ctx.fillStyle = "rgba(0,0,0,0.62)";
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = world.regime.state === "arms-race" ? "#ff8a6b" : "#7fe0a0";
+      ctx.fillText(txt, W / 2, by + bh / 2 + 1);
+      ctx.globalAlpha = 1;
+      ctx.restore();
     }
   }
 
@@ -1022,6 +1122,7 @@
     died: document.getElementById("s-died"),
     eaten: document.getElementById("s-eaten"),
     morphs: document.getElementById("s-morphs"),
+    regime: document.getElementById("s-regime"),
     season: document.getElementById("s-season"),
   };
   // short "high∙low" caption for the axis a morph split runs along
@@ -1029,6 +1130,14 @@
     const g = MORPH_GENES.find((x) => x.key === key);
     return g ? `${g.hiName}∙${g.loName}` : key;
   };
+  // compact, colour-coded HUD text for the current regime: red when predators rule,
+  // green when the grazers have the run of the meadow, amber while a tier claws back.
+  function regimeDisplay(r) {
+    if (r.state === "settling") return { text: "settling…", color: "#8ba3b8" };
+    if (r.state === "arms-race") return { text: r.trend === "declining" ? "arms-race ↓" : "arms-race", color: "#ff6b6b" };
+    if (r.trend === "recovering") return { text: "recovering ↑", color: "#e0b04a" };
+    return { text: "grazer-haven", color: "#6cc08a" };
+  }
   function updateHud() {
     el.tick.textContent = world.tick;
     el.pop.textContent = world.motes.length;
@@ -1040,6 +1149,14 @@
     // morph readout: "1" for a single cloud, "2 · keen∙dull" when the pool has split
     const mo = world.morphs;
     el.morphs.textContent = mo.k >= 2 && mo.gene ? `${mo.k} · ${morphAxisLabel(mo.gene)}` : String(mo.k);
+    // regime readout: which bistable attractor the world is in, colour-coded, with
+    // the full sentence tucked into the tooltip for anyone who hovers it
+    if (el.regime) {
+      const rd = regimeDisplay(world.regime);
+      el.regime.textContent = rd.text;
+      el.regime.style.color = rd.color;
+      el.regime.title = world.regime.label;
+    }
     // growth multiplier, with an arrow for whether we're warming toward summer
     const rising = Math.cos((world.tick / CONFIG.seasonPeriod) * TAU) >= 0;
     el.season.textContent = `×${seasonGrow().toFixed(2)} ${rising ? "↑" : "↓"}`;
@@ -1099,7 +1216,7 @@
     module.exports = {
       world, step, seed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, updateHud,
-      classifyMorphs, MORPH_GENES,
+      classifyMorphs, MORPH_GENES, classifyRegime,
     };
   }
 })();
