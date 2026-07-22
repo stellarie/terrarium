@@ -188,6 +188,23 @@ check(metaboIntakeMult(0.6) < metaboIntakeMult(1) && metaboIntakeMult(1) < metab
 check((metaboIntakeMult(1.0) - metaboIntakeMult(0.6)) > (metaboIntakeMult(1.8) - metaboIntakeMult(1.4)),
       `metabolism intake is concave — diminishing returns (the interior-optimum guarantee)`);
 
+// the PREDATOR side of the same tradeoff (huntMetaboMult scales the assimilated share of a
+// kill): a fast-burning hunter digests prey more thoroughly while paying a linearly higher
+// burn, so the hunter metabo gene gets its own interior optimum instead of decaying to floor
+// as the pure cost it used to be. Same shape guarantees as the grazer gain: (a) neutral at
+// metabo=1 so the tuned pyramid at the ~1.0 operating point is preserved, (b) monotone
+// increasing (the selection gradient points toward greedy where kills are plentiful), and
+// (c) concave, so the linear burn balances it at an interior point rather than the ceiling.
+const { huntMetaboMult } = sim;
+check(Math.abs(huntMetaboMult(1) - 1) < 1e-9,
+      `hunter kill-digestion is neutral at metabo=1 (${huntMetaboMult(1).toFixed(4)})`);
+check(huntMetaboMult(0.55) < huntMetaboMult(1) && huntMetaboMult(1) < huntMetaboMult(1.8),
+      `hunter kill-digestion rises with metabo (${huntMetaboMult(0.55).toFixed(2)} < ${huntMetaboMult(1).toFixed(2)} < ${huntMetaboMult(1.8).toFixed(2)})`);
+check((huntMetaboMult(1.0) - huntMetaboMult(0.55)) > (huntMetaboMult(1.8) - huntMetaboMult(1.35)),
+      `hunter kill-digestion is concave — diminishing returns (the interior-optimum guarantee)`);
+check(huntMetaboMult(0.55) > 0,
+      `hunter kill-digestion stays positive across the clamp range (no negative income)`);
+
 // the death-balance chart's metric must be HONEST — it counts the actual deaths, so
 // an all-predation window reads 1, an all-starvation window reads 0, a 50/50 window
 // reads 0.5, an empty window reads null (band breaks, never lies), and it pools ONLY

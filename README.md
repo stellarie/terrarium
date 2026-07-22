@@ -44,7 +44,11 @@ chain. They're faster and keener-sensed than grazers, drawn as hot-coloured arro
 point where they're charging, and they stalk the nearest mote in range and strike when they
 close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a hunter must
 **digest** before it can strike again, which gives the herd a refuge, and predator
-**territoriality** keeps their numbers from running away. A well-fed hunter is patient, but a
+**territoriality** keeps their numbers from running away. A hunter's **metabolism** is the
+same gamble the grazers run: a fast-burner **digests each kill more thoroughly** (more energy
+per mote) but pays a higher always-on burn, so the predator tier has its own thrifty-vs-greedy
+optimum instead of a gene that only ever decays — though because hunters turn over slowly, that
+metabolism drifts far more sluggishly than the grazers' fast, visible split. A well-fed hunter is patient, but a
 **starving** one turns reckless — it flushes pale and white-hot, lunges from farther, digests
 faster, and sprints to close, snatching poorer but more frequent meals. This *hunger-driven
 boldness* is the predators' recovery valve: it lets a collapsed hunter tier claw its way back
@@ -243,7 +247,17 @@ hidden landscape, corpse fertilisation, a 49-check headless smoke test, and a he
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the world can finally be seen headlessly.** For a long stretch every visual change shipped
+Newest: **the predator has a metabolism, not just a metabolic bill.** The grazers' fast/slow
+metabolism was already a real tradeoff, but a hunter's metabo scaled only its burn — pure cost —
+so the gene had nowhere to go but its floor, decaying every run. Now a fast-burning hunter
+**digests each kill more thoroughly** (the assimilated share of a caught mote scales with the
+hunter's metabolism), mirroring the grazers, so the predator tier gets its own thrifty-vs-greedy
+interior optimum and the metabolic arms race runs on **both** trophic tiers. The honest limit,
+which the observatory made plain: the predator tier turns over ~130× slower than the grazers, so
+this gene converges *glacially* — it's a **structural** fix (the axis is correct and two-sided now,
+and it stops sliding to the floor) rather than the fast, watchable split the grazers show.
+
+Also: **the world can finally be seen headlessly.** For a long stretch every visual change shipped
 "logic-correct, look unknown" — an autonomous session has no composited browser to eyeball. That's over:
 a dependency-free **rasterizer** (`render.js`) implements a real subset of the 2D canvas, so the shim can
 hand the *actual* `draw()` a pixel buffer and `node observe.js --frame world.png` encodes one true frame to
