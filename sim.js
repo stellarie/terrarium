@@ -119,6 +119,20 @@
                               // prey keep a refuge and predators self-limit below their cap
     huntAssimilation: 0.35,   // fraction of the prey's stored energy the hunter absorbs
     huntBonus: 18,            // flat energy per kill on top of the assimilated share
+    // The predator's own fast/slow tradeoff — the mirror of the grazer's metaboIntake.
+    // A hunter's metabo used to scale ONLY its per-tick burn (line ~959): pure cost, so
+    // lower was always strictly better and the gene decayed toward its floor (masked only
+    // by the tier's glacial turnover — observed drifting 1.13→0.96 with no interior optimum).
+    // Now a fast-burning predator also DIGESTS each kill more thoroughly: the assimilated
+    // share is scaled by a concave gain, neutral at metabo=1 (so the tuned pyramid at the
+    // current ~1.0 operating point is preserved) and diminishing (exponent<1) so it balances
+    // the linear burn at an INTERIOR optimum. The flat huntBonus is left metabo-independent —
+    // a thrifty hunter still banks the catch bonus, so low-metabo predators stay viable and
+    // the delicate collapse/recovery balance isn't starved. Prey-rich arms-race worlds (many
+    // kills) should reward greedy fast-burners; prey-poor havens (rare kills, steady burn)
+    // should reward thrift — a regime split mirroring the grazers'. Tuned via observe.js.
+    huntMetaboAssim: 1.3,     // strength of metabolism's digestive gain on energy per kill
+    huntMetaboAssimExp: 0.5,  // concavity of that gain (0.5 = sqrt: strong diminishing returns)
     hunterCorpseVeg: 0.85,    // a fallen hunter feeds more plants than a mote does
     hunterReseedPrey: 55,     // predators only wander back in when this many motes exist
     hunterReseedCount: 6,     // how many drift in when they'd otherwise be extinct
@@ -329,6 +343,15 @@
   // smoke.js can assert its shape deterministically; nothing but the graze reads it.
   function metaboIntakeMult(metabo) {
     return Math.max(0, 1 + CONFIG.metaboIntake * (Math.pow(metabo, CONFIG.metaboIntakeExp) - 1));
+  }
+
+  // The predator side of the same tradeoff: the multiplier on the digested (assimilated)
+  // share of a kill. Same concave, neutral-at-1 shape as metaboIntakeMult, so a fast-burning
+  // hunter (metabo>1) extracts more from each mote while paying a linearly higher always-on
+  // burn — giving the predator tier its own food-dependent interior optimum instead of a gene
+  // that only ever decays. Exported so smoke.js can assert its shape; only the strike reads it.
+  function huntMetaboMult(metabo) {
+    return Math.max(0, 1 + CONFIG.huntMetaboAssim * (Math.pow(metabo, CONFIG.huntMetaboAssimExp) - 1));
   }
 
   // Fertility: a smooth patchy carrying-capacity map from a few random sine
@@ -955,7 +978,9 @@
       h.x = wrap(h.x + Math.cos(h.dir) * v, W);
       h.y = wrap(h.y + Math.sin(h.dir) * v, H);
 
-      // burn energy — hunters are expensive to run
+      // burn energy — hunters are expensive to run. metabo scales this linear cost AND the
+      // digestive gain on a kill (huntMetaboMult at the strike below), so it's a real fast/slow
+      // tradeoff with an interior optimum, not the pure tax it used to be.
       h.energy -= CONFIG.hunterMetabolism * h.g.metabo * (1 + h.g.size * 0.1 + v * 0.4);
 
       // strike: if digestion is done and the target is now within a body-length, eat it
@@ -966,7 +991,10 @@
         const shield = 1 - (prey._cover || 0) * CONFIG.coverStrikeShield;
         const cr = (h.g.size + prey.g.size + CONFIG.huntRange + CONFIG.hunterBoldReach * bold) * shield;
         if (torusD2(h.x, h.y, prey.x, prey.y) < cr * cr) {
-          h.energy += (prey.energy > 0 ? prey.energy : 0) * CONFIG.huntAssimilation + CONFIG.huntBonus;
+          // the assimilated share is scaled by the hunter's metabolism (a fast burner digests
+          // the kill more thoroughly); the flat catch bonus is metabo-independent — see CONFIG.
+          const preyE = prey.energy > 0 ? prey.energy : 0;
+          h.energy += preyE * CONFIG.huntAssimilation * huntMetaboMult(h.g.metabo) + CONFIG.huntBonus;
           h.cool = CONFIG.huntCooldown;   // digest before the next strike
           world.motes.splice(best, 1);
           world.eaten++;
@@ -1619,7 +1647,7 @@
       world, step, seed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
-      concealment, hideability, metaboIntakeMult, predationShare, cellIndex,
+      concealment, hideability, metaboIntakeMult, huntMetaboMult, predationShare, cellIndex,
     };
   }
 })();
