@@ -3,9 +3,10 @@
 A self-contained artificial-life world that runs entirely in your browser, with a
 three-tier food chain: a living meadow, soft **motes** that graze it, and hot-coloured
 **hunters** that chase and eat the motes. Each creature carries a small genome and lives on
-an energy economy — grazers seek the greenest ground and flee predators; hunters stalk the
-herd and strike. There's no score and no goal, just selection: leave it running and watch
-plants, grazers and predators rise and fall against one another.
+an energy economy — grazers seek the greenest ground, and survive a hunter one of two ways:
+**fleers** (fast, keen) outrun it in the open, while **hiders** (small, slow) freeze and
+vanish into dense vegetation. There's no score and no goal, just selection: leave it running
+and watch plants, grazers and predators rise and fall against one another.
 
 ## The living ground
 
@@ -39,12 +40,19 @@ close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a h
 faster, and sprints to close, snatching poorer but more frequent meals. This *hunger-driven
 boldness* is the predators' recovery valve: it lets a collapsed hunter tier claw its way back
 instead of dying out, so a nearly-empty predator population you're watching may suddenly climb
-again. Grazers, in turn, **flee** — a
-mote that spots a hunter within its **sense** range sprints directly away (at an energy
-cost). Because keener-sensed motes spot the threat from farther and get more warning to run,
-predation now selects on **sense** as well as **speed** — and it does so *conditionally*: in
-a predator-rich world the herd evolves keen and twitchy, while in a world where the hunters
-collapse the grazers drift blind and complacent, since nothing is left to fear.
+again. Grazers, in turn, have **two ways to survive** — and a mote's genes decide which it can use.
+A **fleer** (fast, keen) spots a hunter within its **sense** range and sprints directly away
+at an energy cost; because keener, faster motes spot the threat sooner and outrun it,
+predation selects on **sense** and **speed**. A **hider** (small, slow) does the opposite:
+standing on dense vegetation it is hard for a hunter to see or to catch, so when a predator
+nears it **freezes** and melts into the meadow rather than bolting. The trade-off that makes
+this a real choice is that **speed breaks cover** — a moving body is conspicuous — so a mote
+cannot be both a fleer and a hider; it must specialise. Each mote wears a **halo of its
+lifestyle**: leaf-green for a hider, amber for a fleer. Which one a world evolves is set by
+its predators — a fierce **arms-race** world fills with fast amber fleers, while a
+**grazer-haven** where the hunters have thinned fills with slow green hiders lurking in cover;
+remove the predators entirely and the whole herd relaxes into cheap, slow hiders. In answer,
+the hunters **coevolve keener eyes** to find prey that hide.
 
 Predators and prey settle into the classic **phase-lagged cycle**: hunters thrive and thin
 the herd, then starve back as prey grows scarce, letting the motes — and the meadow beneath
@@ -56,9 +64,12 @@ them — recover, riding on top of the grazer–plant boom and bust.
   each normalized to its full genetic range, so you can watch the gene pool drift.
 - A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
   own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
+- Every mote is **ringed by its lifestyle** — leaf-green for a committed hider (small, slow),
+  amber for a committed fleer (fast), fading toward the ambiguous middle — so the hider/fleer
+  divergence predation drives is visible on the field, in every world, at a glance.
 - A **morph readout** in the HUD watches whether the grazers are still one gene pool or have
   **split** into two morphs. A detector clusters the live herd and reports "1" for a single
-  broad cloud, or e.g. "2 · large∙small" when it finds a genuine split — it's deliberately
+  broad cloud, or e.g. "2 · swift∙slow" when it finds a genuine split — it's deliberately
   strict, so it won't cry "speciation!" over a merely wide spread.
 - A **regime readout** names, live, which of the world's two attractors you're watching:
   **arms-race** (predators thriving, coloured red) or **grazer-haven** (predators failing,
@@ -96,12 +107,13 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 30 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 34 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
-hunt, breed and oscillate without pinning at their cap or wiping the motes out), the morph
-detector is honest (it calls a single broad cloud one morph and a clean two-cluster pool two),
-and the regime readout names each attractor correctly with the right hysteresis.
-Because it uses real randomness, run it a few times:
+hunt, breed and oscillate without pinning at their cap or wiping the motes out), the
+concealment mechanic is monotone (a small, slow mote outhides a big fast one in cover, and
+nobody hides on bare ground), the morph detector is honest (it calls a single broad cloud one
+morph and a clean two-cluster pool two), and the regime readout names each attractor correctly
+with the right hysteresis. Because it uses real randomness, run it a few times:
 
 ```bash
 node smoke.js
@@ -130,6 +142,20 @@ collapse to a **prey-quality death spiral** (few hunters → overgrazed, energy-
 unprofitable kills) and added hunger-driven boldness as a recovery valve, cutting the collapse
 rate from ~⅔ of worlds to ~⅖ and giving the two regimes a populated middle to travel between.
 
+The observatory also runs a dedicated **experiment**: does predation *drive* the hider/fleer
+divergence, or would grazers diverge anyway? It runs a batch of worlds with hunters against a
+batch with the hunters removed and reports the strategy each evolves:
+
+```bash
+node observe.js --split-test          # or: node observe.js --split-test 8 20000
+```
+
+The answer is clear: predation pushes the herd hard toward the fleer end (mean grazer speed
+~1.9 with hunters vs ~0.9 without), and the fast fleer is **predation-only** — remove the
+predators and every world collapses to slow, cheap hiders. (What predation does *not* do is
+make two lifestyles coexist *within one* world — the bistability keeps each world on a single
+answer. See the journal for that open thread.)
+
 ## Deploy
 
 Any static host works — GitHub Pages, Netlify, Vercel, Cloudflare Pages, an S3 bucket.
@@ -146,8 +172,8 @@ publishes the site).
 | `style.css` | dark terrarium styling |
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
-| `smoke.js` | headless smoke test — 30 assertions over thousands of real ticks |
-| `observe.js` | the observatory — prints readings of what the world is doing |
+| `smoke.js` | headless smoke test — 34 assertions over thousands of real ticks |
+| `observe.js` | the observatory — prints readings, and `--split-test` runs the predation experiment |
 | `JOURNAL.md` | the project's memory and roadmap |
 
 ## How it's built
@@ -169,25 +195,27 @@ hidden landscape, corpse fertilisation, a 30-check headless smoke test, and a he
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest (**Arc III — The Great Divergence**): a **live regime readout**. The world is *bistable* —
-every seed settles into either a predator **arms-race** or a **grazer-haven** collapse — but that
-fact used to be invisible in the running world: you had to read raw hunter counts to know which one
-you were watching. Now the HUD names the current attractor, colour-coded (red arms-race / green
-grazer-haven), flags **recovering ↑** when a collapsed tier is clawing back, and fades a labelled
-banner across the field the moment the world *tips* between the two — turning an invisible lottery
-into a narrated phase transition. The observatory names it too, so a headless run reports which
-attractor a seed landed in and how long it held, instead of leaving you to decode the numbers.
+Newest (**Arc III — The Great Divergence**): **concealment, and two ways to survive a hunter.**
+Grazers used to have exactly one answer to a predator — flee — so the whole herd converged on it.
+Now a **small, slow** mote on **dense vegetation** can instead **hide**: it freezes and vanishes
+into cover, shrinking a hunter's sight and reach toward it toward zero. Because **speed breaks
+cover**, a mote cannot be both a fast fleer and a hidden hider — it must specialise — and every
+mote now wears a **halo of its lifestyle** (leaf-green hider ↔ amber fleer), so the divergence is
+visible on the field. A new headless experiment (`observe.js --split-test`) proves predation
+*drives* the choice: worlds **with** hunters push the herd toward fast fleers (mean speed ~1.9)
+while worlds **without** collapse to slow hiders (~0.9), and the fleer lifestyle appears only where
+predators exist. The hunters answer by **coevolving keener eyes** to find prey that hide.
 
-Earlier in the arc, **hunger-driven boldness** gave the predator tier a recovery valve: a starving
-hunter turns reckless (a wider lunge, faster digestion, a closing sprint, and a visible pale
-white-hot flush), snatching just enough poor meals to climb back. Across matched seed batches this
-cut the collapse rate from ~⅔ to ~⅖ and roughly quintupled the median predator population — so the
-arms-race and grazer-haven became **phases the world travels between** rather than a fate sealed by
-the founding seed, which is exactly what the new regime readout now makes legible.
+The honest result: predation now clearly *sets the grazers' lifestyle*, but it still **unifies** the
+herd rather than splitting it — the world's arms-race/grazer-haven **bistability** makes each world
+pick a single lifestyle, so genuine two-morph coexistence *within one world* remains the arc's open
+problem (the divergence is real and predation-driven, but it lives *between* worlds). Landing true
+coexistence — straddling the bistability — is the next Expedition.
 
-Earlier in the arc, a **morph detector** was added that clusters the live grazers and reports, live,
-whether they're one gene pool or have split into two (with a strict valley test so a merely wide
-spread doesn't count). On its first readings it **overturned the arc's own premise**: predator-rich
-worlds keep the grazers as a *single broad cloud*, and the only genuine splits — along body
-**size** — show up in predator-*collapse* worlds where the herd overpopulates and starves.
-Speciation here is driven by **crowding, not predators**. See the journal for the full story.
+Earlier in the arc: a **live regime readout** names which attractor a world is in (red arms-race /
+green grazer-haven, **recovering ↑** when a collapsed tier claws back) and banners the moment it
+tips; **hunger-driven boldness** gave the predator tier a recovery valve (a starving hunter turns
+reckless and flushes pale white-hot), cutting the collapse rate from ~⅔ to ~⅖; and a **morph
+detector** clusters the live grazers with a strict valley test. That detector first **overturned the
+arc's premise** — splits are driven by **crowding, not predators** — a refutation this run's
+concealment experiment independently confirms. See the journal for the full story.

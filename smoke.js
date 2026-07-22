@@ -128,6 +128,26 @@ check(gmax > 0, `grazing pressure was recorded for the overlay (peak ${gmax.toFi
 // history is being recorded for the charts
 check(world.history.length > 10, `history buffer filled for the charts (${world.history.length} samples)`);
 
+// concealment (Arc III): a mote hides from hunters only when it is small AND slow AND
+// standing on dense vegetation — the trade-off that lets predation split the herd into
+// hiders and fleers. Test the mechanic deterministically by planting motes on a cell
+// whose density we set by hand, so it can't flake on the live world's randomness.
+const { concealment, hideability, cellIndex } = sim;
+const at = (x, y, g) => ({ x, y, g });
+const coverCell = cellIndex(120, 120);
+const savedVeg = world.veg[coverCell];
+world.veg[coverCell] = 1;                        // lush cover under (120,120)
+const hider  = at(120, 120, { speed: 0.6, size: 2.0, sense: 20, metabo: 0.7 });
+const middle = at(120, 120, { speed: 1.6, size: 3.4, sense: 45, metabo: 1.0 });
+const fleer  = at(120, 120, { speed: 2.4, size: 5.5, sense: 100, metabo: 1.2 });
+check(hideability(hider.g) > 0.8, `hideability rates a small, slow genome a hider (${hideability(hider.g).toFixed(2)})`);
+check(hideability(fleer.g) < 0.05, `hideability rates a big, fast genome a pure fleer (${hideability(fleer.g).toFixed(2)})`);
+check(concealment(hider) > concealment(middle) && concealment(middle) > concealment(fleer),
+      `in cover, a hider outhides the middling, which outhides a fleer (${concealment(hider).toFixed(2)} > ${concealment(middle).toFixed(2)} > ${concealment(fleer).toFixed(2)})`);
+world.veg[coverCell] = 0;                         // bare ground: nobody hides
+check(concealment(hider) === 0, `on bare ground even a perfect hider has zero cover (${concealment(hider)})`);
+world.veg[coverCell] = savedVeg;                  // restore so nothing downstream is perturbed
+
 // the morph detector must be HONEST: one broad cloud reads as one morph (a naive
 // 2-means would always split), a genuinely two-cluster pool reads as two. Test both
 // with deterministic synthetic pools so this check never flakes on real randomness.
