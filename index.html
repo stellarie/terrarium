@@ -10,7 +10,7 @@
   <div id="app">
     <header>
       <h1>Terrarium <span class="tag">v1</span></h1>
-      <p class="sub">A self-contained world of motes grazing a living meadow. Plants grow, spread, and get eaten; motes drift, breed, and mutate. Nobody is driving.</p>
+      <p class="sub">A self-contained world of motes grazing a living meadow. Plants grow, spread, and get eaten; motes drift, breed, and mutate. Nobody is driving. Toggle the <b>overlay</b> (or press <kbd>O</kbd>) to reveal the hidden fertility map and where the herd has been grazing.</p>
     </header>
 
     <div class="stage-wrap">
@@ -40,6 +40,7 @@
       <button id="btn-pause">pause</button>
       <button id="btn-seed">sow seeds</button>
       <button id="btn-reset">reseed world</button>
+      <button id="btn-overlay" title="reveal the hidden fertility map or recent grazing (press O)">overlay: off</button>
       <label class="speed">speed
         <input id="speed" type="range" min="1" max="8" value="2" />
       </label>

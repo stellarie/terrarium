@@ -39,6 +39,7 @@ global.document = {
     if (canvases[id]) return canvases[id];
     return cache[id] || (cache[id] = stubEl());
   },
+  addEventListener() {},   // the sim attaches a keydown handler for the overlay
 };
 global.requestAnimationFrame = () => 0; // never auto-runs the render loop; we drive step()
 
@@ -113,14 +114,28 @@ let clean = world.motes.every((m) => finite(m.x) && finite(m.y) && finite(m.ener
 for (let i = 0; i < world.veg.length && clean; i++) if (!finite(world.veg[i]) || world.veg[i] < 0) clean = false;
 check(clean, "no NaN/negative values in motes or the vegetation grid");
 
+// the view-only grazing-pressure field stays sane and actually records something
+let grazeClean = true, gmax = 0;
+for (let i = 0; i < world.graze.length; i++) {
+  const g = world.graze[i];
+  if (!finite(g) || g < 0) grazeClean = false;
+  if (g > gmax) gmax = g;
+}
+check(grazeClean, "grazing-pressure field stayed finite and non-negative");
+check(gmax > 0, `grazing pressure was recorded for the overlay (peak ${gmax.toFixed(2)})`);
+
 // history is being recorded for the charts
 check(world.history.length > 10, `history buffer filled for the charts (${world.history.length} samples)`);
 
-// the render path (unexercised by step()) doesn't throw against the shimmed canvas
+// the render path (unexercised by step()) doesn't throw — including every overlay
+// mode (off / fertility / grazing) against the shimmed canvas
 let renderThrew = null;
-try { draw(); drawChart(); drawCountChart(); updateHud(); }
-catch (e) { renderThrew = e; }
-check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw / charts / hud all render without throwing");
+try {
+  for (const ov of [0, 1, 2]) { world.overlay = ov; draw(); }
+  world.overlay = 0;
+  drawChart(); drawCountChart(); updateHud();
+} catch (e) { renderThrew = e; }
+check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays) / charts / hud render without throwing");
 
 // ---- verdict ----------------------------------------------------------------
 if (failures) {

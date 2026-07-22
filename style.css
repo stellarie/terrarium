@@ -42,6 +42,16 @@ header .sub {
   color: var(--muted);
 }
 
+header .sub kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8em;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+  color: var(--ink);
+}
+
 .stage-wrap {
   border: 1px solid var(--line);
   border-radius: 12px;

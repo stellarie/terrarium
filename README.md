@@ -34,7 +34,22 @@ night.
 - The **HUD** shows tick, motes, plant biomass, births, deaths, and the current seasonal
   growth multiplier.
 
-Controls: pause, sow a burst of seeds, reseed the whole world, and a speed slider.
+### See the hidden landscape
+
+The forces driving the boom and bust are mostly invisible — until you toggle the
+**overlay** (the `overlay:` button, or press <kbd>O</kbd>). It cycles through two view-only
+lenses painted over the meadow:
+
+- **Fertility** — the permanent carrying-capacity bedrock as an indigo→gold heatmap, so you
+  can finally see *why* the lush meadows and stubborn barrens sit where they do.
+- **Grazing** — a cool→hot wash over the cells the herd has eaten in the last moment,
+  revealing the live pressure that carves the corridors.
+
+Each comes with a small labelled gradient key, and neither touches the simulation — they
+only read the world and paint it.
+
+Controls: pause, sow a burst of seeds, reseed the whole world, cycle the overlay, and a
+speed slider.
 
 ## Run it
 
@@ -83,5 +98,6 @@ The journal is the project's only memory between sessions.
 **v1** — the living ground: motes graze a spatial, self-propagating vegetation field
 grown over a fertility map, following the food gradient by sense; the economy
 limit-cycles between bloom and overgrazed crash under a seasonal breath. Live trait and
-population/biomass charts, corpse fertilisation, and a committed headless smoke test.
-See the journal for what's next.
+population/biomass charts, a toggleable fertility/grazing overlay onto the hidden
+landscape, corpse fertilisation, and a committed headless smoke test. Next up: predators —
+a second species that eats motes, for a three-tier ecology. See the journal for the story.
