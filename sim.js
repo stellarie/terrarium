@@ -93,6 +93,26 @@
                               // fear radius IS the mote's `sense` gene, so keen motes flee
                               // sooner — predation now selects on sense (see step()).
     panicBoost: 1.6,          // speed multiplier while fleeing (burns more energy, too)
+
+    // Hunger-driven boldness — the recovery valve for a collapsing predator tier.
+    // observe.js showed the world is bistable: ~half of seeds fall into a "grazer
+    // haven" where hunters bleed to a handful, motes overpopulate, and the meadow is
+    // grazed bare — so prey are energy-poor and kills stop paying, a death spiral the
+    // tier never climbs out of. Catches are AMBUSH-limited (a panicking mote outruns
+    // any hunter), so a starving hunter turns reckless: it lunges from farther, digests
+    // its last meal faster, and puts on a closing sprint — snatching poorer, more
+    // frequent meals kept just-barely-profitable by the flat huntBonus. Boldness scales
+    // with hunger and vanishes when fed, so it rescues a collapsed tier without letting
+    // a thriving one pin at its cap.
+    hunterBoldFull: 70,       // energy at/above which a hunter is calm (boldness 0); it
+                              // ramps to full boldness as energy falls toward death at 0
+    hunterBoldReach: 7,       // extra px of strike lunge at full hunger (huntRange is 6,
+                              // so a starving hunter roughly doubles its catch window)
+    hunterBoldDigest: 1.8,    // extra cooldown drained per tick at full hunger, so the
+                              // 40-tick digestion shrinks toward ~14 when starving
+    hunterBoldSprint: 0.45,   // extra fraction of speed at full hunger to close the gap
+                              // (costs energy via the metabolic bill — a real gamble)
+
     sparkFade: 0.045,         // per-tick fade of a kill-flash marker (view only)
   };
 
@@ -622,7 +642,12 @@
     for (let i = world.hunters.length - 1; i >= 0; i--) {
       const h = world.hunters[i];
       h.age++;
-      if (h.cool > 0) h.cool--;
+      // hunger-driven boldness: 0 when fed (energy ≥ hunterBoldFull), ramping to 1 as
+      // energy falls toward death. Squared so only real hunger turns a hunter reckless.
+      const hunger = 1 - clamp(h.energy / CONFIG.hunterBoldFull, 0, 1);
+      const bold = hunger * hunger;
+      // a starving hunter digests faster, so its next strike comes sooner
+      if (h.cool > 0) h.cool -= 1 + CONFIG.hunterBoldDigest * bold;
 
       // always stalk the nearest mote in sense range — a sated hunter keeps tracking
       // (and scaring) the herd, it simply can't strike again until it has digested.
@@ -641,8 +666,9 @@
         h.dir += rand(-0.5, 0.5); // prowl
       }
 
-      // move
-      const v = h.g.speed;
+      // move — a starving hunter puts on a closing sprint (which costs more energy
+      // below, via v: reckless is expensive, so a bold hunter that misses dies faster)
+      const v = h.g.speed * (1 + CONFIG.hunterBoldSprint * bold);
       h.x = wrap(h.x + Math.cos(h.dir) * v, W);
       h.y = wrap(h.y + Math.sin(h.dir) * v, H);
 
@@ -652,7 +678,7 @@
       // strike: if digestion is done and the target is now within a body-length, eat it
       if (best >= 0 && h.cool <= 0) {
         const prey = world.motes[best];
-        const cr = h.g.size + prey.g.size + CONFIG.huntRange;
+        const cr = h.g.size + prey.g.size + CONFIG.huntRange + CONFIG.hunterBoldReach * bold;
         if (torusD2(h.x, h.y, prey.x, prey.y) < cr * cr) {
           h.energy += (prey.energy > 0 ? prey.energy : 0) * CONFIG.huntAssimilation + CONFIG.huntBonus;
           h.cool = CONFIG.huntCooldown;   // digest before the next strike
@@ -753,17 +779,21 @@
     // predator reads as directional and menacing next to the soft grazer discs
     for (const h of world.hunters) {
       const glow = clamp(h.energy / CONFIG.hunterReproEnergy, 0.3, 1);
+      // starving hunters read as desperate: the nose lunges longer and the body
+      // flushes pale and white-hot, so a collapsing predator tier looks frantic
+      const hunger = 1 - clamp(h.energy / CONFIG.hunterBoldFull, 0, 1);
+      const bold = hunger * hunger;
       const s = h.g.size;
       ctx.save();
       ctx.translate(h.x, h.y);
       ctx.rotate(h.dir);
       ctx.beginPath();
-      ctx.moveTo(s * 1.8, 0);        // nose
-      ctx.lineTo(-s, s * 0.95);      // rear corners, with a notched tail
+      ctx.moveTo(s * (1.8 + bold * 1.6), 0);   // nose — a bold hunter lunges longer
+      ctx.lineTo(-s, s * 0.95);                // rear corners, with a notched tail
       ctx.lineTo(-s * 0.4, 0);
       ctx.lineTo(-s, -s * 0.95);
       ctx.closePath();
-      ctx.fillStyle = `hsl(${h.g.hue.toFixed(0)} 85% ${(46 + glow * 20).toFixed(0)}%)`;
+      ctx.fillStyle = `hsl(${h.g.hue.toFixed(0)} ${(85 - bold * 45).toFixed(0)}% ${(46 + glow * 20 + bold * 26).toFixed(0)}%)`;
       ctx.fill();
       ctx.restore();
     }
