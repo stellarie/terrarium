@@ -376,6 +376,66 @@ try {
 } catch (e) { frameOK = false; }
 check(frameOK, "render: `observe.js --frame` drives the real draw() to a PNG end-to-end");
 
+// ---- reproducibility: a named world regrows exactly --------------------------
+// The point of the seeded RNG (2026-07-23) is that `seed(N)` rewinds the world's
+// randomness, so the same number always grows the same world. If that ever drifts,
+// every census table, every paired split-test and every shared URL quietly becomes a
+// lie — so it is asserted by construction rather than hoped for. Runs last, because
+// it deliberately rebuilds the world several times.
+function worldFingerprint() {
+  let g = 0;
+  for (const m of world.motes) g += m.g.speed + m.g.size * 3 + m.g.sense * 7 + m.g.metabo * 11 + m.x + m.y * 2;
+  for (const h of world.hunters) g += h.g.speed * 13 + h.g.sense * 17 + h.x + h.y * 2;
+  let v = 0;
+  for (let i = 0; i < world.veg.length; i++) v += world.veg[i] * (1 + (i % 7));
+  return [world.motes.length, world.hunters.length, world.born, world.died, world.eaten,
+          Math.round(g * 1e6), Math.round(v * 1e6)].join("|");
+}
+const DTICKS = 900;   // long enough for grazing, breeding, hunting and deaths to bite
+seed(20260723); for (let t = 0; t < DTICKS; t++) step();
+const fpA = worldFingerprint();
+check(world.seedValue === 20260723, "a seeded world reports its own name (world.seedValue)");
+seed(20260723); for (let t = 0; t < DTICKS; t++) step();
+check(worldFingerprint() === fpA,
+      "reproducible: the same seed regrows a byte-identical world after 900 ticks");
+seed(20260724); for (let t = 0; t < DTICKS; t++) step();
+check(worldFingerprint() !== fpA,
+      "the seed is actually used: a neighbouring seed grows a different world");
+seed(null);
+check(world.seedValue === null, "seed(null) hands the world back to free randomness");
+seed(); for (let t = 0; t < 120; t++) step();
+const u1 = worldFingerprint();
+seed(); for (let t = 0; t < 120; t++) step();
+check(worldFingerprint() !== u1,
+      "unseeded, two fresh worlds differ — Math.random is genuinely back in charge");
+
+// The HUD chip that shows a world its own name.
+seed(4242);
+updateHud();
+check(document.getElementById("s-seed").textContent === "4242",
+      "the HUD names the world (`s-seed` chip carries the seed)");
+
+// The browser boot path — a world's name travels in the URL hash. This can't run in
+// this process (sim.js read `location` once, at load), and the file:// preview pane
+// drops the fragment when it opens a page, so it's proved the same way the rasterizer
+// is: a subprocess that installs a fake `location` *before* requiring the sim.
+{
+  const boot = (hash, expr) => {
+    try {
+      return cp.execFileSync(process.execPath, ["-e",
+        `global.location={hash:${JSON.stringify(hash)}};require('./shim.js');` +
+        `const s=require('./sim.js');process.stdout.write(String(${expr}));`],
+        { cwd: __dirname }).toString();
+    } catch (e) { return "THREW"; }
+  };
+  check(boot("#s=777", "s.world.seedValue") === "777",
+        "a shared link replays its world — `#s=777` boots the world seeded 777");
+  const minted = boot("", "s.world.seedValue + '|' + location.hash");
+  const [sv, hash] = minted.split("|");
+  check(/^\d+$/.test(sv) && hash === "s=" + sv,
+        "a first visit mints a world and publishes its name into the URL hash");
+}
+
 // ---- verdict ----------------------------------------------------------------
 if (failures) {
   console.error(`\nSMOKE TEST FAILED — ${failures} check(s) failed.`);

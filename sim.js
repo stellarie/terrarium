@@ -269,8 +269,38 @@
     return tot > 0 ? e / tot : null;
   }
 
+  // ---- the world's randomness ---------------------------------------------
+  // Every stochastic thing in this world — where the fertility gratings fall, which
+  // cell sprouts, how a genome mutates, whether an old hunter's number comes up —
+  // draws from `rng`, and nothing calls Math.random directly. Unseeded, `rng` IS
+  // Math.random and every load is a fresh, unrepeatable world. Give it a seed and the
+  // world becomes *reproducible*: the same number always grows the same meadow, the
+  // same herd, the same collapse. That is what makes a world shareable (a URL hash)
+  // and an experiment repeatable (`observe.js --census`, and the now-paired
+  // `--split-test`). mulberry32: 32 bits of state, one multiply, small enough to read
+  // in a sitting and far better distributed than anything hand-rolled would be.
+  function mulberry32(a) {
+    return function () {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  let rngSeed = null;              // null = unseeded; a uint32 = this world's name
+  let rng = Math.random;
+  // Point the world's randomness at a seed (or back at Math.random with null).
+  // Returns the normalized seed so a caller can display exactly what it got.
+  function setSeed(s) {
+    const v = s == null || !Number.isFinite(Number(s)) ? null : Number(s) >>> 0;
+    rngSeed = v;
+    rng = v == null ? Math.random : mulberry32(v);
+    return v;
+  }
+  const randomSeed = () => (Math.random() * 4294967296) >>> 0;   // a fresh world's name
+
   // ---- helpers ------------------------------------------------------------
-  const rand = (a, b) => a + Math.random() * (b - a);
+  const rand = (a, b) => a + rng() * (b - a);
   const clamp = (x, lo, hi) => (x < lo ? lo : x > hi ? hi : x);
   const wrap = (x, max) => (x < 0 ? x + max : x >= max ? x - max : x);
 
@@ -492,9 +522,18 @@
     // which bistable attractor the world is in, read live off the history buffer
     regime: { state: "settling", trend: "steady", label: "settling — reading the world…",
               hmean: 0, flash: 0, flashText: "" },
+    seedValue: null,   // this world's name: a uint32 if seeded, null if freely random
   };
 
-  function seed() {
+  // Build a fresh world. Pass a number and this world becomes reproducible: the RNG
+  // stream is rewound to that seed before a single grating, mote or hunter is drawn,
+  // so `seed(1234)` always grows exactly the same world. Pass nothing and whatever
+  // randomness is currently installed simply continues — which is what every existing
+  // caller (the harnesses' "run several seeds" habit) already wanted. Pass an explicit
+  // `null` to hand the world back to Math.random and stop being reproducible.
+  function seed(s) {
+    if (s !== undefined) setSeed(s);
+    world.seedValue = rngSeed;
     world.fert = buildFertility();
     world.veg = new Float64Array(GRID.n);
     world.vegNext = new Float64Array(GRID.n);
@@ -572,8 +611,8 @@
     let s = CONFIG.vegSeedRate * seasonGrow();
     const veg = world.veg, fert = world.fert;
     while (s > 0) {
-      if (s >= 1 || Math.random() < s) {
-        const i = (Math.random() * veg.length) | 0;
+      if (s >= 1 || rng() < s) {
+        const i = (rng() * veg.length) | 0;
         const start = CONFIG.vegSeedAmount * fert[i];
         if (veg[i] < start) veg[i] = start;
       }
@@ -885,7 +924,7 @@
           if (val > bestVal) { bestVal = val; bestDir = a; }
         }
         if (bestDir >= 0) m.dir = bestDir;
-        else if (Math.random() < 0.08) m.dir += rand(-0.6, 0.6); // idle wander
+        else if (rng() < 0.08) m.dir += rand(-0.6, 0.6); // idle wander
       }
 
       // move — a bolting mote sprints (and pays for it in the burn below); a hiding
@@ -968,7 +1007,7 @@
       if (best >= 0) {
         const prey = world.motes[best];
         h.dir = torusAngle(h.x, h.y, prey.x, prey.y);
-      } else if (Math.random() < 0.06) {
+      } else if (rng() < 0.06) {
         h.dir += rand(-0.5, 0.5); // prowl
       }
 
@@ -1023,7 +1062,7 @@
       let aged = false;
       if (!starved && h.age > CONFIG.hunterSenesceOnset) {
         const hazard = CONFIG.hunterSenesceRate * (h.age - CONFIG.hunterSenesceOnset);
-        if (Math.random() < hazard) aged = true;
+        if (rng() < hazard) aged = true;
       }
       if (starved || aged) {
         world.hunters.splice(i, 1);
@@ -1553,6 +1592,7 @@
     morphs: document.getElementById("s-morphs"),
     regime: document.getElementById("s-regime"),
     season: document.getElementById("s-season"),
+    seed: document.getElementById("s-seed"),
   };
   // short "high∙low" caption for the axis a morph split runs along
   const morphAxisLabel = (key) => {
@@ -1586,6 +1626,13 @@
       el.regime.style.color = rd.color;
       el.regime.title = world.regime.label;
     }
+    // this world's name — the number that will regrow it exactly, sitting in the URL
+    if (el.seed) {
+      el.seed.textContent = world.seedValue == null ? "—" : String(world.seedValue);
+      el.seed.title = world.seedValue == null
+        ? "this world is freely random — it has no seed and cannot be replayed"
+        : `world #${world.seedValue} — its name is in the address bar, so copying the URL shares this exact world`;
+    }
     // growth multiplier, with an arrow for whether we're warming toward summer
     const rising = Math.cos((world.tick / CONFIG.seasonPeriod) * TAU) >= 0;
     el.season.textContent = `×${seasonGrow().toFixed(2)} ${rising ? "↑" : "↓"}`;
@@ -1612,12 +1659,14 @@
   document.getElementById("btn-seed").addEventListener("click", () => {
     // a generous scattering of seeds across the field
     for (let k = 0; k < 240; k++) {
-      const i = (Math.random() * world.veg.length) | 0;
+      const i = (rng() * world.veg.length) | 0;
       const start = 0.6 * world.fert[i];
       if (world.veg[i] < start) world.veg[i] = start;
     }
   });
-  document.getElementById("btn-reset").addEventListener("click", seed);
+  // Not just a reshuffle any more: this mints a *named* world and puts its name in
+  // the address bar, so the one you happen to like is one copied URL from permanent.
+  document.getElementById("btn-reset").addEventListener("click", () => { newWorld(); });
   document.getElementById("speed").addEventListener("input", (e) => {
     world.stepsPerFrame = parseInt(e.target.value, 10);
   });
@@ -1636,15 +1685,50 @@
     });
   }
 
+  // ---- this world's name (the URL hash) -----------------------------------
+  // A seeded world is a shareable one. The seed rides in the address bar as `#s=…`,
+  // so copying the URL hands someone the *exact* world you are watching — the same
+  // meadow, the same herd, the same collapse at the same tick — instead of merely
+  // "a terrarium". Under Node there is no location, so the harnesses stay freely
+  // random unless they ask for a seed themselves.
+  const HAS_LOCATION =
+    typeof location !== "undefined" && location != null && typeof location.hash === "string";
+  function readHashSeed() {
+    if (!HAS_LOCATION) return null;
+    const m = /[#&]s=(\d+)/.exec(location.hash);
+    if (!m) return null;
+    const v = Number(m[1]);
+    return Number.isFinite(v) ? v >>> 0 : null;
+  }
+  function writeHashSeed(v) {
+    if (!HAS_LOCATION) return;
+    // A fragment-only change never reloads the page; some file:// setups still
+    // object, and a world that runs beats a URL that's tidy.
+    try { location.hash = "s=" + v; } catch (e) { /* ignore */ }
+  }
+  // Mint a brand-new world and remember its name in the URL.
+  function newWorld() {
+    const v = randomSeed();
+    seed(v);
+    writeHashSeed(v);
+    return v;
+  }
+
   // ---- go -----------------------------------------------------------------
-  seed();
+  if (HAS_LOCATION) {
+    const fromHash = readHashSeed();
+    if (fromHash == null) newWorld();          // first visit: mint one and publish it
+    else { seed(fromHash); writeHashSeed(fromHash); }   // a shared link: replay it exactly
+  } else {
+    seed();                                     // headless: unseeded unless asked
+  }
   requestAnimationFrame(frame);
 
   // Headless hook: when loaded under Node (the smoke test), expose the internals
   // so a DOM/canvas shim can drive real ticks. No effect in a browser.
   if (typeof module !== "undefined" && module.exports) {
     module.exports = {
-      world, step, seed, sample, biomass, CONFIG, GRID,
+      world, step, seed, setSeed, randomSeed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
       concealment, hideability, metaboIntakeMult, huntMetaboMult, predationShare, cellIndex,
