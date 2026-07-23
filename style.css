@@ -96,6 +96,8 @@ canvas {
 }
 
 .stat.wide { min-width: 132px; }
+/* a 10-digit world name shouldn't shout louder than the population count */
+.stat.seed .v { font-size: 0.95rem; color: var(--muted); }
 
 .stat .k {
   display: block;

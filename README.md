@@ -103,14 +103,28 @@ them — recover, riding on top of the grazer–plant boom and bust.
   coloured green), with **recovering ↑** when a collapsed hunter tier is clawing back. It's
   hysteretic, so it won't strobe on a marginal seed, and when the world *tips* from one
   attractor to the other a labelled banner fades across the top of the field — so the
-  bistable phase transition, once invisible, is impossible to miss.
+  phase transition, once an invisible coin-flip, is impossible to miss.
 - The **whole meadow's light leans with the regime**: an arms-race stokes a warm, tense,
   close-walled glow, a grazer-haven cools and dims toward a hollow blue-grey, and the shift
   eases in over a few seconds — so the world's *mood* reads at a glance, before you even
   read the HUD chip. It's pure atmosphere (a background lean plus a soft tinted vignette);
   nothing in the ecology reads it back.
 - The **HUD** shows tick, motes, hunters, plant biomass, births, natural deaths, motes
-  eaten, the **morph** count, the **regime**, and the current seasonal growth multiplier.
+  eaten, the **morph** count, the **regime**, the seasonal growth multiplier, and this
+  world's **seed** — its name.
+
+### Every world has a name
+
+The world is **reproducible**. Each one is grown from a single number, and that number
+lives in the address bar as `#s=…`, so **copying the URL hands someone the exact world
+you're watching** — the same fertility map, the same founding herd, the same collapse at
+the same tick. The **world seed** chip in the HUD shows it; the **new world** button mints
+a fresh one and publishes it to the URL. Open the page with no seed and it picks one for
+you.
+
+That's not just a share button: it's what lets the world be *studied*. A regime you like
+can be summoned on demand instead of waited for, and every headless experiment below can
+run the same worlds twice.
 
 ### See the hidden landscape
 
@@ -126,8 +140,8 @@ lenses painted over the meadow:
 Each comes with a small labelled gradient key, and neither touches the simulation — they
 only read the world and paint it.
 
-Controls: pause, sow a burst of seeds, reseed the whole world, cycle the overlay, and a
-speed slider.
+Controls: pause, sow a burst of seeds, mint a **new world** (a fresh seed, written to the
+URL), cycle the overlay, and a speed slider.
 
 ## Run it
 
@@ -139,15 +153,17 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 60 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 72 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
 concealment mechanic is monotone (a small, slow mote outhides a big fast one in cover, and
 nobody hides on bare ground), the morph detector is honest (it calls a single broad cloud one
 morph and a clean two-cluster pool two), the regime readout names each attractor correctly
-with the right hysteresis, and the **headless renderer** works end-to-end (it drives the real
-`draw()` to a valid PNG). Because it uses real randomness, run it a few times:
+with the right hysteresis, **seeded worlds are truly reproducible** (the same seed regrows a
+byte-identical world, a neighbouring seed doesn't, and a shared `#s=…` link replays its world),
+and the **headless renderer** works end-to-end (it drives the real `draw()` to a valid PNG).
+Because it also exercises real randomness, run it a few times:
 
 ```bash
 node smoke.js
@@ -163,32 +179,53 @@ safety-net firings, births/deaths/kills per 1,000 ticks, an age histogram, per-g
 and its life, a **gene-pool shape** section — each grazer gene's spread, a histogram, and
 the morph detector's verdict, so you can see whether the mean is hiding a split — and a
 **regime** section that names which attractor the seed settled in and tallies how long it
-spent in each, so the bistability is counted rather than eyeballed.
+spent in each, so the regime is counted rather than eyeballed.
 
 ```bash
-node observe.js          # or: node observe.js 50000   (custom tick count)
+node observe.js                    # or: node observe.js 50000   (custom tick count)
+node observe.js 20000 --seed 3     # pin the reading to one named, repeatable world
 ```
 
 It's how each build session *watches the world before touching it* — and on its first run it
-revealed the ecology is **bistable**, settling per-seed into either a predator arms-race or a
-predator near-collapse where grazers overgraze the meadow to nothing. A later run traced the
-collapse to a **prey-quality death spiral** (few hunters → overgrazed, energy-poor prey →
-unprofitable kills) and added hunger-driven boldness as a recovery valve, cutting the collapse
-rate from ~⅔ of worlds to ~⅖ and giving the two regimes a populated middle to travel between.
+revealed the ecology has **two regimes**, each world settling into either a predator arms-race
+or a predator near-collapse where grazers overgraze the meadow to nothing. A later run traced
+the collapse to a **prey-quality death spiral** (few hunters → overgrazed, energy-poor prey →
+unprofitable kills) and added hunger-driven boldness as a recovery valve, giving the two
+regimes a populated middle to travel between.
 
-The observatory also runs a dedicated **experiment**: does predation *drive* the hider/fleer
-divergence, or would grazers diverge anyway? It runs a batch of worlds with hunters against a
-batch with the hunters removed and reports the strategy each evolves:
+### Count the regimes — `--census`
+
+For most of this project's life "how often does a world become an arms-race?" was a *remembered*
+number, because one unseeded run visits exactly one regime and a handful of runs isn't a rate.
+Now that worlds have names, it's arithmetic:
+
+```bash
+node observe.js --census            # or: node observe.js --census 48 20000
+```
+
+It runs N reproducible worlds, reports each one's settled regime, hunter tier, gene means and
+flip count, then gives the verdict. Same arguments → the same table, every time, so a future
+version of the world can be measured against today's. The current reading (24 worlds × 12,000
+ticks): **17% settle arms-race, 83% grazer-haven — but 28% of all _ticks_ are arms-race and 11
+of 24 worlds flip regime at least once.** In other words, reading only the final state badly
+undercounts the predators: several worlds spend two-thirds of their life in an arms-race and
+still *end* in a grazer-haven.
+
+### Does predation drive the split? — `--split-test`
+
+A dedicated **experiment**: does predation *drive* the hider/fleer divergence, or would grazers
+diverge anyway? It runs each seed **twice** — once with hunters, once with them removed — so the
+two rows are the *same world* differing only in whether predators exist:
 
 ```bash
 node observe.js --split-test          # or: node observe.js --split-test 8 20000
 ```
 
 The answer is clear: predation pushes the herd hard toward the fleer end (mean grazer speed
-~1.9 with hunters vs ~0.9 without), and the fast fleer is **predation-only** — remove the
-predators and every world collapses to slow, cheap hiders. (What predation does *not* do is
-make two lifestyles coexist *within one* world — the bistability keeps each world on a single
-answer. See the journal for that open thread.)
+~1.5–1.9 with hunters vs ~0.8–0.9 without, and **every matched pair** moves that way), and the
+fast fleer is **predation-only** — remove the predators and every world collapses to slow, cheap
+hiders. (What predation does *not* do is make two lifestyles coexist *within one* world — each
+world still settles on a single answer. See the journal for that open thread.)
 
 ### See it — render a frame to a PNG
 
@@ -198,7 +235,8 @@ A browser preview can't be composited in an automated session, so for a long tim
 one true frame can be encoded to a PNG (hand-rolled, no zlib) and looked at:
 
 ```bash
-node observe.js --frame world.png          # or: node observe.js --frame world.png 12000 1
+node observe.js --frame world.png                   # a random world
+node observe.js --frame world3.png 6000 --seed 3    # world #3, the same picture every time
 ```
 
 It boots a fresh world, ticks it (default 4,000), seats the regime's warm/cold mood, renders one
@@ -224,8 +262,8 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 60 assertions over thousands of real ticks |
-| `observe.js` | the observatory — prints readings; `--split-test` runs the predation experiment, `--frame` renders a PNG |
+| `smoke.js` | headless smoke test — 72 assertions over thousands of real ticks |
+| `observe.js` | the observatory — prints readings; `--census` measures the regimes, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
 ## How it's built
@@ -242,12 +280,24 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing overlay onto the
-hidden landscape, corpse fertilisation, a 49-check headless smoke test, and a headless
+hidden landscape, corpse fertilisation, a 72-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the predator has a metabolism, not just a metabolic bill.** The grazers' fast/slow
+Newest: **every world has a name.** The whole simulation now draws its randomness from one
+seedable generator, so a world is **reproducible**: the same number regrows the same meadow, herd
+and collapse, tick for tick. The seed rides in the URL (`#s=…`) and is shown in the HUD, so a world
+you like is one copied link away from permanent — and the same machinery gave the project the
+instrument it had been missing for a dozen sessions. `node observe.js --census` runs a batch of
+named worlds and *counts* which regime each settles in, turning a figure that used to be
+remembered into one that's measured: **17% of worlds settle into a predator arms-race, 83% into a
+grazer-haven — yet 28% of all ticks are arms-race, and 11 of 24 worlds flip between them.** Reading
+only a world's final state, it turns out, badly undercounts the predators. The predation experiment
+(`--split-test`) is now **paired** by seed too, so its verdict rests on the same world with and
+without hunters rather than on a spread of lucky draws.
+
+Also: **the predator has a metabolism, not just a metabolic bill.** The grazers' fast/slow
 metabolism was already a real tradeoff, but a hunter's metabo scaled only its burn — pure cost —
 so the gene had nowhere to go but its floor, decaying every run. Now a fast-burning hunter
 **digests each kill more thoroughly** (the assimilated share of a caught mote scales with the
@@ -286,10 +336,10 @@ while worlds **without** collapse to slow hiders (~0.9), and the fleer lifestyle
 predators exist. The hunters answer by **coevolving keener eyes** to find prey that hide.
 
 The honest result: predation now clearly *sets the grazers' lifestyle*, but it still **unifies** the
-herd rather than splitting it — the world's arms-race/grazer-haven **bistability** makes each world
+herd rather than splitting it — the world's arms-race/grazer-haven **regime split** makes each world
 pick a single lifestyle, so genuine two-morph coexistence *within one world* remains the arc's open
 problem (the divergence is real and predation-driven, but it lives *between* worlds). Landing true
-coexistence — straddling the bistability — is the next Expedition.
+coexistence — straddling that regime split — is the next Expedition.
 
 Earlier in the arc: a **live regime readout** names which attractor a world is in (red arms-race /
 green grazer-haven, **recovering ↑** when a collapsed tier claws back) and banners the moment it

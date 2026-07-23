@@ -13,7 +13,10 @@
  * failure — read it and decide. This is the microscope invariant 7 demands, and
  * without it no run can honestly claim to have *watched* the world before touching it.
  *
- * Run:  node observe.js [ticks]     (default 20000 ≈ 8+ seasonal cycles)
+ * Run:  node observe.js [ticks] [--seed N]   (default 20000 ≈ 8+ seasonal cycles)
+ *       node observe.js --census [N] [ticks]  — the regime census across N seeded worlds
+ *       node observe.js --split-test [N] [ticks]  — the paired predation-divergence test
+ *       node observe.js --frame [out.png] [ticks] [1|2]  — render one real frame to a PNG
  * Exit: 0 = a clean reading; 1 = the sim threw or NaN leaked (a real defect).
  */
 "use strict";
@@ -29,12 +32,29 @@ const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs, hideability, p
 
 const W = 960, H = 540;
 
+// `--seed N` pins the whole reading to one reproducible world, so a number that looks
+// wrong can be handed to the next run verbatim instead of described from memory.
+const SEEDAT = ARGS.indexOf("--seed");
+const SEED = SEEDAT >= 0 && /^\d+$/.test(ARGS[SEEDAT + 1] || "") ? Number(ARGS[SEEDAT + 1]) : null;
+// bare integers, minus the one that belongs to --seed
+const NUMS = ARGS.filter((a, i) => /^\d+$/.test(a) && i !== SEEDAT + 1).map(Number);
+
 // A dedicated experiment (not the normal single-world report): does PREDATION drive
 // the hider/fleer divergence? Run N worlds with hunters against N with hunters removed,
 // and compare the grazer strategy each evolves. Fires on `node observe.js --split-test`.
 if (ARGS.includes("--split-test") || ARGS.includes("--divergence")) {
-  const nums = ARGS.filter((a) => !a.startsWith("--")).map((x) => parseInt(x, 10)).filter((x) => x > 0);
-  splitTest(nums[0] || 6, nums[1] || 15000);
+  splitTest(NUMS[0] || 6, NUMS[1] || 15000);
+  process.exit(0);
+}
+
+// The regime census (Arc III's measuring instrument, added 2026-07-23): the world is
+// bistable, and a single unseeded run only ever visits ONE attractor — so for its whole
+// life the split between them has been a *remembered* figure, re-guessed each session
+// from whatever handful of draws that session happened to take. Now that the RNG takes
+// a seed, N reproducible worlds can be run and the rate simply *measured*, the same
+// number every time. Fires on `node observe.js --census [N] [ticks]`.
+if (ARGS.includes("--census")) {
+  census(NUMS[0] || 24, NUMS[1] || 12000, SEED == null ? 1 : SEED);
   process.exit(0);
 }
 
@@ -52,11 +72,11 @@ function frameMode() {
   const { encodePNG } = require("./render.js");
   const rest = ARGS.filter((a) => !a.startsWith("--"));
   const out = rest.find((a) => !/^\d+$/.test(a)) || "terrarium-frame.png";
-  const nums = rest.filter((a) => /^\d+$/.test(a)).map(Number);
+  const nums = NUMS;
   const ticks = nums.find((n) => n > 3) || 4000;      // first int > 3 is the tick count
   const overlay = nums.includes(1) ? 1 : nums.includes(2) ? 2 : 0; // small ints pick an overlay lens
 
-  seed();
+  seed(SEED == null ? undefined : SEED);   // --seed N renders a *nameable* world
   for (let i = 0; i < ticks; i++) step();
   world.overlay = overlay;
   // A single frame can't show the eased mood tint the way a viewer watching for seconds
@@ -78,7 +98,7 @@ function frameMode() {
   const nf = world.motes.length ? world.motes.filter((m) => hideability(m.g) < 0.30).length : 0;
   console.log("═══ TERRARIUM FRAME ═══");
   console.log(`  wrote ${out}  (${raster.width}×${raster.height} PNG, ${png.length} bytes)`);
-  console.log(`  tick ${world.tick}  ·  overlay ${["off", "fertility", "grazing"][overlay]}`);
+  console.log(`  tick ${world.tick}  ·  overlay ${["off", "fertility", "grazing"][overlay]}  ·  seed ${world.seedValue == null ? "— (random)" : "#" + world.seedValue}`);
   console.log(`  regime  : ${world.regime.state}${world.regime.trend ? " / " + world.regime.trend : ""}  (mood ${world.mood.toFixed(2)})`);
   console.log(`  motes   : ${world.motes.length}   hunters: ${world.hunters.length}   biomass: ${Math.round(biomass())}`);
   console.log(`  mote hue mean ${meanHue}°  ·  lifestyle: ${nf} fleers / ${nm} hiders (of ${world.motes.length})`);
@@ -86,7 +106,7 @@ function frameMode() {
   console.log("  (text/labels are not rendered; colour, position, rings & rims are real)");
 }
 
-const TICKS = Math.max(1000, parseInt(process.argv[2], 10) || 20000);
+const TICKS = Math.max(1000, NUMS[0] || 20000);
 
 // The mutation clamps from sim.js — the *true* range each gene can drift within, so
 // "pinned at the edge" means pinned at a clamp, not merely at a founder bound. Keep
@@ -126,7 +146,7 @@ function meter() {
 }
 
 // ---- run --------------------------------------------------------------------
-seed();
+seed(SEED == null ? undefined : SEED);
 const founders = { mote: geneAverages(world.motes), hunter: geneAverages(world.hunters) };
 
 const mPop = meter(), hPop = meter(), bio = meter();
@@ -184,6 +204,7 @@ line();
 line("═══════════════════════════════════════════════════════════════════════");
 line("  TERRARIUM OBSERVATORY");
 line(`  ${TICKS} ticks in ${secs}s · grid ${GRID.cols}×${GRID.rows} · seasons ×0.4–×1.6 / ${CONFIG.seasonPeriod}t`);
+line(`  world seed ${world.seedValue == null ? "— (freely random; pass --seed N to make this reading repeatable)" : "#" + world.seedValue + " (reproducible: --seed " + world.seedValue + " regrows it exactly)"}`);
 line("═══════════════════════════════════════════════════════════════════════");
 
 line("\n[1] INTEGRITY");
@@ -428,15 +449,97 @@ function regimeReport() {
 
 process.exit(threw || nanFlags.length ? 1 : 0);
 
+// ---- the regime census ------------------------------------------------------
+// The bistability has been this world's headline finding for a dozen runs, and for all
+// of them the *rate* — how often a world becomes a predator arms-race rather than a
+// grazer-haven — was a number sessions remembered rather than measured, because one
+// unseeded run visits exactly one attractor and a handful of draws is not a rate. With
+// a seedable RNG the question becomes arithmetic: run N named worlds, ask each one which
+// attractor it settled in, and count. Same seeds → same table, so a future run can
+// re-measure this exact census and see whether the world has drifted underneath it.
+function runCensusWorld(sd, ticks) {
+  const rt = { settling: 0, "arms-race": 0, "grazer-haven": 0 };
+  const hM = meter(), mM = meter(), bM = meter();
+  let flips = 0, prev = "settling", threw = null, hunterEmpty = 0;
+  try {
+    seed(sd);
+    for (let t = 0; t < ticks; t++) {
+      step();
+      const hn = world.hunters.length;
+      hM.push(hn); mM.push(world.motes.length); bM.push(biomass());
+      if (hn === 0) hunterEmpty++;
+      const rs = world.regime.state;
+      rt[rs] = (rt[rs] || 0) + 1;
+      if ((rs === "arms-race" || rs === "grazer-haven") &&
+          (prev === "arms-race" || prev === "grazer-haven") && rs !== prev) flips++;
+      prev = rs;
+    }
+  } catch (e) { threw = e; }
+  const pop = world.motes;
+  const meanGene = (k) => (pop.length ? pop.reduce((s, m) => s + m.g[k], 0) / pop.length : NaN);
+  return {
+    sd, threw, flips, hunterEmpty,
+    state: world.regime.state, hmean: hM.mean(), hmax: hM.max,
+    motes: mM.mean(), plants: bM.mean(), sense: meanGene("sense"), speed: meanGene("speed"),
+    armsFrac: rt["arms-race"] / ticks, havenFrac: rt["grazer-haven"] / ticks,
+    k: classifyMorphs(pop).k,
+  };
+}
+
+function census(n, ticks, from) {
+  const pz = (s, w) => String(s).padStart(w);
+  const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : "NaN");
+  const bar = "─".repeat(78);
+  console.log("\n" + "═".repeat(78));
+  console.log("  TERRARIUM — REGIME CENSUS");
+  console.log(`  ${n} worlds × ${ticks} ticks · seeds ${from}..${from + n - 1} · reproducible (same seeds → same table)`);
+  console.log("  Q: how often does this world become a predator ARMS-RACE, and how often a GRAZER-HAVEN?");
+  console.log("═".repeat(78));
+  console.log("   seed   motes  plants   hunters mean/max   sense   settled in      arms%  flips");
+
+  const t0 = Date.now();
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    const r = runCensusWorld(from + i, ticks);
+    rows.push(r);
+    const tag = r.state === "arms-race" ? "arms-race   " : r.state === "grazer-haven" ? "grazer-haven" : "settling    ";
+    console.log(`  ${pz(r.sd, 5)}  ${pz(r.motes.toFixed(0), 6)}  ${pz(r.plants.toFixed(0), 6)}   ` +
+      `${pz(f1(r.hmean), 7)} /${pz(r.hmax, 4)}   ${pz(f1(r.sense), 5)}   ${tag}  ` +
+      `${pz(Math.round(100 * r.armsFrac), 4)}  ${pz(r.flips, 5)}${r.threw ? "  THREW" : ""}${r.hunterEmpty ? "  ⚑empty" : ""}`);
+  }
+  const secs = ((Date.now() - t0) / 1000).toFixed(0);
+
+  const count = (s) => rows.filter((r) => r.state === s).length;
+  const pctOf = (c) => Math.round((100 * c) / n);
+  const hmeans = rows.map((r) => r.hmean).sort((a, b) => a - b);
+  const median = hmeans[hmeans.length >> 1];
+  const armsTicks = rows.reduce((s, r) => s + r.armsFrac, 0) / n;
+  const havenTicks = rows.reduce((s, r) => s + r.havenFrac, 0) / n;
+  const flipped = rows.filter((r) => r.flips > 0).length;
+  const threwN = rows.filter((r) => r.threw).length;
+
+  console.log("\n  " + bar);
+  console.log("  VERDICT  (the bistability, finally counted rather than remembered)");
+  console.log(`   • settled ARMS-RACE    : ${pz(count("arms-race"), 3)}/${n} worlds  (${pctOf(count("arms-race"))}%)`);
+  console.log(`   • settled GRAZER-HAVEN : ${pz(count("grazer-haven"), 3)}/${n} worlds  (${pctOf(count("grazer-haven"))}%)`);
+  console.log(`   • still settling       : ${pz(count("settling"), 3)}/${n} worlds  (${pctOf(count("settling"))}%)`);
+  console.log(`   • hunter tier          : median mean ${f1(median)}  (range ${f1(hmeans[0])}–${f1(hmeans[hmeans.length - 1])})`);
+  console.log(`   • time-weighted        : ${Math.round(100 * armsTicks)}% of all ticks arms-race · ${Math.round(100 * havenTicks)}% grazer-haven`);
+  console.log(`   • flipped attractor    : ${flipped}/${n} worlds (max ${Math.max(...rows.map((r) => r.flips))} flips)`);
+  console.log(`   • integrity            : ${threwN ? threwN + " world(s) THREW — a real defect" : "no world threw"}`);
+  console.log(`  ${secs}s. Re-run with the same N and ticks to compare a future world against this table.`);
+  console.log("  " + bar + "\n");
+}
+
 // ---- the predation-divergence experiment ------------------------------------
 // Run one world to a settled state and read the grazers' evolved anti-predator
 // strategy: mean genes, and the *tactic mix* — what fraction became hiders (high
 // hideability: small + slow, vanish into cover) vs fleers (low: fast, outrun in the
 // open). hideability is the very axis draw() tints motes by, so this measures exactly
 // what a viewer sees. Throws are caught so one sick seed can't abort the whole sweep.
-function runOneWorld(ticks) {
+function runOneWorld(ticks, sd) {
   let threw = null;
-  try { seed(); for (let t = 0; t < ticks; t++) step(); }
+  try { seed(sd); for (let t = 0; t < ticks; t++) step(); }
   catch (e) { threw = e; }
   const pop = world.motes, n = pop.length || 1;
   let sp = 0, sz = 0, se = 0, Hs = 0, hid = 0, fle = 0;
@@ -457,15 +560,18 @@ function runOneWorld(ticks) {
 // lifestyle — being built to outrun a predator — should appear ONLY when predators exist,
 // and the strategy should vary far more across predator worlds (the arms-race / grazer-
 // haven bistability picking different answers) than across the relaxed predator-free ones.
-// Unpaired (there is no seeded RNG yet — see the backlog), so read the SPREAD across seeds,
-// never a single row.
+// PAIRED as of 2026-07-23: both conditions now run the *same* seed list, so row 7 with
+// hunters and row 7 without start from the identical fertility map and founding herd and
+// differ only in whether predators exist. That upgrade retires the old "unpaired — read
+// the spread, never a row" caveat: the per-seed difference is now a real difference, and
+// the verdict counts how many matched pairs move in the predicted direction.
 function splitTest(seeds, ticks) {
   const pz = (s, w) => String(s).padStart(w);
   const f2 = (x) => (Number.isFinite(x) ? x.toFixed(2) : "NaN");
   const bar = "─".repeat(71);
   console.log("\n" + "═".repeat(71));
   console.log("  TERRARIUM — PREDATION-DIVERGENCE TEST");
-  console.log(`  ${seeds} worlds × ${ticks} ticks per condition · unpaired (read the spread, not a row)`);
+  console.log(`  ${seeds} worlds × ${ticks} ticks per condition · PAIRED by seed (row N = the same world, with and without predators)`);
   console.log("  Q: does predation DRIVE the hider↔fleer split, or would grazers diverge anyway?");
   console.log("═".repeat(71));
 
@@ -483,7 +589,7 @@ function splitTest(seeds, ticks) {
     console.log("  seed   n   speed  size  sense    H   hider%  fleer%  morphs   hunters");
     const rows = [];
     for (let s = 0; s < seeds; s++) {
-      const r = runOneWorld(ticks);
+      const r = runOneWorld(ticks, s + 1);   // the same seed list in both conditions
       rows.push(r);
       const morph = r.k >= 2 ? `2·${r.gene || "?"}` : "1";
       console.log(`  ${pz(s + 1, 3)} ${pz(r.n, 5)}  ${pz(f2(r.speed), 5)} ${pz(f2(r.size), 5)} ` +
@@ -513,6 +619,21 @@ function splitTest(seeds, ticks) {
   console.log(`   • predation & hiding: mean hideability ${f2(wH.meanH)} WITH vs ${f2(nH.meanH)} without — ` +
     `${nH.meanH > wH.meanH + 0.05 ? "without a predator to outrun, grazers default to the small-slow hider genotype" :
       "similar"}.`);
+  // The paired reading: the same seed, with and without predators. A spread across
+  // unrelated worlds could always be blamed on the worlds; a matched difference can't.
+  {
+    const pairs = wH.rows.map((r, i) => ({
+      sd: i + 1, dSpeed: r.speed - nH.rows[i].speed, dH: r.H - nH.rows[i].H,
+    }));
+    const faster = pairs.filter((p) => p.dSpeed > 0).length;
+    const hidesLess = pairs.filter((p) => p.dH < 0).length;
+    const mean = (f) => pairs.reduce((s, p) => s + f(p), 0) / pairs.length;
+    console.log(`   • PAIRED (same seed, ± predators): ${faster}/${seeds} worlds evolve a FASTER herd with hunters ` +
+      `(mean Δspeed ${f2(mean((p) => p.dSpeed))}), ${hidesLess}/${seeds} a LESS hideable one ` +
+      `(mean Δhideability ${f2(mean((p) => p.dH))}) — ${faster >= Math.ceil(seeds * 0.75) ?
+        "a consistent within-world effect, not a spread across lucky draws" :
+        "an inconsistent effect — the direction is not reliable seed by seed"}.`);
+  }
   console.log(`   • predation & COEXISTENCE (the arc's hypothesis): within-world 2-morph splits ` +
     `${wH.morph2}/${seeds} WITH vs ${nH.morph2}/${seeds} without — ${wH.morph2 > nH.morph2 ?
       "splits need predators (arc supported!)" :
