@@ -74,7 +74,8 @@ function frameMode() {
   const out = rest.find((a) => !/^\d+$/.test(a)) || "terrarium-frame.png";
   const nums = NUMS;
   const ticks = nums.find((n) => n > 3) || 4000;      // first int > 3 is the tick count
-  const overlay = nums.includes(1) ? 1 : nums.includes(2) ? 2 : 0; // small ints pick an overlay lens
+  // small ints pick an overlay lens: 1 fertility · 2 grazing · 3 soil nutrients
+  const overlay = nums.includes(1) ? 1 : nums.includes(2) ? 2 : nums.includes(3) ? 3 : 0;
 
   seed(SEED == null ? undefined : SEED);   // --seed N renders a *nameable* world
   for (let i = 0; i < ticks; i++) step();
@@ -98,7 +99,7 @@ function frameMode() {
   const nf = world.motes.length ? world.motes.filter((m) => hideability(m.g) < 0.30).length : 0;
   console.log("═══ TERRARIUM FRAME ═══");
   console.log(`  wrote ${out}  (${raster.width}×${raster.height} PNG, ${png.length} bytes)`);
-  console.log(`  tick ${world.tick}  ·  overlay ${["off", "fertility", "grazing"][overlay]}  ·  seed ${world.seedValue == null ? "— (random)" : "#" + world.seedValue}`);
+  console.log(`  tick ${world.tick}  ·  overlay ${["off", "fertility", "grazing", "soil"][overlay]}  ·  seed ${world.seedValue == null ? "— (random)" : "#" + world.seedValue}`);
   console.log(`  regime  : ${world.regime.state}${world.regime.trend ? " / " + world.regime.trend : ""}  (mood ${world.mood.toFixed(2)})`);
   console.log(`  motes   : ${world.motes.length}   hunters: ${world.hunters.length}   biomass: ${Math.round(biomass())}`);
   console.log(`  mote hue mean ${meanHue}°  ·  lifestyle: ${nf} fleers / ${nm} hiders (of ${world.motes.length})`);
@@ -159,6 +160,21 @@ let earlySnap = null;           // boredom check: a window around tick ~1000
 const regimeTicks = { settling: 0, "arms-race": 0, "grazer-haven": 0 };
 let recoveringTicks = 0, regimeFlips = 0, prevRegime = "settling";
 let threw = null;
+// The matter ledger (2026-07-24). This exists because the world spent its whole life
+// quietly running down and no instrument could see it: vegetation used to be created
+// from nothing, so the only symptom was a slow slide the boredom check read as "a live,
+// moving system". Total matter is now a conserved quantity, which means a DRIFT in it is
+// a defect by definition — a future run can spot in one line what took a 40k-tick probe
+// to find. Sampled sparsely (the body sum walks both populations) since it moves slowly.
+const MATTER_EVERY = Math.max(1, Math.floor(TICKS / 12));
+const matterLog = [];
+const soilSum = () => { let s = 0; for (let i = 0; i < world.soil.length; i++) s += world.soil[i]; return s; };
+const bodySum = () => {
+  let s = 0;
+  for (const m of world.motes) s += m.matter;
+  for (const h of world.hunters) s += h.matter;
+  return s;
+};
 
 const t0 = Date.now();
 try {
@@ -183,6 +199,7 @@ try {
       earlySnap = { pop: p, hunters: hn, bio: b,
                     mote: geneAverages(world.motes), hunter: geneAverages(world.hunters) };
     }
+    if (t % MATTER_EVERY === 0) matterLog.push({ t, veg: b, soil: soilSum(), body: bodySum() });
   }
 } catch (e) { threw = e; }
 if (curEmpty > longestEmpty) longestEmpty = curEmpty;
@@ -269,6 +286,7 @@ boredomReport();
 
 line("\n[8] SPATIAL  (coarse density, 48×16 over the 960×540 torus)");
 vegMap();
+soilMap();
 lifeMap();
 
 line("\n[9] GENE-POOL SHAPE  (the mean hides the shape — has the grazer pool SPLIT?)");
@@ -276,6 +294,9 @@ shapeReport();
 
 line("\n[10] REGIME  (which bistable attractor this seed settled in — the live, hysteretic readout)");
 regimeReport();
+
+line("\n[11] MATTER  (the nutrient cycle's ledger — is the world running down?)");
+matterReport();
 
 line();
 line(threw ? "READING ABORTED — the sim threw (see [1])." :
@@ -344,21 +365,25 @@ function boredomReport() {
 }
 
 // Downsample a per-cell / per-creature field into a coarse ASCII grid.
-function vegMap() {
+// One coarse map per grid field. `field` is the Float64Array to bin (veg or soil), so
+// the nutrient layer is watchable with the same instrument as the standing crop —
+// which matters, because the interesting thing is where the two DISAGREE: rich soil
+// under bare ground is a patch about to bloom.
+function gridMap(field, caption) {
   const acc = new Float64Array(MC * MR), cnt = new Float64Array(MC * MR);
   const { cols, rows } = GRID;
   for (let cy = 0; cy < rows; cy++) {
     for (let cx = 0; cx < cols; cx++) {
       const mx = Math.min(MC - 1, (cx / cols * MC) | 0);
       const my = Math.min(MR - 1, (cy / rows * MR) | 0);
-      acc[my * MC + mx] += world.veg[cy * cols + cx];
+      acc[my * MC + mx] += field[cy * cols + cx];
       cnt[my * MC + mx]++;
     }
   }
   const ramp = " .:-=+*#%@";
   let mx = 0;
   for (let i = 0; i < acc.length; i++) { const v = acc[i] / (cnt[i] || 1); if (v > mx) mx = v; }
-  line(`    vegetation density  (max cell mean ${fmt(mx)}; ramp "${ramp}")`);
+  line(`    ${caption}  (max cell mean ${fmt(mx)}; ramp "${ramp}")`);
   for (let y = 0; y < MR; y++) {
     let s = "    ";
     for (let x = 0; x < MC; x++) {
@@ -369,6 +394,9 @@ function vegMap() {
     line(s);
   }
 }
+// declarations, not consts — these are called from the report block above
+function vegMap() { gridMap(world.veg, "vegetation density"); }
+function soilMap() { gridMap(world.soil, "soil nutrients — the bank the dead leave behind"); }
 
 function lifeMap() {
   const mote = new Int32Array(MC * MR), hunt = new Int32Array(MC * MR);
@@ -445,6 +473,41 @@ function regimeReport() {
        `grazer-haven ${pad(pct(regimeTicks["grazer-haven"]), 3)}%  ·  settling ${pad(pct(regimeTicks.settling), 3)}%`);
   line(`    recovering : ${pad(pct(recoveringTicks), 3)}% of ticks (a predator tier visibly clawing back)`);
   line(`    phase flips: ${regimeFlips} (attractor → attractor over the run)`);
+}
+
+// Total matter is conserved by construction, so this table is a self-check on the
+// nutrient cycle AND the best early warning the world has that it is quietly dying.
+// Read the three columns as a story: matter sitting in `soil` is banked and idle,
+// matter in `veg` is the standing crop, matter in `bodies` is the herd. A healthy world
+// sloshes between them. A dying one drains `veg` into `soil` and never gets it back.
+function matterReport() {
+  if (!matterLog.length) { line("    (run too short to sample)"); return; }
+  const tot = (r) => r.veg + r.soil + r.body;
+  line("      tick       veg      soil    bodies     TOTAL");
+  for (const r of matterLog) {
+    line(`    ${pad(r.t, 6)}${pad(r.veg.toFixed(0), 10)}${pad(r.soil.toFixed(0), 10)}` +
+         `${pad(r.body.toFixed(0), 10)}${pad(tot(r).toFixed(0), 10)}`);
+  }
+  const first = tot(matterLog[0]), last = tot(matterLog[matterLog.length - 1]);
+  const drift = first > 0 ? (100 * (last - first)) / first : 0;
+  // Compare the LAST THIRD against the middle third: the opening transient legitimately
+  // sheds matter as the founding windfall settles, so judging drift from tick 0 would
+  // flag every healthy world. What must not happen is a slide that is still going late.
+  const third = Math.max(1, Math.floor(matterLog.length / 3));
+  const mid = matterLog.slice(third, 2 * third).reduce((a, r) => a + tot(r), 0) / third;
+  const end = matterLog.slice(-third).reduce((a, r) => a + tot(r), 0) / third;
+  const lateDrift = mid > 0 ? (100 * (end - mid)) / mid : 0;
+  line(`    drift: ${drift >= 0 ? "+" : ""}${drift.toFixed(1)}% over the whole run · ` +
+       `${lateDrift >= 0 ? "+" : ""}${lateDrift.toFixed(1)}% mid→late`);
+  const verdict = Math.abs(lateDrift) < 8
+    ? "HOLDING — the cycle closes; what the herd eats comes back"
+    : lateDrift <= -8
+      ? "⚑ RUNNING DOWN — matter is leaving the world. This is the defect the cycle exists to prevent."
+      : "⚑ INFLATING — matter is being created. A return path is over-paying.";
+  line(`    verdict: ${verdict}`);
+  const bare = (() => { let b = 0; for (let i = 0; i < world.veg.length; i++) if (world.veg[i] < 0.005) b++; return b; })();
+  line(`    bare ground: ${((100 * bare) / world.veg.length).toFixed(1)}% of cells ` +
+       `(a figure that CLIMBS monotonically across horizons is the ratchet returning)`);
 }
 
 process.exit(threw || nanFlags.length ? 1 : 0);

@@ -45,7 +45,11 @@
     reproCost: 90,           // energy handed to the child
     baseMetabolism: 0.06,    // energy burned per tick at rest
     startEnergy: 90,
-    maxPop: 600,
+    maxPop: 800,             // raised 600→800 alongside hunterMaxPop when the nutrient cycle
+                             // landed: a recycling meadow feeds a bigger herd, and at 600 the
+                             // grazers sat AT the ceiling ~22% of ticks, which flattens the
+                             // boom half of the limit cycle into a plateau. This is a safety
+                             // stop, not an ecological limit — food is meant to do the limiting.
     sampleEvery: 30,         // ticks between history samples
     historyCap: 240,         // how many samples the charts keep
     // The death-balance chart: a diverging band asking what is killing the herd right
@@ -86,8 +90,78 @@
     metaboIntake: 2.0,       // strength of metabolism's digestive gain on energy per bite
     metaboIntakeExp: 0.5,    // concavity of that gain (0.5 = sqrt: strong diminishing returns)
     fertMin: 0.28,           // poorest ground's carrying capacity (richest is 1.0)
-    corpseVeg: 0.6,          // vegetation a dead mote returns to the cell it fell on
     startVegFrac: 0.7,       // initial vegetation as a fraction of each cell's fertility
+
+    // ---- The Nutrient Cycle (2026-07-24) — matter is no longer free ----
+    // The defect this fixes: vegetation used to grow out of nothing toward a static
+    // fertility map at a rate proportional to the density already there. Two
+    // consequences, both measured over 40k ticks before this existed: (a) a cell grazed
+    // to ~0 was an ABSORBING STATE — with v≈0 the logistic term g·v·(fert−v) is ≈0, so
+    // bare ground could only come back by diffusion from a living neighbour or a lucky
+    // seed; (b) nothing the herd ate ever came back. Together they made a ONE-WAY
+    // RATCHET: bare ground climbed 25%→54% of the meadow and the living cells thinned
+    // 0.21→0.086, so biomass slid 440→149 and never recovered. The predator tier died
+    // with it (births 3.7→0.00 per 1k, hunters 19.5→2.2) — not because the hunt failed
+    // (kills per hunter stayed flat) but because each kill was worth less on a starved
+    // meadow. The world's best drama was a transient of its youth.
+    //
+    // The fix is a second field, `soil`, and a closed loop. Plants DRAW nutrients to
+    // grow; grazers return them as dung, as respiration, and — the whole point — as
+    // corpses. So the ground the herd strips is the ground its own dead re-fertilise,
+    // and poverty becomes recoverable instead of terminal. Bounded at both ends by
+    // construction: `soilGerm` gives bare-but-rich ground a way back up, `soilMax`
+    // stops a nutrient pile-up from running away.
+    soilStart: 0.55,         // initial soil per cell (× local fertility)
+    soilMax: 7.0,            // per-cell nutrient ceiling — the pool is bounded above, so a long
+                             // run can't inflate the world the way it used to deflate it. Sized
+                             // by the matter ledger, not by taste: at 2.2 a busy hunting ground
+                             // buried more than a cell could hold and the surplus was destroyed
+                             // even after spilling to neighbours, costing 11–24% of the world's
+                             // matter per run. 7.0 measured 0.0% drift over 8 seeds × 20k.
+    soilShow: 2.0,           // display scale for the soil overlay. Deliberately NOT soilMax —
+                             // the ceiling is a rare safety stop, so normalising the wash
+                             // against it would render the whole map near-black.
+    soilGerm: 0.22,          // THE ANTI-RATCHET TERM. Growth reads (v + soilGerm·richness)
+                             // instead of v alone, so a bare cell with nutrients under it
+                             // sprouts on its own. Scaled by richness, which is what makes
+                             // a corpse patch visibly bloom while spent ground stays bare.
+                             // Swept 0.03 / 0.055 / 0.12 / 0.17 / 0.22 / 0.35 over 40k ticks ×4
+                             // seeds, and the result inverted the obvious guess: LOW
+                             // germination starves the world. Below ~0.15 the meadow can't
+                             // convert its soil fast enough, nutrients pile up unused (the
+                             // bank swelled to 1309 while biomass fell to 104) and the
+                             // predator tier decays to 2–3 exactly as it did before any of
+                             // this existed. 0.22 is where production matches the herd:
+                             // verified over 120k ticks, total matter settles ~860 and holds,
+                             // and hunters still oscillate 6–63 where they used to be dead.
+    soilSpread: 0.010,       // slow leaching — buried richness bleeds outward over ~100s of ticks
+    grazeWaste: 0.35,        // share of every bite dropped straight back as dung. Added to the
+                             // soil WITHOUT docking the mote's energy: the tuned grazing income
+                             // (vegEnergy above) is deliberately left byte-identical, so this
+                             // change moves matter, never the energy economy.
+    //
+    // Matter and energy are SEPARATE currencies, and this is the one design decision the
+    // whole cycle rests on. Energy is the old economy, untouched. Matter is new and is
+    // CONSERVED: every creature carries a body (`matter`), grows it by eating, spends it
+    // by breathing, splits it to its young, and drops whatever is left when it dies. The
+    // first attempt at this skipped the body and just deposited a fixed corpse constant —
+    // which conjured matter out of nothing, inflated the world's total 1430→3859 over 40k
+    // ticks, and pinned BOTH tiers against their caps (hunters 75/75 in 4 of 4 seeds).
+    // A body that has to be earned is what makes the loop actually close.
+    respireReturn: 0.65,     // matter released per unit of burned energy, ÷ vegEnergy. Calibrated
+                             // to (1 − grazeWaste): a creature assimilates that share of each
+                             // bite and breathes exactly it back out, so intake and outflow
+                             // balance over a lifetime instead of compounding.
+    bodyMatter: 0.5,         // the body a founder (or a parachute reseed) starts with
+    bodyMatterMax: 0.55,     // how much body a creature can hold, per unit of its size gene.
+                             // Without this, matter piles up inside the herd: a grazing mote
+                             // takes in ~0.10 matter/tick and breathes out only ~0.014, so
+                             // bodies ballooned until they held 1389 of the world's 1833 units
+                             // and the meadow starved for nutrients that were locked in flesh.
+                             // A creature that is full simply passes the rest through.
+    birthMatterShare: 0.5,   // share of its body a parent hands to each newborn
+    offalShare: 0.45,        // share of a caught mote's body left on the ground as offal;
+                             // the rest is carried off inside the hunter
     grazeDecay: 0.99,        // grazing-pressure heat fades ~1%/tick so the overlay shows
                              // *recent* eating; view-only, nothing in the economy reads it
 
@@ -97,15 +171,24 @@
     // extinction. Tuned empirically with smoke.js into a phase-lagged limit cycle.
     hunterStart: 12,          // predators seeded at world start — enough to blunt the
                               // founding prey boom instead of chasing it from behind
-    hunterMaxPop: 75,         // a roomy ceiling the herd rarely touches — the real limit is
-                              // satiation + metabolism, so hunters oscillate, not pin here
+    hunterMaxPop: 140,        // a roomy ceiling the herd rarely touches — the real limit is
+                              // satiation + metabolism, so hunters oscillate, not pin here.
+                              // Raised 75→140 for the nutrient cycle (2026-07-24): recycling
+                              // roughly quadrupled what the predator tier can sustain, and at
+                              // 75 the hunters sat AT the ceiling 20–35% of ticks (smoke's
+                              // anti-runaway check, which forbids >15%, caught it). The old
+                              // number was sized for a world that was quietly starving.
+                              // 170 was tried first and was WORSE than either: the crowd brake
+                              // below reads n/hunterMaxPop, so a higher cap WEAKENS it, and the
+                              // tier overshot and crashed the prey to a single mote. Cap and
+                              // brake have to move together — hence hunterCrowd 2.4→4.2 too.
     hunterMetabolism: 0.1,    // base energy burned per tick — hunters are costly to run, so
                               // they die back when prey thins (the cycle's downswing)
     hunterStartEnergy: 120,
     hunterReproEnergy: 285,   // energy needed to split (a slowish numerical response damps
                               // the boom so predators can't overshoot the prey to nothing)
     hunterReproCost: 140,     // energy handed to the pup
-    hunterCrowd: 2.4,         // territoriality: the split threshold rises steeply with
+    hunterCrowd: 4.2,         // territoriality: the split threshold rises steeply with
                               // predator density, so hunters brake to an equilibrium well
                               // below the cap and oscillate there instead of pinning at it.
                               // Raised 1.6→2.4 when senescence was added: aging lifts the
@@ -133,7 +216,6 @@
     // should reward thrift — a regime split mirroring the grazers'. Tuned via observe.js.
     huntMetaboAssim: 1.3,     // strength of metabolism's digestive gain on energy per kill
     huntMetaboAssimExp: 0.5,  // concavity of that gain (0.5 = sqrt: strong diminishing returns)
-    hunterCorpseVeg: 0.85,    // a fallen hunter feeds more plants than a mote does
     hunterReseedPrey: 55,     // predators only wander back in when this many motes exist
     hunterReseedCount: 6,     // how many drift in when they'd otherwise be extinct
     fearFloor: 22,            // close-range startle reflex: the *minimum* radius at which any
@@ -456,6 +538,7 @@
       x, y,
       dir: rand(0, TAU),
       energy: CONFIG.startEnergy,
+      matter: CONFIG.bodyMatter,   // its body, in the same units as vegetation
       age: 0,
       g: genome || makeGenome(null),
     };
@@ -488,6 +571,7 @@
       x, y,
       dir: rand(0, TAU),
       energy: CONFIG.hunterStartEnergy,
+      matter: CONFIG.bodyMatter,   // predators carry a body on the same ledger
       age: 0,
       cool: 0,               // digestion timer; >0 means sated and not hunting
       g: genome || makeHunterGenome(null),
@@ -502,6 +586,8 @@
     veg: new Float64Array(GRID.n),      // plant density per cell
     vegNext: new Float64Array(GRID.n),  // scratch buffer for the diffusion pass
     fert: new Float64Array(GRID.n),     // static carrying capacity per cell
+    soil: new Float64Array(GRID.n),     // nutrients per cell — the pool plants grow OUT of
+    soilNext: new Float64Array(GRID.n), // scratch buffer for the soil leaching pass
     graze: new Float64Array(GRID.n),    // decaying record of recent grazing (view only)
     tick: 0,
     born: 0,
@@ -512,7 +598,7 @@
     hunterAged: 0,                      // subset of hunterDied that died of old age (senescence)
     paused: false,
     stepsPerFrame: 2,
-    overlay: 0,    // hidden-landscape lens: 0 off · 1 fertility map · 2 grazing pressure
+    overlay: 0,    // hidden-landscape lens: 0 off · 1 fertility · 2 grazing · 3 soil nutrients
     history: [],   // rolling samples of trait averages + counts
     morphs: { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 }, // live morph readout
     _morphPendK: 1, // hysteresis: proposed k awaiting confirmation
@@ -537,8 +623,13 @@
     world.fert = buildFertility();
     world.veg = new Float64Array(GRID.n);
     world.vegNext = new Float64Array(GRID.n);
+    world.soil = new Float64Array(GRID.n);
+    world.soilNext = new Float64Array(GRID.n);
     world.graze = new Float64Array(GRID.n);
-    for (let i = 0; i < GRID.n; i++) world.veg[i] = world.fert[i] * CONFIG.startVegFrac;
+    for (let i = 0; i < GRID.n; i++) {
+      world.veg[i] = world.fert[i] * CONFIG.startVegFrac;
+      world.soil[i] = world.fert[i] * CONFIG.soilStart;
+    }
     world.motes = [];
     world.hunters = [];
     world.sparks = [];
@@ -567,17 +658,95 @@
   }
 
   // ---- vegetation dynamics ------------------------------------------------
-  // Logistic regrowth toward each cell's fertility, scaled by the season. Bare
-  // cells (0) can't regrow on their own — they must be seeded or spread into.
+  // Logistic regrowth toward each cell's fertility, scaled by the season — but now
+  // paid for out of the cell's SOIL. Two changes from the old free-matter version,
+  // and between them they are what turned the meadow's slow death into a cycle:
+  //
+  //   1. the growth term reads (v + soilGerm·richness) instead of v alone, so bare
+  //      ground is no longer an absorbing state — a cell grazed to zero germinates
+  //      again as soon as there are nutrients under it, and the richer the ground the
+  //      faster it greens. This is why a carcass now leaves a patch that visibly blooms.
+  //   2. every unit of new growth is DRAWN from soil[i], so the meadow can only be as
+  //      lush as the ground is fed. Growth stops when the nutrients run out, not when
+  //      an arbitrary constant says so.
   function growVeg() {
-    const veg = world.veg, fert = world.fert;
+    const veg = world.veg, fert = world.fert, soil = world.soil;
     const g = CONFIG.vegGrowth * seasonGrow();
+    const germ = CONFIG.soilGerm;
     for (let i = 0; i < veg.length; i++) {
       const v = veg[i];
-      let nv = v + g * v * (fert[i] - v);   // >fert (e.g. from a corpse) decays back
+      const s = soil[i];
+      const rich = s < 1 ? (s > 0 ? s : 0) : 1;   // nutrient availability, 0..1
+      let dv = g * (v + germ * rich) * (fert[i] - v);
+      if (dv > 0) {
+        if (dv > s) dv = s;                  // can't grow more matter than the soil holds
+        soil[i] = s - dv;
+      } else if (dv < 0) {
+        // die-back. Diffusion keeps spilling green onto ground poorer than it, which then
+        // shrinks toward the local carrying capacity — and that shrinkage is LITTER, not a
+        // hole in the world. Returning it here is what finally closed the budget: while
+        // this branch silently deleted matter, the world bled ~260 units per 300 ticks and
+        // the "conserved" cycle was still a ratchet wearing a better costume.
+        const back = -dv;
+        soil[i] = s + back > CONFIG.soilMax ? CONFIG.soilMax : s + back;
+      }
+      let nv = v + dv;
       if (nv < 0) nv = 0;
       veg[i] = nv;
     }
+  }
+
+  // Nutrients leach slowly sideways, so a corpse's richness bleeds into the ground
+  // around it instead of staying a single hot cell. Much slower than vegSpread — soil
+  // moves in hundreds of ticks, grass in tens. Double-buffered like the veg pass.
+  function spreadSoil() {
+    const { cols, rows } = GRID;
+    const soil = world.soil, nx = world.soilNext;
+    const k = CONFIG.soilSpread, cap = CONFIG.soilMax;
+    for (let y = 0; y < rows; y++) {
+      const up = ((y - 1 + rows) % rows) * cols;
+      const dn = ((y + 1) % rows) * cols;
+      const row = y * cols;
+      for (let x = 0; x < cols; x++) {
+        const i = row + x;
+        const l = soil[row + ((x - 1 + cols) % cols)];
+        const r = soil[row + ((x + 1) % cols)];
+        const lap = l + r + soil[up + x] + soil[dn + x] - 4 * soil[i];
+        let nv = soil[i] + k * lap;
+        if (nv < 0) nv = 0; else if (nv > cap) nv = cap;
+        nx[i] = nv;
+      }
+    }
+    world.soil = nx;
+    world.soilNext = soil;
+  }
+
+  // Every return path into the ground goes through here, so the nutrient budget has
+  // exactly one door and `soilMax` can't be bypassed by a caller that forgot it.
+  //
+  // A full cell SPILLS to its neighbours rather than deleting the surplus. This matters
+  // more than it looks: predators kill in clusters, so a busy hunting ground buries far
+  // more matter in one cell than `soilMax` allows, and simply clamping there quietly
+  // destroyed it — the matter ledger caught exactly that, reporting "RUNNING DOWN" in 3
+  // of 4 kill-heavy draws while a calmer world read "HOLDING". Spilling turns a hotspot
+  // into a spreading patch of richness, which is also what a real carcass does.
+  const SPILL = [-1, 1, 0, 0];
+  function enrich(i, amount) {
+    const cap = CONFIG.soilMax, soil = world.soil;
+    let s = soil[i] + amount;
+    if (s <= cap) { soil[i] = s; return; }
+    soil[i] = cap;
+    let over = s - cap;
+    const { cols, rows } = GRID;
+    const x = i % cols, y = (i / cols) | 0;
+    const share = over / 4;
+    for (let k = 0; k < 4; k++) {
+      const nx = k < 2 ? (x + SPILL[k] + cols) % cols : x;
+      const ny = k < 2 ? y : (y + SPILL[k] + rows) % rows;
+      const j = ny * cols + nx;
+      const t = soil[j] + share;
+      soil[j] = t > cap ? cap : t;   // neighbours full too: the surplus is genuinely lost,
+    }                                // which keeps the pool bounded above. Bounded, not leaky.
   }
 
   // Diffusion: green bleeds into neighbouring cells so patches expand as fronts
@@ -609,12 +778,14 @@
   // letting fresh patches — and post-wipeout recovery — begin.
   function sowSeeds() {
     let s = CONFIG.vegSeedRate * seasonGrow();
-    const veg = world.veg, fert = world.fert;
+    const veg = world.veg, fert = world.fert, soil = world.soil;
     while (s > 0) {
       if (s >= 1 || rng() < s) {
         const i = (rng() * veg.length) | 0;
-        const start = CONFIG.vegSeedAmount * fert[i];
-        if (veg[i] < start) veg[i] = start;
+        let start = CONFIG.vegSeedAmount * fert[i];
+        // a sprout is matter too: it can only start as big as the ground can fund
+        if (start > soil[i] + veg[i]) start = soil[i] + veg[i];
+        if (veg[i] < start) { soil[i] -= start - veg[i]; veg[i] = start; }
       }
       s -= 1;
     }
@@ -876,9 +1047,10 @@
   function step() {
     world.tick++;
 
-    // the ground lives its own life first
+    // the ground lives its own life first: plants draw nutrients up, nutrients leach sideways
     growVeg();
     spreadVeg();
+    spreadSoil();
     sowSeeds();
     decayGraze();
 
@@ -940,11 +1112,24 @@
 
       // graze the cell underfoot
       const ci = cellIndex(m.x, m.y);
+      // respiration: burning energy costs body matter, which lands on the ground the mote
+      // is standing on. This is the cycle's main return path — a grazer is a slow pump
+      // carrying the standing crop back down into the soil, wherever it happens to wander.
+      let resp = (cost / CONFIG.vegEnergy) * CONFIG.respireReturn;
+      if (resp > m.matter) resp = m.matter;
+      m.matter -= resp;
+      enrich(ci, resp);
       const avail = world.veg[ci];
       if (avail > 0) {
         const bite = avail < CONFIG.vegGrazeRate ? avail : CONFIG.vegGrazeRate;
         world.veg[ci] = avail - bite;
+        // energy income is deliberately unchanged — the tuned limit cycle depends on it
         m.energy += bite * CONFIG.vegEnergy * metaboIntakeMult(m.g.metabo);
+        m.matter += bite * (1 - CONFIG.grazeWaste);   // the digested share builds the body
+        enrich(ci, bite * CONFIG.grazeWaste);         // the rest drops straight back as dung
+        // a full body passes the surplus straight through — a big mote holds more
+        const cap = CONFIG.bodyMatterMax * m.g.size;
+        if (m.matter > cap) { enrich(ci, m.matter - cap); m.matter = cap; }
         world.graze[ci] += bite;   // leave a fading mark for the grazing overlay
       }
 
@@ -957,16 +1142,21 @@
         m.energy -= CONFIG.reproCost;
         const child = makeMote(m.x, m.y, makeGenome(m.g));
         child.energy = CONFIG.reproCost;
+        child.matter = m.matter * CONFIG.birthMatterShare;   // a body is built out of the parent's,
+        m.matter -= child.matter;                            // never out of thin air
         newborns.push(child);
         world.born++;
       }
 
-      // death — the corpse fertilises the ground where it fell
+      // death — the corpse enriches the ground where it fell. It used to become grass
+      // instantly; now it becomes the SOIL that grass grows out of, so a die-off leaves
+      // a rich patch that greens over the following hundreds of ticks instead of a
+      // green flash that the next passing mote eats. This is the loop that closes:
+      // where the herd starved is exactly where the ground is about to be richest.
       if (m.energy <= 0) {
         world.motes.splice(i, 1);
         world.died++;
-        const di = cellIndex(m.x, m.y);
-        world.veg[di] = clamp(world.veg[di] + CONFIG.corpseVeg, 0, 1.2);
+        enrich(cellIndex(m.x, m.y), m.matter);   // whatever the body still held
       }
     }
 
@@ -1020,7 +1210,14 @@
       // burn energy — hunters are expensive to run. metabo scales this linear cost AND the
       // digestive gain on a kill (huntMetaboMult at the strike below), so it's a real fast/slow
       // tradeoff with an interior optimum, not the pure tax it used to be.
-      h.energy -= CONFIG.hunterMetabolism * h.g.metabo * (1 + h.g.size * 0.1 + v * 0.4);
+      const hcost = CONFIG.hunterMetabolism * h.g.metabo * (1 + h.g.size * 0.1 + v * 0.4);
+      h.energy -= hcost;
+      // predators respire into the ground too — the pyramid's top tier is part of the
+      // nutrient cycle, not sitting outside it
+      let hresp = (hcost / CONFIG.vegEnergy) * CONFIG.respireReturn;
+      if (hresp > h.matter) hresp = h.matter;
+      h.matter -= hresp;
+      enrich(cellIndex(h.x, h.y), hresp);
 
       // strike: if digestion is done and the target is now within a body-length, eat it
       if (best >= 0 && h.cool <= 0) {
@@ -1035,6 +1232,14 @@
           const preyE = prey.energy > 0 ? prey.energy : 0;
           h.energy += preyE * CONFIG.huntAssimilation * huntMetaboMult(h.g.metabo) + CONFIG.huntBonus;
           h.cool = CONFIG.huntCooldown;   // digest before the next strike
+          // the prey's body splits: the hunter carries most of it off, the rest stays
+          // where it fell as offal — so a hunting ground slowly enriches itself
+          const offal = prey.matter * CONFIG.offalShare;
+          h.matter += prey.matter - offal;
+          const hcap = CONFIG.bodyMatterMax * h.g.size;
+          const spill = h.matter > hcap ? h.matter - hcap : 0;
+          if (spill) h.matter = hcap;
+          enrich(cellIndex(prey.x, prey.y), offal + spill);
           world.motes.splice(best, 1);
           world.eaten++;
           if (world.sparks.length < 240) world.sparks.push({ x: prey.x, y: prey.y, life: 1 });
@@ -1050,6 +1255,8 @@
         h.energy -= CONFIG.hunterReproCost;
         const pup = makeHunter(h.x, h.y, makeHunterGenome(h.g));
         pup.energy = CONFIG.hunterReproCost;
+        pup.matter = h.matter * CONFIG.birthMatterShare;
+        h.matter -= pup.matter;
         newHunters.push(pup);
         world.hunterBorn++;
       }
@@ -1068,8 +1275,7 @@
         world.hunters.splice(i, 1);
         world.hunterDied++;
         if (aged) world.hunterAged++;
-        const di = cellIndex(h.x, h.y);
-        world.veg[di] = clamp(world.veg[di] + CONFIG.hunterCorpseVeg, 0, 1.2);
+        enrich(cellIndex(h.x, h.y), h.matter);
       }
     }
     for (const c of newHunters) world.hunters.push(c);
@@ -1258,6 +1464,9 @@
   // lately. Neither touches the simulation — they only read state and paint.
   const fertColor = (t) => `rgb(${40 + 215 * t | 0},${60 + 140 * t | 0},${120 - 55 * t | 0})`;
   const grazeColor = (q) => `rgb(255,${210 - 150 * q | 0},${70 - 30 * q | 0})`;
+  // soil runs spent-violet → rich-loam: cool and empty where the ground has been
+  // drained, warm and dark where corpses and dung have banked nutrients waiting to bloom
+  const soilColor = (t) => `rgb(${55 + 145 * t | 0},${38 + 92 * t | 0},${92 - 42 * t | 0})`;
 
   function drawOverlay() {
     const mode = world.overlay;
@@ -1299,6 +1508,23 @@
         ? "grazing pressure — where motes have eaten lately"
         : "grazing pressure — nobody's grazing yet";
       overlayKey(caption, "cool", "hot", grazeColor);
+    } else if (mode === 3) {
+      // the nutrient bank: the ground's memory of everything that has died on it.
+      // Scaled against soilMax rather than the live maximum so the wash means the same
+      // thing from tick to tick — a brightening patch is really enriching, not just
+      // winning a renormalisation against its neighbours.
+      const soil = world.soil, inv = 1 / CONFIG.soilShow;
+      ctx.globalAlpha = 0.46;
+      for (let y = 0; y < rows; y++) {
+        const row = y * cols;
+        for (let x = 0; x < cols; x++) {
+          const t = clamp(soil[row + x] * inv, 0, 1);
+          ctx.fillStyle = soilColor(t);
+          ctx.fillRect(x * cell, y * cell, cell, cell);
+        }
+      }
+      ctx.globalAlpha = 1;
+      overlayKey("soil nutrients — what the dead left behind", "spent", "rich", soilColor);
     }
   }
 
@@ -1671,8 +1897,8 @@
     world.stepsPerFrame = parseInt(e.target.value, 10);
   });
 
-  // cycle the hidden-landscape overlay: off → fertility → grazing → off
-  const overlayNames = ["off", "fertility", "grazing"];
+  // cycle the hidden-landscape overlay: off → fertility → grazing → soil → off
+  const overlayNames = ["off", "fertility", "grazing", "soil"];
   const btnOverlay = document.getElementById("btn-overlay");
   function cycleOverlay() {
     world.overlay = (world.overlay + 1) % overlayNames.length;

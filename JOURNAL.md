@@ -206,11 +206,22 @@ instead of run-and-hoped-for, and `--split-test` is now **paired** by seed — i
 went from a spread across unrelated worlds to **4/4 matched pairs** moving the predicted way (mean Δspeed
 +0.73). Every future "straddle the bistability" attempt can now be A/B'd against the *same* worlds.
 
-_Runs since the last Expedition:_ **0** — this run was one (the seedable world + census). **Candid note,
-written down so a future session can hold me to it:** two Expeditions in a row have now gone to
-_instruments_ rather than to ecology. The **"straddle the bistability" ecology Expedition is still owed**,
-and it is now much cheaper to attempt than it has ever been — the census gives it a before/after number
-and the seeds give it a paired A/B. The next Expedition should be that one.
+_Update (2026-07-24, the nutrient-cycle Expedition): the arc's premise has to be re-tested from scratch,
+because the world it was measured in was sick._ Grazers are still ONE broad cloud (k=1) and this run
+didn't attempt the split. But it found something that undercuts every regime measurement the arc rests
+on: the world was **running down**, and the census that produced "17% arms-race / 83% grazer-haven" was
+taken at 12k ticks, in the middle of a monotone decay nobody could see. Predator scarcity was not the
+world's nature — it was the world **dying**. With matter conserved, predation is now the *dominant*
+force in most worlds (~85% of mote deaths, was ~30%) and the tier survives to 80k. Two consequences for
+the arc: (1) **every "how often is it an arms-race?" figure in this journal is now stale** and must be
+re-measured on the healed world; (2) the "straddle the bistability" Expedition is finally a fair
+experiment — it kept failing to find persistent predation to split a herd with, and now there is plenty.
+The arc's stubborn core is untouched, but the ground under it is no longer rotten.
+
+_Runs since the last Expedition:_ **0** — this run was one (the nutrient cycle). The candid note from
+last run is **discharged**: after two Expeditions spent on instruments, this one went to **ecology**, as
+promised. The new debt is smaller and named: mote `speed` now pins near its ceiling under the heavier
+predation, and that wants a run.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -222,52 +233,51 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-23 — 5 unseeded `observe.js` 20k passes (3 before the change, 2 after), the
-first-ever `--census 24 12000`, a paired `--split-test 4 8000`, two seeded `--frame` renders, and
-`smoke.js` ×3 seeds** (the reproducible-world **Expedition**, a **tooling/infrastructure** change; the
-unseeded economy is untouched by construction — `rand()` still bottoms out in `Math.random` unless a
-seed is asked for — so the pre/post population and gene numbers below should, and do, agree).
+**Last observed: 2026-07-24 — the nutrient-cycle Expedition (ecology).** Readings: ~15 unseeded
+`observe.js` passes at 16–20k, a re-run `--census 24 12000`, horizon probes to **80k** (6 seeds) and
+**120k** (3 seeds), config sweeps over `soilGerm` / `soilStart` / `vegEnergy` / `vegGrowth` /
+`hunterCrowd` / `hunterMaxPop` / `soilMax`, two `--frame` renders **looked at**, and `smoke.js` ×15+.
+**This change moves the economy**, so unlike last run the numbers below are *expected* to differ from
+`previously:` — every one of them does, and the direction is the point.
 
-- **THE HEADLINE, AND IT IS NEW: the bistability is now a measured rate.** `--census 24 12000`
-  (seeds 1–24, reproducible byte-for-byte across processes): **4/24 (17%) settle arms-race, 20/24 (83%)
-  grazer-haven, 0 settling** — but **28% of all ticks** are arms-race and **11/24 worlds flip** attractor
-  (max 2). Hunter tier across seeds: **median mean 12.0, range 5.0–29.5** — a continuum, not two humps.
-- **THE COMPLAINT THE LAST TWO RUNS RAISED IS EXPLAINED, NOT CONFIRMED.** 19 straight unseeded draws
-  had settled grazer-haven, which read as "the world has gone haven-dominant." The census says the
-  end-state read is **biased**: seeds 5, 10 and 13 spent **67–75% of their ticks in an arms-race** and
-  still *ended* grazer-haven. Sample the trajectory, not the last tick. (Today's 5 unseeded draws:
-  5/5 haven — consistent with a 17% settle rate, not evidence of a new defect.)
-- **A NEW COMPLAINT — "bistable" is now partly a misnomer, and the journal says it ~20 times.** The
-  per-seed hunter means fill their range smoothly (5.0 · 5.1 · 5.5 · 5.8 · 7.3 · 7.7 · 8.1 · 8.7 · 9.0
-  · 9.8 · 10.2 · 10.9 · 12.0 · 12.2 · 13.1 · 15.0 · 16.3 · 17.3 · 21.2 · 21.9 · 22.0 · 26.6 · 28.4 ·
-  29.5). Two *attractors* the trajectories visit, yes; two *humps* in the outcome distribution, no.
-  Logged, not fixed — rewriting the vocabulary is a future run's tidying.
-- **motes:** min **35–37**, max **549–600**, mean **306–350**, CV ~41–42% — oscillates (0→6 net never fired).
-- **hunters:** unseeded draws **min 1, max 14–20, mean 4–9**; never *exactly* zero (parachute holds).
-  Named arms-race worlds (`--seed 3`) run **mean 29.5, max 42**.
-- **plants (biomass):** min **1**, max **1292–1361**, mean **224–257**, CV ~130–142%.
-- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1); no genuine split. Unchanged.
-- **mote gene drift:** speed **0.94–0.99 → 1.39–1.46 ↑**; size 3.2–3.5 → 1.9–2.2 ↓; grazer-haven sense
-  **collapses 44–49 → 18–22**; metabo 1.06–1.09 → 0.80–0.91 ↓ (thrift in the haven). None newly pinned.
-- **hunter gene drift:** speed 1.55→1.95 ↑; size ~4.4; sense 75→83 ↑; metabo ~1.05→1.00 (holds — last
-  run's fix still holding). None clamp-pinned in section [6].
-- **flow per 1k:** mote births ~148–180, starved ~113–123, eaten ~19–38; hunter births ~0.3–0.7,
-  aged-out 12–44%. Death split ~14–24% predation / 76–86% starvation (haven draws).
-- **boredom check: NOT a fixed point.** Genes shift **4/5** >8% between tick 1k and the end; pops swing.
-- **paired split-test (upgraded this run):** 4/4 matched seeds evolve a faster, less hideable herd with
-  hunters (mean Δspeed **+0.73**, Δhideability **−0.21**). Within-world 2-morph: **0/4 both conditions**.
-- **smoke:** **72 checks** green ×3 seeds (**+8** this run: reproducibility, seed reporting, seed-is-used,
-  seed(null), unseeded-differs, the HUD chip, and two subprocess boot checks for the URL-hash path).
-  Correction: the journal previously claimed 60 checks; the true pre-run count was **64**.
-- **known pre-existing marginal (noted, not fixed):** `smoke.js`'s hunter-breeding checks can flake on
-  harsh grazer-haven seeds where the starved tier never banks enough to breed. Did **not** fire this run.
-- **the glacial-tier caveat (still true):** hunters turn over at ~0.3–0.7 births/1k in haven draws, so no
-  hunter gene evolves fast. Any lever leaning on predator evolution must reckon with this.
+- **THE HEADLINE: the world no longer runs down.** Total matter is conserved by construction and the new
+  ledger reads **+0.0% drift · HOLDING in 5/5 draws**. Bare ground **falls** 17%→11% over 40k and holds
+  (it used to climb **25%→54%** and never turn back); living-cell density 0.181→**0.261** (was
+  0.210→0.086); biomass 363→**539** (was 440→149).
+- **The predator tier survives the long horizon.** Trailing-window hunter mean across 6 seeds:
+  76 · 101 · 92 · 93 · 82 · **79** at 6k/12k/20k/40k/60k/80k — **0 of 6 worlds with a dead tier at any
+  horizon.** Before: 18.7 → 6.9 → 5.3 → **3.0**, with 3 of 10 dead by 30k.
+- **THE CENSUS INVERTED, and this is the finding that reframes a dozen past runs.** `--census 24 12000`:
+  **23/24 (96%) settle arms-race, 1/24 (4%) grazer-haven, 75% of all ticks arms-race**, hunter tier
+  **median mean 70.1 (range 8.1–82.3)**, 23/24 worlds flip exactly once. Previously 17% / 83% / 28%,
+  median 12.0. The "grazer-haven dominance" this journal has described for a dozen runs was **the world
+  dying**, not the world's nature — and the old census was taken at 12k, mid-decay.
+- **A NEW COMPLAINT, logged not fixed: the regime readout now says the same word about 96% of worlds.**
+  Its cut points were fitted to a starving world. Backlogged as a Repair.
+- **A SECOND NEW COMPLAINT: mote `speed` pins near its 2.60 ceiling** (2.27–2.41, mode in the top
+  histogram bin) because predation is now the dominant killer. Honest context: this run *un-pinned* two
+  genes that used to sit on their **floors** — `sense` 18–22→**37–40**, `metabo` 0.64–0.77→interior — so
+  the world traded three edge problems for one. Backlogged as a Build.
+- **motes:** min ~37, max 777–800, mean **440–540** (cap raised 600→800; ~4% of ticks at cap).
+- **hunters:** min 7–12, max 82–140, mean **48–70** (cap raised 75→140; **0% of ticks at cap**).
+- **plants (biomass):** min 73, max ~1320, mean **326–376**, oscillates.
+- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged by this run.
+- **flow per 1k:** mote births ~356, starved ~47, eaten ~273; hunter births **~7.6** (was 0.3–1.4),
+  aged-out ~89% of hunter deaths. Death split **~85% predation / 15% starvation** (was ~30/70).
+- **boredom check: NOT a fixed point** — 4–5 of 5 genes shift >8% between tick 1k and the end.
+- **smoke:** **72 checks**, **7/7 completing runs green**. Its cap and prey-crash assertions earned their
+  keep this run, catching two bad tunings before they shipped.
+- **known pre-existing flake (confirmed NOT caused by this run):** `smoke.js` intermittently hangs at its
+  `observe.js --frame` subprocess check — reproduced at **2/6 on unmodified code** via `git stash`. It
+  leaves orphaned node processes behind. Worth a future Repair.
 
-_previously:_ (2026-07-23, hunter-metabolism Build, ecology) hunter metabo stopped decaying (1.06→1.06
-where it used to slide to the floor); 16/16 unseeded draws grazer-haven — flagged as "the world is
-haven-dominant," now explained above as an end-state sampling bias; motes mean ~328–387, hunters 1–8 /
-arms 12–31, plants mean ~252–290; grazers one broad cloud (k=1); smoke reported as 60 checks (really 64).
+_previously:_ (2026-07-23, reproducible-world Expedition, tooling) the world was measured but not yet
+healed: `--census 24 12000` read **17% arms-race / 83% grazer-haven, 28% of ticks arms-race**, hunter
+tier median mean 12.0 (range 5.0–29.5); motes min 35–37 / max 549–600 / mean 306–350; hunters min 1 /
+max 14–20 / mean 4–9; biomass min **1** / mean 224–257; mote genes speed 0.94→1.45, sense collapsing
+44–49→**18–22**, metabo sliding to **0.77–0.91**; flow per 1k births ~148–180 / starved ~113–123 /
+eaten ~19–38, hunter births **~0.3–0.7**; death split ~14–24% predation. Grazers one broad cloud (k=1);
+smoke 72 checks. Every one of these numbers was taken on a world that was quietly running down.
 
 ---
 
@@ -457,6 +467,23 @@ the backlog.**
   `--census`, `--seed` and the paired `--split-test` possible, and what "save / share a world" turned out
   to be. `smoke.js` asserts reproducibility by construction (identical fingerprints after 900 ticks) and
   proves the hash path in subprocesses, since the file:// preview pane drops URL fragments.
+- **The nutrient cycle** (`world.soil`, `growVeg`/`spreadSoil`/`enrich`, `m.matter`; added 2026-07-24) —
+  the world's conservation law, and the fix for its oldest defect. Vegetation used to be created from
+  nothing and grow at a rate proportional to itself, which made a grazed-to-zero cell an **absorbing
+  state** and the meadow a one-way ratchet (bare ground 25%→54% over 40k, biomass 440→149, predator tier
+  19.5→2.2). Now a second Float64Array field, `soil`, sits under the meadow: `growVeg` **draws** every
+  unit of new growth out of it and reads `(v + soilGerm·richness)` instead of `v` alone, so bare-but-rich
+  ground germinates on its own. Every creature carries a body (`matter`) on the same ledger — grown by
+  eating (`1 − grazeWaste` of each bite), spent by breathing (`respireReturn`, calibrated to
+  `1 − grazeWaste` so intake and outflow balance over a lifetime), split at birth, and returned **whole**
+  on death. `enrich()` is the single door into the soil and spills a full cell into its neighbours rather
+  than deleting the surplus. Three traps found the hard way and worth not re-falling into: (1) a fixed
+  corpse constant instead of a real body **inflates** the world (matter 1430→3859, both tiers pinned at
+  their caps); (2) `growVeg`'s die-back branch (`dv < 0`, which fires constantly because diffusion spills
+  green onto poorer ground) must return that shrinkage as litter or the budget leaks ~260 units per 300
+  ticks; (3) an uncapped body lets the herd hoard the world's matter (1389 of 1833 units) and starve the
+  meadow of nutrients locked in flesh — hence `bodyMatterMax`. Verified by `observe.js` section [11],
+  which reports **+0.0% drift** and is the standing guard against all three.
 - `index.html` — page shell, canvas, HUD (incl. the `s-regime` chip and the `s-seed` world-name chip), three chart canvases
   (`#chart` trait, `#chart2` trophic cascade, `#chart3` death-balance), controls.
 - `style.css` — dark terrarium styling. CSS variables at the top; `.stat.wide` widens the regime chip.
@@ -752,6 +779,46 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-24 — [Expedition] the world stops running down: a nutrient cycle, and matter that has to come from somewhere
+
+**Observed (the complaint):** two 20k readings ended with **exactly 1 hunter** — including `--seed 3`,
+which last run's Field Notes recorded as an *arms-race* world (hunters mean 29.5, max 42) at 12k. That
+smelled like a horizon artefact, so I measured it instead of guessing: across 10 seeds the predator tier's
+trailing-window mean fell **18.7 → 6.9 → 5.3 → 3.0** at 6k/12k/20k/30k. Not a trough — a **monotone
+decay in 10 of 10 worlds**. My first hypothesis (prey out-evolve the glacial predators) was **refuted**:
+the speed gap held at +0.43 and kills-per-hunter stayed flat, so the hunt never stopped working. What
+collapsed was *births* — 3.70 → 0.00 per 1k — because biomass slid 431 → 150 and a kill on a starved
+meadow isn't worth enough to breed on. The root was older and worse than the predators: **bare ground
+climbed 25% → 54% of the meadow and never came back**, because growth was proportional to the greenery
+already there (so a grazed-to-zero cell was an *absorbing state*) and nothing the herd ate was ever
+returned. A one-way ratchet. The world's best drama was a transient of its youth, and the census that
+produced the journal's headline "17% arms-race" was measured at 12k — mid-slide.
+
+**Changed in the world:** matter is no longer free. Every cell now carries a bank of **soil**, plants can
+only grow by *drawing it down*, and everything alive pays it back — part of every bite dropped as dung,
+burned energy breathed into the ground underfoot, offal where a hunter made its kill, and a creature's
+**whole body** returned when it dies. Bare cells germinate in proportion to the richness beneath them, so
+the barrens where a die-off happened are the first ground to bloom. A visitor sees a meadow that
+**recovers**: bare ground now settles at 11–17% instead of climbing past half the field, biomass runs
+363 → 539 over 40k where it used to fall 440 → 149, and the predator tier is alive and oscillating at
+**80,000 ticks (0 of 6 worlds dead at any horizon; it used to be dead by 30k)**. There's a third overlay —
+**soil**, spent-violet to rich-loam — and it's the best one: it glows brightest exactly where the field
+looks emptiest, so you can see a barren holding everything that starved on it.
+
+**What it cost, honestly.** Recycling roughly quadrupled what the world can carry, so ceilings tuned for a
+starving world had to move (`maxPop` 600→800, `hunterMaxPop` 75→140, `hunterCrowd` 2.4→4.2). Predation is
+now the dominant killer (~85% of mote deaths, was ~30%), and that has a real cost: **mote `speed` now
+pins near its 2.60 ceiling** in predator-heavy worlds. The trade is not one-sided — the old world pinned
+`sense` *and* `metabo` at their **floors**, and both are now interior (sense 37–40, was 18–22). But it is
+a new pin, and it is the next run's problem.
+
+**Verified:** `node --check` ×5; `smoke.js` **7/7 completing runs green at 72 checks** (its cap and
+prey-crash assertions caught two bad tunings mid-run — 170 hunters crashed the prey to 1 mote); the new
+matter ledger reads **+0.0% drift, HOLDING, in 5/5 draws**; 80k-tick horizon and 120k-tick probes; two
+frames rendered and **looked at**. Zero runtime network calls. (Category: **ecology** — rotated off last
+run's tooling. An **Expedition**, counter reset to **0** — and it is the ecology one the last two
+Expeditions kept deferring.)
 
 ### 2026-07-23 — [Expedition] every world gets a name (a seedable world, and the bistability finally counted)
 
@@ -1183,6 +1250,40 @@ Built the whole static page and the first working simulation from nothing: motes
 
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
+
+- **[Repair/Build] Recalibrate the regime detector — its thresholds were tuned for a dying world.** The
+  post-nutrient-cycle census reads **23/24 worlds settling "arms-race" (96%)**, where the same census on
+  the old world read 17%. That is not a detector *lie* — predation really is dominant now — but a readout
+  that says the same word about 96% of worlds has stopped carrying information, and the hunter tier's
+  per-seed means still span a real **8.1–82.3**. Re-fit the arms-race / grazer-haven cut points (and the
+  Schmitt-trigger hysteresis band) to the healed world's actual distribution so the two names split it
+  meaningfully again. While in there, settle the long-standing "is 'bistable' even the right word" item
+  below with the new numbers — 23/24 worlds flipping exactly once looks far more like a *transient into a
+  single attractor* than like bistability, which would retire a word this journal uses ~20 times.
+- **[Build] Un-pin mote `speed` — give the arms race somewhere to go besides "faster."** The nutrient
+  cycle made predation the dominant killer (~85% of mote deaths, was ~30%), and mote `speed` answered by
+  running to **2.27–2.41 against its 2.60 clamp**, with the pool's mode in the top histogram bin. Widening
+  the clamp is the wrong fix — prey already nearly match hunters, and a faster herd just makes predation
+  fail. The right fix is a **cost that bites at the top of the range**: speed already multiplies the
+  metabolic burn linearly, so make it *superlinear* (a sprinter's drag term), or trade it against
+  something — very fast motes could carry a `sense` or `size` penalty. Success is measurable and cheap:
+  the same `observe.js` section [9] histogram should show an interior mode, with the predator tier still
+  alive at 80k. Note the honest context: this run *un*-pinned `sense` and `metabo` (both used to sit on
+  their floors) and pinned speed instead, so the world has one edge problem, not three.
+- **[Expedition] Let the ground remember — succession, and a soil that isn't just a number**
+  _(ambitious — I'm not sure a second plant type can be balanced without wrecking the tuned limit cycle)_.
+  The nutrient cycle gave every cell a bank of soil, and right now that bank does exactly one thing: fund
+  regrowth of the single, uniform vegetation. Make the ground's history *matter*. Give the meadow **two
+  plant strategies competing for the same soil** — a fast, thin **pioneer** that colonises fresh barrens
+  cheaply and is easy to graze, and a slow, dense **climax** grass that only establishes on long-undisturbed
+  rich ground but holds far more biomass and gives far better cover. Then a patch has a *life story* a
+  viewer can watch: die-off → bare, nutrient-rich ground → pioneer flush → slow thickening into deep cover
+  → a hider stronghold → grazed back down. This is the strongest candidate yet for the arc's stubborn core,
+  because it manufactures **exactly the within-world heterogeneity** that "straddle the bistability" needs
+  — permanent hider country (dense climax cover) beside fleer country (open pioneer flush) — and it does it
+  through a mechanism the world now genuinely has, instead of by decorating the fertility map. Risk: two
+  plant types double the vegetation state, the grazing/concealment code both read `veg` as a scalar, and
+  the limit cycle is tuned against that scalar.
 
 - **[Build] Retired (BUILT, with a caveat): "Give hunters the same metabolic tradeoff."** Shipped
   2026-07-23 — the assimilated share of a kill now scales by `huntMetaboMult` (concave, neutral-at-1),

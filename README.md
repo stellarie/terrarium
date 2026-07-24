@@ -14,8 +14,30 @@ Food isn't handed out at random anymore — it **grows**. The field is a meadow 
 vegetation laid over a fixed **fertility map**, so some regions are naturally lush and
 others stubbornly barren. Plants regrow logistically toward each patch's carrying
 capacity, **spread** into neighbouring bare cells, and get **grazed down** by the motes
-that roam them. Where herds linger, they carve the meadow into bare corridors and
-patches; when a mote dies, its corpse fertilises the ground where it fell.
+that roam them. Where herds linger, they carve the meadow into bare corridors and patches.
+
+### Nothing grows out of nothing
+
+The meadow runs on a **nutrient cycle**, and matter is conserved. Every cell holds a bank of
+**soil** as well as its standing crop, and plants can only grow by *drawing that bank down* —
+so the meadow is exactly as lush as the ground beneath it is fed. Everything alive pays it
+back: a grazer drops part of every bite straight away, breathes matter into the ground it
+walks over, and — the whole point — **hands its entire body back when it dies**. A hunter's
+kill leaves offal where the mote fell. Nutrients then leach slowly sideways, so a carcass
+becomes a spreading patch of richness rather than a single hot cell.
+
+The consequence is a world that can **recover from its own poverty**. Ground grazed to bare
+earth isn't dead ground; it's ground holding everything that starved on it, and it greens
+again as soon as the herd moves off. Bare cells germinate in proportion to how rich the soil
+under them is, so the barrens where a die-off happened are the first places to bloom.
+
+This replaced the world's oldest quiet defect. Vegetation used to be created from nothing and
+destroyed into nothing, and growth was proportional to the greenery already present — which
+made a grazed-to-zero cell an *absorbing state*. Measured over 40,000 ticks, bare ground
+climbed from 25% of the meadow to 54% and never turned back, biomass slid 440→149, and the
+predator tier died with it. The world's best drama was a transient of its youth. It isn't
+any more: bare ground now settles around 11–17% and the whole pyramid still oscillates at
+80,000 ticks.
 
 Because food is now *spatial*, a mote's **sense** gene is its whole perception radius —
 "how far can I perceive the world": it follows the vegetation gradient toward the greenest
@@ -129,13 +151,17 @@ run the same worlds twice.
 ### See the hidden landscape
 
 The forces driving the boom and bust are mostly invisible — until you toggle the
-**overlay** (the `overlay:` button, or press <kbd>O</kbd>). It cycles through two view-only
+**overlay** (the `overlay:` button, or press <kbd>O</kbd>). It cycles through three view-only
 lenses painted over the meadow:
 
 - **Fertility** — the permanent carrying-capacity bedrock as an indigo→gold heatmap, so you
   can finally see *why* the lush meadows and stubborn barrens sit where they do.
 - **Grazing** — a cool→hot wash over the cells the herd has eaten in the last moment,
   revealing the live pressure that carves the corridors.
+- **Soil** — the nutrient bank, spent-violet to rich-loam: the ground's memory of everything
+  that has died on it. This is the one to watch after a die-off, because it glows brightest
+  exactly where the meadow looks emptiest — rich soil under bare ground is a patch about to
+  bloom.
 
 Each comes with a small labelled gradient key, and neither touches the simulation — they
 only read the world and paint it.
@@ -177,9 +203,17 @@ and prints readings you interpret rather than pass/fail: per-tier population min
 safety-net firings, births/deaths/kills per 1,000 ticks, an age histogram, per-gene drift for
 **both** species (with edge-of-range flags), a boredom check, coarse ASCII maps of the meadow
 and its life, a **gene-pool shape** section — each grazer gene's spread, a histogram, and
-the morph detector's verdict, so you can see whether the mean is hiding a split — and a
+the morph detector's verdict, so you can see whether the mean is hiding a split — a
 **regime** section that names which attractor the seed settled in and tallies how long it
-spent in each, so the regime is counted rather than eyeballed.
+spent in each, so the regime is counted rather than eyeballed, and a **matter ledger** that
+tracks the world's total nutrients across veg, soil and living bodies.
+
+That last one is the instrument this project most needed and didn't have. Total matter is
+conserved by construction, so any *drift* in it is a defect by definition — the ledger prints
+the split each way and a blunt verdict (`HOLDING` / `RUNNING DOWN` / `INFLATING`). For most of
+the world's life it was quietly running down and nothing could see it: the population still
+swung and the genes still moved, so every check reported a healthy, living system while the
+meadow thinned underneath it. Now that takes one line to spot instead of a 40,000-tick probe.
 
 ```bash
 node observe.js                    # or: node observe.js 50000   (custom tick count)
@@ -279,13 +313,30 @@ The journal is the project's only memory between sessions.
 vegetation field grown over a fertility map, following the food gradient by sense; **hunters**
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
-breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing overlay onto the
-hidden landscape, corpse fertilisation, a 72-check headless smoke test, and a headless
+breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
+onto the hidden landscape, a conserved **nutrient cycle**, a 72-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **every world has a name.** The whole simulation now draws its randomness from one
+Newest: **the world stopped running down.** Vegetation used to grow out of nothing, at a rate
+proportional to the greenery already there — so ground grazed to zero could never recover on its own,
+and nothing the herd ate was ever returned. Measured over 40,000 ticks, that was a one-way ratchet:
+bare ground climbed **25% → 54%** of the meadow, biomass slid **440 → 149**, and the predator tier
+starved out with it (its births fell to *zero* per 1,000 ticks — not because the hunt failed, but
+because a kill on a starved meadow isn't worth breeding on). Every population still swung and every
+gene still drifted, so the world *looked* alive the whole time it was dying.
+
+Now matter is **conserved**. Plants draw nutrients from a soil bank, and grazers and hunters return
+them by feeding, breathing and dying, so a barren is just ground holding everything that starved on
+it — and it blooms again. Bare ground now settles at **11–17%** and the whole pyramid still oscillates
+at **80,000 ticks**, where the predator tier used to be dead by 30,000. The re-run census makes the
+scale of the old sickness plain: **96% of worlds now settle into a predator arms-race, against 17%
+before** — the "grazer-haven dominance" this project described for a dozen sessions was the world
+dying, not the world's nature. A new **soil overlay** shows the nutrient bank, and `observe.js` gained
+a **matter ledger** so the defect can never hide again.
+
+Before that: **every world has a name.** The whole simulation draws its randomness from one
 seedable generator, so a world is **reproducible**: the same number regrows the same meadow, herd
 and collapse, tick for tick. The seed rides in the URL (`#s=…`) and is shown in the HUD, so a world
 you like is one copied link away from permanent — and the same machinery gave the project the
