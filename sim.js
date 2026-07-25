@@ -251,10 +251,11 @@
                               // so a hidden mote is hard to grab even once a hunter is close
 
     // Hunger-driven boldness — the recovery valve for a collapsing predator tier.
-    // observe.js showed the world is bistable: ~half of seeds fall into a "grazer
-    // haven" where hunters bleed to a handful, motes overpopulate, and the meadow is
-    // grazed bare — so prey are energy-poor and kills stop paying, a death spiral the
-    // tier never climbs out of. Catches are AMBUSH-limited (a panicking mote outruns
+    // (Historically ~half of seeds fell into a "grazer haven" where hunters bled to a
+    // handful, motes overpopulated, and the meadow was grazed bare — a prey-quality
+    // death spiral the tier never climbed out of. The nutrient cycle later made genuine
+    // collapse rare, ~1 world in 24, but boldness still guards those.) Catches are
+    // AMBUSH-limited (a panicking mote outruns
     // any hunter), so a starving hunter turns reckless: it lunges from farther, digests
     // its last meal faster, and puts on a closing sprint — snatching poorer, more
     // frequent meals kept just-barely-profitable by the flat huntBonus. Boldness scales
@@ -288,17 +289,26 @@
 
     sparkFade: 0.045,         // per-tick fade of a kill-flash marker (view only)
 
-    // Regime readout — naming, live, which of the two bistable attractors the world
-    // is currently in. observe.js showed the ecology is bistable (a predator arms-race
-    // vs. a grazer-haven collapse) but that fact was invisible in the running world:
-    // you had to read raw hunter counts to know which one you were watching. A Schmitt
-    // trigger on the recent mean hunter count (asymmetric thresholds → hysteresis, so it
-    // won't flicker in the ambiguous middle band) plus a trend test that catches a tier
-    // clawing back turns the invisible lottery into a labelled, narrated phase transition.
-    regimeWindow: 24,         // history samples (~720 ticks) the readout averages over
-    regimeArmsOn: 22,         // mean hunters at/above which the world reads "arms-race"
-    regimeHavenOn: 12,        // mean hunters at/below which it reads "grazer-haven"
-    regimeFlashTicks: 150,    // how long the on-canvas transition banner lingers after a flip
+    // Regime readout — naming, live, where the world sits in its predator–prey CYCLE.
+    // (History: this began as a two-attractor lottery — "arms-race" vs "grazer-haven" —
+    // with fixed hunter-count thresholds. That was honest while the world was quietly
+    // dying: predators often starved out, so a grazer-haven was a real second attractor.
+    // The nutrient cycle fixed the dying, and a 24-seed census now reads 96% arms-race /
+    // 4% collapse with the per-world hunter mean forming ONE mode at ~65–75 and a thin
+    // low tail — not two wells. So the readout was re-pointed 2026-07-25: the world is a
+    // SINGLE persistent-predation attractor with a boom-bust cycle riding on it, and the
+    // live readout now names the phase of THAT cycle, self-calibrated to each world so it
+    // carries information whether the world runs 15 hunters or 90.) The recent hunter mean
+    // is compared to the world's own long BASELINE: above it = predation surging (the
+    // boom), below = ebbing (the bust), near = steady. An absolute floor still catches the
+    // rare world where predators genuinely fail ("collapsed"). Schmitt hysteresis on the
+    // surge/ebb crossing stops it strobing. Pure narration — nothing reads world.regime back.
+    regimeWindow: 24,         // history samples (~720 ticks) — the RECENT hunter level
+    regimeBaseWindow: 160,    // history samples (~4800 ticks) — the world's own baseline to judge phase against
+    regimeCollapseFloor: 16,  // baseline hunters below which predators have genuinely FAILED (not a cycle trough)
+    regimeSurgeOn: 0.09,      // recent this fraction above/below baseline to ENTER surging/ebbing
+    regimeSurgeOff: 0.035,    // …and must fall back inside this band to leave it (hysteresis)
+    regimeFlashTicks: 150,    // how long the on-canvas banner lingers after a collapse/recovery
     moodEase: 0.012,          // per-frame easing of the regime "mood" tint toward its target (~a few seconds)
   };
 
@@ -605,9 +615,9 @@
     _morphPendN: 0, // consecutive samples agreeing on the proposed k
     _prevEaten: 0,  // cumulative predation/starvation deaths at the last sample, so
     _prevDied: 0,   // each sample can record how many of each happened in its window
-    // which bistable attractor the world is in, read live off the history buffer
+    // where the world sits in its predator–prey cycle, read live off the history buffer
     regime: { state: "settling", trend: "steady", label: "settling — reading the world…",
-              hmean: 0, flash: 0, flashText: "" },
+              hmean: 0, base: 0, flash: 0, flashText: "", flashWarm: true },
     seedValue: null,   // this world's name: a uint32 if seeded, null if freely random
   };
 
@@ -647,8 +657,8 @@
     world._morphPendK = 1;
     world._morphPendN = 0;
     world.regime = { state: "settling", trend: "steady", label: "settling — reading the world…",
-                     hmean: 0, flash: 0, flashText: "" };
-    world.mood = 0;          // eased regime atmosphere: +1 arms-race (warm/tense), -1 grazer-haven (cold/sparse)
+                     hmean: 0, base: 0, flash: 0, flashText: "", flashWarm: true };
+    world.mood = 0;          // eased predation-cycle atmosphere: +1 surging (warm/tense), -1 collapsed (cold/hollow)
     for (let i = 0; i < CONFIG.startMotes; i++) {
       world.motes.push(makeMote(rand(0, W), rand(0, H)));
     }
@@ -920,58 +930,85 @@
   }
 
   // ---- regime detection ---------------------------------------------------
-  // Which of the two bistable attractors is the world in right now? A pure reading
-  // off the history buffer's recent hunter counts. The base state is a Schmitt
-  // trigger — enter "arms-race" only once the mean rises to regimeArmsOn, drop to
-  // "grazer-haven" only once it falls to regimeHavenOn, and in the ambiguous band
-  // between them HOLD the previous state (that hysteresis is what stops the readout
-  // strobing on a marginal seed). A separate trend test compares the window's first
-  // half to its second so a predator tier clawing back out of collapse reads as
-  // "recovering" and a thriving one sliding down reads as "destabilising". Nothing in
-  // the economy ever reads world.regime back — it is pure narration, like the charts.
+  // Where is the world in its predator–prey CYCLE right now? A pure reading off the
+  // history buffer. The recent hunter mean (regimeWindow ≈ 720 ticks) is compared to
+  // the world's own BASELINE (regimeBaseWindow ≈ 4800 ticks, spanning ~a full boom-bust
+  // cycle) — so the phase is judged relative to how predated THIS world is, not a fixed
+  // count. States: "surge" (recent well above baseline → the predator boom, the cull
+  // intensifying), "ebb" (well below → the bust, the herd's reprieve), "steady" (near
+  // baseline). A Schmitt trigger on the surge/ebb crossing (regimeSurgeOn to enter,
+  // regimeSurgeOff to leave) stops it strobing. One absolute state overrides the phase:
+  // "collapsed" — baseline below regimeCollapseFloor means the predator tier has
+  // genuinely FAILED (the rare ~4% world), not merely troughed. Nothing in the economy
+  // reads world.regime back — it is pure narration, like the charts.
   function classifyRegime(history, prev) {
     if (!history || history.length < 8) {
-      return { state: "settling", trend: "steady", label: "settling — reading the world…", hmean: 0 };
+      return { state: "settling", trend: "steady", label: "settling — reading the world…", hmean: 0, base: 0 };
     }
     const win = Math.min(CONFIG.regimeWindow, history.length);
     const s = history.slice(history.length - win);
     let sum = 0;
     for (let i = 0; i < win; i++) sum += s[i].hunters;
-    const hmean = sum / win;
+    const hmean = sum / win;                        // the recent predation level
 
-    // trend: mean of the window's first half vs its second half
+    // the world's own baseline — a long trailing mean, so "surge" and "ebb" mean
+    // "above/below THIS world's normal", not "above/below a starving world's counts"
+    const bwin = Math.min(CONFIG.regimeBaseWindow, history.length);
+    const bs = history.slice(history.length - bwin);
+    let bsum = 0;
+    for (let i = 0; i < bwin; i++) bsum += bs[i].hunters;
+    const base = bsum / bwin;
+
+    // trend: mean of the recent window's first half vs its second half — is predation
+    // climbing or falling right now (colours the label and softens the mood ease)
     const half = Math.max(1, win >> 1);
     let early = 0, late = 0;
     for (let i = 0; i < half; i++) early += s[i].hunters;
     for (let i = win - half; i < win; i++) late += s[i].hunters;
-    const hEarly = early / half, hLate = late / half;
-    const slope = hLate - hEarly;
-    const thr = Math.max(2, hEarly * 0.25);       // ignore small wobble; demand a real move
-    const trend = slope > thr ? "recovering" : slope < -thr ? "declining" : "steady";
+    const slope = late / half - early / half;
+    const trendThr = Math.max(1.5, base * 0.06);
+    const trend = slope > trendThr ? "rising" : slope < -trendThr ? "falling" : "level";
 
-    // base state with hysteresis (a Schmitt trigger on the mean hunter count)
+    // "collapsed" is a strong claim — the predators have genuinely FAILED — so it must be
+    // confident: a mature baseline (we've watched long enough to tell failure from youth),
+    // with BOTH the long baseline and the recent window under the floor. Otherwise a fresh
+    // world's predators-still-establishing reads as a false collapse (and a false recovery
+    // banner when they finish establishing). A young or recovering world falls through to
+    // the phase logic instead — climbing predators read, correctly, as a surge.
+    const mature = history.length >= CONFIG.regimeBaseWindow;
     let state;
-    if (hmean >= CONFIG.regimeArmsOn) state = "arms-race";
-    else if (hmean <= CONFIG.regimeHavenOn) state = "grazer-haven";
-    else if (prev === "arms-race" || prev === "grazer-haven") state = prev;
-    else state = hmean >= (CONFIG.regimeArmsOn + CONFIG.regimeHavenOn) / 2 ? "arms-race" : "grazer-haven";
+    if (mature && base < CONFIG.regimeCollapseFloor && hmean < CONFIG.regimeCollapseFloor) {
+      state = "collapsed";
+    } else {
+      const rel = (hmean - base) / Math.max(1, base);
+      const on = CONFIG.regimeSurgeOn, off = CONFIG.regimeSurgeOff;
+      const wasSurge = prev === "surge", wasEbb = prev === "ebb";
+      if (rel >= on || (wasSurge && rel > off)) state = "surge";
+      else if (rel <= -on || (wasEbb && rel < -off)) state = "ebb";
+      else state = "steady";
+    }
 
-    const label = state === "arms-race"
-      ? (trend === "declining" ? "arms-race — thriving, but destabilising ↓" : "arms-race — predators thriving")
-      : (trend === "recovering" ? "grazer-haven — predators clawing back ↑" : "grazer-haven — predators failing");
-    return { state, trend, label, hmean };
+    const label =
+      state === "collapsed" ? (trend === "rising" ? "predators collapsed — clawing back ↑" : "predators collapsed — the herd runs free") :
+      state === "surge"     ? "predation surging — the cull intensifies ↑" :
+      state === "ebb"       ? "predation ebbing — the herd's reprieve ↓" :
+                              "predation steady — the cycle holds";
+    return { state, trend, label, hmean, base };
   }
 
-  // The world's "mood" target for a given regime: +1 = arms-race (warm, tense,
-  // ember-lit), -1 = grazer-haven (cold, sparse, blue-dim), 0 = settling. A trend
-  // that softens the regime (an arms-race destabilising, a haven clawing back)
-  // relaxes the mood toward neutral so the light eases ahead of the label flipping.
-  // Pure narration: draw() eases world.mood toward this; nothing reads it back.
+  // The world's "mood" target for a given regime phase: warm/tense when predation is
+  // surging (+1), cooling as it ebbs (−0.55), coldest and most hollow when the predators
+  // have collapsed (−1), neutral while steady or settling. So the meadow's light now
+  // BREATHES with the boom-bust cycle instead of sitting one colour for a whole world. A
+  // trend that softens the phase (a surge cresting, a collapse recovering) relaxes the
+  // target toward neutral so the light eases ahead of the label. Pure narration: draw()
+  // eases world.mood toward this; nothing reads it back.
   function regimeMood(r) {
     if (!r) return 0;
-    if (r.state === "arms-race")    return r.trend === "declining"  ?  0.45 :  1;
-    if (r.state === "grazer-haven") return r.trend === "recovering" ? -0.35 : -1;
-    return 0;
+    if (r.state === "surge")     return r.trend === "falling" ?  0.45 :  1;
+    if (r.state === "ebb")       return r.trend === "rising"  ? -0.25 : -0.55;
+    if (r.state === "collapsed") return r.trend === "rising"  ? -0.4  : -1;
+    return 0;   // steady / settling
   }
 
   // ---- history sample -----------------------------------------------------
@@ -1025,22 +1062,30 @@
     else { world._morphPendK = cls.k; world._morphPendN = 1; }
     if (world._morphPendN >= 3 || cls.k === world.morphs.k) world.morphs = cls;
 
-    // update the live regime readout on the same cadence. When the base attractor
-    // flips between the two concrete states, arm a transition banner (a settling→state
-    // transition isn't a flip — the world was never in the other attractor to leave).
+    // update the live regime readout on the same cadence. The surge/steady/ebb phases
+    // turn over every cycle, so banner-ing each one would spam; instead the banner is
+    // reserved for the rare, dramatic event — the predator tier genuinely COLLAPSING or
+    // CLAWING BACK. (Entering collapsed from anything but settling, or leaving it.)
     const rg = classifyRegime(world.history, world.regime.state);
-    const both = (a, b) => (a === "arms-race" || a === "grazer-haven") &&
-                           (b === "arms-race" || b === "grazer-haven");
-    if (both(rg.state, world.regime.state) && rg.state !== world.regime.state) {
+    const prevState = world.regime.state, prevBase = world.regime.base;
+    // the "failing" banner fires only for a world that HAD an established predator tier
+    // (prevBase healthy) and just lost it — never for a world whose predators never rose.
+    if (rg.state === "collapsed" && prevState !== "collapsed" && prevState !== "settling"
+        && prevBase >= CONFIG.regimeCollapseFloor * 2) {
       world.regime.flash = CONFIG.regimeFlashTicks;
-      world.regime.flashText = rg.state === "arms-race"
-        ? "→ arms-race — the predators surge back"
-        : "→ grazer-haven — the predators are failing";
+      world.regime.flashText = "the predators are failing";
+      world.regime.flashWarm = false;
+    } else if (rg.state !== "collapsed" && prevState === "collapsed") {
+      // leaving a (mature, confident) collapse is genuine recovery
+      world.regime.flash = CONFIG.regimeFlashTicks;
+      world.regime.flashText = "the predators claw back";
+      world.regime.flashWarm = true;
     }
     world.regime.state = rg.state;
     world.regime.trend = rg.trend;
     world.regime.label = rg.label;
     world.regime.hmean = rg.hmean;
+    world.regime.base = rg.base;
   }
 
   // ---- simulation step ----------------------------------------------------
@@ -1308,17 +1353,17 @@
 
   // ---- render -------------------------------------------------------------
   function draw() {
-    // ease the world's "mood" toward the current regime so its light leans warm and
-    // tense in a predator arms-race, cold and sparse in a grazer-haven collapse — a
-    // shift a visitor feels before reading the HUD. Pure narration: the economy never
-    // sees world.mood, exactly like the charts and the regime chip.
+    // ease the world's "mood" toward the current predation-cycle phase so its light
+    // breathes: warm and tense as predation surges, cool as it ebbs, coldest and hollow
+    // in a genuine collapse — a shift a visitor feels before reading the HUD. Pure
+    // narration: the economy never sees world.mood, exactly like the charts and the chip.
     world.mood += (regimeMood(world.regime) - world.mood) * CONFIG.moodEase;
     const mood = world.mood;
     const warm = mood > 0 ? mood : 0, cold = mood < 0 ? -mood : 0;
 
     // seasonal base (cool/dark in winter, warmer at high summer), then leaned by mood:
-    // an arms-race stokes the reds and banks the blue toward an ember dark, a
-    // grazer-haven cools and dims the whole field toward a hollow blue-grey
+    // a surge stokes the reds and banks the blue toward an ember dark, an ebb or collapse
+    // cools and dims the whole field toward a hollow blue-grey
     const p = (seasonWave() + 1) / 2; // 0 = deep winter, 1 = high summer
     const br = clamp(6 + 6 * p + 13 * warm - 3 * cold, 0, 255) | 0;
     const bg = clamp(9 + 5 * p + 3 * warm + 1 * cold, 0, 255) | 0;
@@ -1422,8 +1467,8 @@
     }
 
     // mood vignette — a soft, tinted darkening of the field's edges that reads as the
-    // world's light: warm and close-walled in an arms-race, cold and hollow in a
-    // grazer-haven. Kept gentle (edge alpha ≤ ~0.24) so the living scene stays legible;
+    // world's light: warm and close-walled as predation surges, cold and hollow in an ebb
+    // or collapse. Kept gentle (edge alpha ≤ ~0.24) so the living scene stays legible;
     // it's the ambient half of the regime cue the HUD chip states outright.
     {
       const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.30,
@@ -1436,8 +1481,8 @@
       ctx.fillRect(0, 0, W, H);
     }
 
-    // regime-transition banner — when the world tips from one attractor to the other,
-    // a labelled marker fades across the top so the phase change is impossible to miss
+    // regime-transition banner — reserved for the rare, dramatic event: the predator
+    // tier genuinely collapsing (cold) or clawing back (warm), fading across the top
     if (world.regime.flash > 0) {
       const a = clamp(world.regime.flash / CONFIG.regimeFlashTicks, 0, 1);
       const txt = world.regime.flashText;
@@ -1450,7 +1495,7 @@
       ctx.fillStyle = "rgba(0,0,0,0.62)";
       ctx.fillRect(bx, by, bw, bh);
       ctx.globalAlpha = a;
-      ctx.fillStyle = world.regime.state === "arms-race" ? "#ff8a6b" : "#7fe0a0";
+      ctx.fillStyle = world.regime.flashWarm ? "#ff8a6b" : "#7fb0e0";
       ctx.fillText(txt, W / 2, by + bh / 2 + 1);
       ctx.globalAlpha = 1;
       ctx.restore();
@@ -1825,13 +1870,15 @@
     const g = MORPH_GENES.find((x) => x.key === key);
     return g ? `${g.hiName}∙${g.loName}` : key;
   };
-  // compact, colour-coded HUD text for the current regime: red when predators rule,
-  // green when the grazers have the run of the meadow, amber while a tier claws back.
+  // compact, colour-coded HUD text for the current predation-cycle phase: warm red as
+  // the cull surges, amber holding steady, cool teal as it ebbs, cold blue if the
+  // predators have genuinely collapsed. The chip now moves WITH the cycle, not once a world.
   function regimeDisplay(r) {
-    if (r.state === "settling") return { text: "settling…", color: "#8ba3b8" };
-    if (r.state === "arms-race") return { text: r.trend === "declining" ? "arms-race ↓" : "arms-race", color: "#ff6b6b" };
-    if (r.trend === "recovering") return { text: "recovering ↑", color: "#e0b04a" };
-    return { text: "grazer-haven", color: "#6cc08a" };
+    if (r.state === "settling")  return { text: "settling…", color: "#8ba3b8" };
+    if (r.state === "collapsed") return { text: r.trend === "rising" ? "collapsed ↑" : "collapsed", color: "#7fb0e0" };
+    if (r.state === "surge")     return { text: "surging ↑", color: "#ff6b6b" };
+    if (r.state === "ebb")       return { text: "ebbing ↓", color: "#5fc8b0" };
+    return { text: "steady", color: "#e0b04a" };
   }
   function updateHud() {
     el.tick.textContent = world.tick;
@@ -1844,7 +1891,7 @@
     // morph readout: "1" for a single cloud, "2 · keen∙dull" when the pool has split
     const mo = world.morphs;
     el.morphs.textContent = mo.k >= 2 && mo.gene ? `${mo.k} · ${morphAxisLabel(mo.gene)}` : String(mo.k);
-    // regime readout: which bistable attractor the world is in, colour-coded, with
+    // regime readout: where the world sits in its predation cycle, colour-coded, with
     // the full sentence tucked into the tooltip for anyone who hovers it
     if (el.regime) {
       const rd = regimeDisplay(world.regime);

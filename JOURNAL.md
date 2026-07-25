@@ -218,10 +218,24 @@ re-measured on the healed world; (2) the "straddle the bistability" Expedition i
 experiment — it kept failing to find persistent predation to split a herd with, and now there is plenty.
 The arc's stubborn core is untouched, but the ground under it is no longer rotten.
 
-_Runs since the last Expedition:_ **0** — this run was one (the nutrient cycle). The candid note from
-last run is **discharged**: after two Expeditions spent on instruments, this one went to **ecology**, as
-promised. The new debt is smaller and named: mote `speed` now pins near its ceiling under the heavier
-predation, and that wants a run.
+_Update (2026-07-25, the cycle-phase regime Build): the word "bistable" the arc leaned on for a dozen
+runs is retired, and the retirement sharpens the arc's own diagnosis._ Grazers are still ONE broad cloud
+(k=1); this run didn't attempt the split. It confirmed, with a fresh census, that the nutrient cycle
+didn't just heal the world — it **collapsed the two attractors into one**: 23/24 worlds are a persistent
+arms-race (median 70 hunters, one mode, thin low tail), genuine collapse in only 1/24. The arc has said
+for months that the divergence "lives between worlds because the bistability picks one lifestyle per
+world." That sentence now needs re-reading: there is no bistability: worlds differ by predation
+*intensity* along a continuum, not by which of two wells they fell into. So the open centrepiece —
+within-world coexistence — is unchanged, but its obstacle is named more honestly: it's the fact that
+each world settles at a *single* predation intensity (and so a single optimal lifestyle), not a
+two-attractor lottery. The instrument the arc depends on is also healthier: the regime readout, which
+had gone monotone (one word for 96% of worlds), now names the predation *cycle* and carries information
+again — you can read a world's predation phase at a glance before asking whether it drove a split.
+
+_Runs since the last Expedition:_ **1** (the nutrient cycle was the last one). This run was a **Build**
+(observability/analysis — rotated off last run's ecology). The named debt from last run — mote `speed`
+pinned near its ceiling — is **still open** (this run was non-ecology by the anti-repetition rule); it
+remains the top backlog Build for the next ecology run.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -233,51 +247,48 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-24 — the nutrient-cycle Expedition (ecology).** Readings: ~15 unseeded
-`observe.js` passes at 16–20k, a re-run `--census 24 12000`, horizon probes to **80k** (6 seeds) and
-**120k** (3 seeds), config sweeps over `soilGerm` / `soilStart` / `vegEnergy` / `vegGrowth` /
-`hunterCrowd` / `hunterMaxPop` / `soilMax`, two `--frame` renders **looked at**, and `smoke.js` ×15+.
-**This change moves the economy**, so unlike last run the numbers below are *expected* to differ from
-`previously:` — every one of them does, and the direction is the point.
+**Last observed: 2026-07-25 — the cycle-phase regime Build (observability).** Readings: a 20k unseeded
+`observe.js` pass, per-seed observes at 20–50k (seeds 3/5/7/12), a fresh re-run `--census 24 12000`, two
+`--frame` renders **looked at** (a collapsed world and a surging one), and `smoke.js` ×5. **This change is
+pure narration** (nothing reads `world.regime`/`world.mood` back), so the economy numbers below are
+*expected* to match `previously:` — and the census hunter means came back **byte-identical** to last run's,
+the strongest proof of that. What changed is the *readout*, not the world.
 
-- **THE HEADLINE: the world no longer runs down.** Total matter is conserved by construction and the new
-  ledger reads **+0.0% drift · HOLDING in 5/5 draws**. Bare ground **falls** 17%→11% over 40k and holds
-  (it used to climb **25%→54%** and never turn back); living-cell density 0.181→**0.261** (was
-  0.210→0.086); biomass 363→**539** (was 440→149).
-- **The predator tier survives the long horizon.** Trailing-window hunter mean across 6 seeds:
-  76 · 101 · 92 · 93 · 82 · **79** at 6k/12k/20k/40k/60k/80k — **0 of 6 worlds with a dead tier at any
-  horizon.** Before: 18.7 → 6.9 → 5.3 → **3.0**, with 3 of 10 dead by 30k.
-- **THE CENSUS INVERTED, and this is the finding that reframes a dozen past runs.** `--census 24 12000`:
-  **23/24 (96%) settle arms-race, 1/24 (4%) grazer-haven, 75% of all ticks arms-race**, hunter tier
-  **median mean 70.1 (range 8.1–82.3)**, 23/24 worlds flip exactly once. Previously 17% / 83% / 28%,
-  median 12.0. The "grazer-haven dominance" this journal has described for a dozen runs was **the world
-  dying**, not the world's nature — and the old census was taken at 12k, mid-decay.
-- **A NEW COMPLAINT, logged not fixed: the regime readout now says the same word about 96% of worlds.**
-  Its cut points were fitted to a starving world. Backlogged as a Repair.
-- **A SECOND NEW COMPLAINT: mote `speed` pins near its 2.60 ceiling** (2.27–2.41, mode in the top
-  histogram bin) because predation is now the dominant killer. Honest context: this run *un-pinned* two
-  genes that used to sit on their **floors** — `sense` 18–22→**37–40**, `metabo` 0.64–0.77→interior — so
-  the world traded three edge problems for one. Backlogged as a Build.
-- **motes:** min ~37, max 777–800, mean **440–540** (cap raised 600→800; ~4% of ticks at cap).
-- **hunters:** min 7–12, max 82–140, mean **48–70** (cap raised 75→140; **0% of ticks at cap**).
-- **plants (biomass):** min 73, max ~1320, mean **326–376**, oscillates.
-- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged by this run.
-- **flow per 1k:** mote births ~356, starved ~47, eaten ~273; hunter births **~7.6** (was 0.3–1.4),
-  aged-out ~89% of hunter deaths. Death split **~85% predation / 15% starvation** (was ~30/70).
-- **boredom check: NOT a fixed point** — 4–5 of 5 genes shift >8% between tick 1k and the end.
-- **smoke:** **72 checks**, **7/7 completing runs green**. Its cap and prey-crash assertions earned their
-  keep this run, catching two bad tunings before they shipped.
-- **known pre-existing flake (confirmed NOT caused by this run):** `smoke.js` intermittently hangs at its
-  `observe.js --frame` subprocess check — reproduced at **2/6 on unmodified code** via `git stash`. It
-  leaves orphaned node processes behind. Worth a future Repair.
+- **THE HEADLINE: the regime readout carries information again.** The re-run `--census 24 12000` proves the
+  world is a **single persistent-predation attractor**: predation intensity **median 70.1 hunters/world**
+  (range 8.1–82.3, quartiles **60.5 / 72.6**), within-world swing **median 47% CV**, genuine collapse in
+  only **1/24 worlds (seed 7, 60% of its ticks)** — **one mode with a thin low tail, NOT two wells.** The
+  old readout said "arms-race" about 96% of worlds; the new cycle-phase readout reads surge/steady/ebb
+  against each world's own baseline, so it *varies* (per-seed cycle mix at 30k: seed 3 **33/63/3%**, seed 5
+  **36/48/15%**, seed 12 **71/11/18%**) and seed 7 reads **"collapsed" outright**.
+- **The mood breathes now (verified by eye).** `--frame` renders: a collapsed world (seed 7) is cold
+  blue-hollow, a surging world (seed 12) warm green-red with hunters on the prowl. The tint leans warm on
+  surge, cool on ebb, coldest on collapse — though it still reads faintly under a full meadow (the known
+  "lean the living things too" follow-on).
+- **STILL-OPEN COMPLAINT (not this run's, by anti-repetition): mote `speed` pins near its 2.60 ceiling**
+  (2.32–2.38, mode top histogram bin ⚑), with `metabo` high (~1.61 ⚑) and `size` low (~2.05 ⚑) — three
+  genes cornered by the arms-race regime. **Unchanged by this run** (pure narration). Top backlog Build.
+- **motes:** min ~36, max 799–800, mean **440–540**. Unchanged (byte-identical economy).
+- **hunters:** min ~11, max ~111–135, mean **~48–82** by seed (census median 70.1). Unchanged.
+- **plants (biomass):** min ~93, max ~1300, mean **326–370**, oscillates. Unchanged.
+- **matter:** **+0.0% drift · HOLDING**. Unchanged — the nutrient cycle still closes.
+- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged.
+- **flow per 1k (20k unseeded):** mote births ~591, starved ~35, eaten ~519; hunter births ~13, aged-out
+  ~98% of hunter deaths. Death split **~94% predation / 6% starvation**. (Within the healed-world envelope.)
+- **boredom check: NOT a fixed point** — 4/5 genes shift >8% between tick 1k and the end.
+- **smoke:** **74 checks** (+2 for the cycle-phase readout), green across ×5 runs (2 fully clean; the rest
+  gated only by the pre-existing `--frame` hang below).
+- **known pre-existing flake (confirmed NOT caused by this run — I touch no render code):** `smoke.js`
+  intermittently hangs at its `observe.js --frame` subprocess check, leaving orphaned node processes.
+  Reproduced 2/6 on unmodified code in an earlier run. Worth a future Repair.
 
-_previously:_ (2026-07-23, reproducible-world Expedition, tooling) the world was measured but not yet
-healed: `--census 24 12000` read **17% arms-race / 83% grazer-haven, 28% of ticks arms-race**, hunter
-tier median mean 12.0 (range 5.0–29.5); motes min 35–37 / max 549–600 / mean 306–350; hunters min 1 /
-max 14–20 / mean 4–9; biomass min **1** / mean 224–257; mote genes speed 0.94→1.45, sense collapsing
-44–49→**18–22**, metabo sliding to **0.77–0.91**; flow per 1k births ~148–180 / starved ~113–123 /
-eaten ~19–38, hunter births **~0.3–0.7**; death split ~14–24% predation. Grazers one broad cloud (k=1);
-smoke 72 checks. Every one of these numbers was taken on a world that was quietly running down.
+_previously:_ (2026-07-24, nutrient-cycle Expedition, ecology) the world had just been healed: matter
+**+0.0% drift · HOLDING**; `--census 24 12000` read **96% arms-race / 4% grazer-haven** under the old
+readout, hunter tier median 70.1 (range 8.1–82.3); motes min ~37 / max 777–800 / mean 440–540; hunters
+min 7–12 / max 82–140 / mean 48–70; biomass min 73 / mean 326–376; predator tier alive at 80k in 0/6
+seeds; mote `speed` newly pinned 2.27–2.41 while `sense` (→37–40) and `metabo` un-pinned off their floors;
+death split ~85% predation. Grazers one broad cloud (k=1); smoke 72 checks. The complaint that seeded this
+run: the regime readout said the same word about 96% of worlds.
 
 ---
 
@@ -518,8 +529,9 @@ the backlog.**
   so no zlib is needed and the encoder is a few dozen lines. Exercised by `observe.js --frame` and guarded
   by 11 `smoke.js` render checks (incl. an end-to-end real-`draw()`→PNG subprocess).
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **72 checks** (the "60" claimed here for several runs was
-  always wrong — the true pre-2026-07-23 count was 64; this run added 8). Of those, **8 cover the seedable
+  runs 7200 ticks (3 seasons), and asserts **74 checks** (the "60" claimed here for several runs was
+  always wrong — the true pre-2026-07-23 count was 64; the seedable world added 8, the cycle-phase
+  regime readout +2 on 2026-07-25). Of those, **8 cover the seedable
   world** (2026-07-23): the same seed regrows a byte-identical world after 900 ticks, a neighbouring seed
   doesn't, `world.seedValue` reports the name, `seed(null)` restores free randomness, two unseeded worlds
   differ, the `s-seed` HUD chip carries the seed, and two **subprocess boots** with a faked `location`
@@ -538,12 +550,14 @@ the backlog.**
   proved by construction); the
   morph detector is honest on synthetic pools; **the concealment mechanic is monotone — a small,
   slow mote outhides a middling one, which outhides a big fast fleer, all in cover, and nobody
-  hides on bare ground** (4 deterministic checks); **the regime readout names each attractor
-  correctly on synthetic history windows (grazer-haven / arms-race / recovering / declining) and
-  its Schmitt-trigger hysteresis holds the prior state in the ambiguous band**; **the regime mood tint
-  signs each attractor correctly (arms-race warm, grazer-haven cold, settling neutral), keeps its sign
-  under a softening trend, and its eased value provably converges toward the live regime — a check that
-  also drives the leaned-background and vignette draw path through the shim's gradient stub** (3 checks);
+  hides on bare ground** (4 deterministic checks); **the regime readout names each predation-cycle phase
+  correctly on synthetic history windows (steady / surge / ebb / collapsed + a recovering-collapse
+  trend), the collapse floor discriminates a thin-but-alive tier from a genuine failure, and its
+  self-calibrating hysteresis holds a prior surge in the ambiguous band without triggering one from
+  steady** (8 checks); **the regime mood tint signs each phase correctly (surge warm, ebb cool, collapsed
+  coldest, steady neutral), keeps its sign under a softening trend, and its eased value provably converges
+  toward the live phase — a check that also drives the leaned-background and vignette draw path through the
+  shim's gradient stub** (3 checks);
   **the metabolism intake multiplier is neutral at metabo=1, monotone-increasing, and concave — the
   three properties that make metabolism a live interior-optimum axis rather than a dead floored one**
   (3 checks); **the death-balance metric `predationShare` is honest by construction — it reads 1 when
@@ -567,9 +581,9 @@ the backlog.**
   boredom check (tick 1k vs the end), [8] coarse 48×16 ASCII maps of vegetation and life, and
   **[9] gene-pool shape** — for each grazer gene its sd, a 24-bin histogram, a bimodality
   coefficient, and the morph detector's verdict, so the _distribution_ is visible, not just the
-  mean — and **[10] regime**, which names which bistable attractor the seed settled in, the mean
-  hunter count behind that call, the fraction of ticks spent in each state, and how many times the
-  world flipped between attractors (so the bistability is _counted_, not eyeballed). Exit 0 = a clean
+  mean — and **[10] regime**, which names where the world sits in its predation _cycle_ (the recent
+  hunter mean vs the world's own baseline), the fraction of ticks spent surging / steady / ebbing, and
+  the count of genuine predator collapses (so the cycle is _counted_, not eyeballed). Exit 0 = a clean
   reading; exit 1 = the sim threw or NaN leaked. Shares `shim.js` with `smoke.js` but not its
   purpose: numbers to judge, not a green checkmark. **`node observe.js --split-test [seeds] [ticks]`**
   runs a different experiment entirely (Arc III): N worlds **with** hunters vs N with hunters removed
@@ -578,12 +592,14 @@ the backlog.**
   seed as of 2026-07-23** (both conditions run seeds 1..N, so row 7 is the *same world* with and without
   predators), and the verdict now counts matched pairs moving the predicted way — 4/4 on first use, mean
   Δspeed +0.73. It is how the predation→lifestyle claim is proven headlessly.
-  **`node observe.js --census [N] [ticks]`** (2026-07-23) is the regime census the seedable RNG unlocked:
-  N reproducible worlds, each reporting which attractor it settled in, its mean/max hunter tier, its mean
-  motes/plants/sense, what fraction of its ticks were arms-race, and how many times it flipped — then a
-  verdict giving the **settle rate**, the **time-weighted** rate, the hunter-tier median/range and the flip
-  count. Same N and ticks → byte-identical table across processes, so a future run can re-measure this
-  exact census and see whether the world drifted underneath it. Defaults 24 × 12000 (~70s).
+  **`node observe.js --census [N] [ticks]`** (2026-07-23; re-pointed 2026-07-25) is the **predation
+  census** the seedable RNG unlocked: N reproducible worlds, each reporting its predation intensity
+  (mean/max hunters), its within-world oscillation (a CV%), its mean motes/plants/sense and its collapse
+  fraction — then a verdict giving the intensity **median/range/quartiles**, the median swing, and the
+  **genuine-collapse rate** (worlds and ticks). It once counted "which of two attractors"; the census
+  itself proved there is now only one (a single mode at ~70 hunters, a thin low tail), so the framing
+  was retired. Same N and ticks → byte-identical table across processes, so a future run can re-measure
+  this exact census and see whether the world drifted underneath it. Defaults 24 × 12000 (~235s).
   **`--seed N`** pins any normal reading or `--frame` render to one named world. **`node observe.js --frame [out.png] [ticks] [1|2]`** (2026-07-22) arms the
   rasterizer, ticks a fresh world, seats `world.mood` at its settled regime target (a single frame can't
   ease the tint in the way seconds of watching do), renders **one real `draw()`** to a hand-encoded PNG,
@@ -600,33 +616,40 @@ the backlog.**
   it each tick-sample into `world.morphs` (with 3-sample hysteresis so the HUD doesn't flicker);
   the economy never reads it back. `smoke.js` asserts it on deterministic synthetic pools
   (unimodal→1, two-cluster→2) so the check can't flake on real randomness.
-- **The regime readout** (`classifyRegime`, exported) — names, live, which of the two bistable
-  attractors the world is in. It reads the recent mean hunter count off `world.history` (last
-  `regimeWindow` = 24 samples) and applies a **Schmitt trigger**: enter `arms-race` only once the
-  mean rises to `regimeArmsOn` (22), drop to `grazer-haven` only once it falls to `regimeHavenOn`
-  (12), and in the band between them HOLD the previous state — that asymmetric hysteresis is what
-  stops the readout strobing on a marginal seed. A separate trend test (window first-half vs
-  second-half mean) tags a climbing tier `recovering ↑` and a sliding one `declining ↓`. `sample()`
-  writes `world.regime` each sample; when the base state *flips* between the two concrete attractors
-  it arms `world.regime.flash`, a countdown `draw()` renders as a fading banner across the top of the
-  field. `updateHud()` paints the compact state into the `s-regime` chip, colour-coded (red / green /
-  amber). It is **pure narration** — nothing in the economy reads `world.regime` back, so it cannot
-  perturb the world, exactly like the charts and the morph readout. `smoke.js` asserts it on
-  deterministic synthetic history windows; `observe.js` reports it as section [10].
-- **The regime mood tint** (`regimeMood`, exported; added 2026-07-22) — the *ambient* half of the regime
-  readout, so the world's state reads from the canvas alone, not only the HUD chip. `regimeMood(regime)`
-  is a pure function returning a target in `[-1,1]`: **+1** for an arms-race (warm/tense), **−1** for a
-  grazer-haven (cold/sparse), **0** while settling, with a softening trend (an arms-race `declining`, a
-  haven `recovering`) relaxing the target partway toward neutral so the light eases *ahead* of the label
-  flipping. `draw()` eases `world.mood` toward it each frame (`CONFIG.moodEase` ≈ a few seconds), then
-  leans the seasonal background colour (reds up / blues banked when warm; cooled and dimmed when cold)
-  **and** lays a soft tinted **vignette** over the field's edges (warm and close-walled vs. cold and
-  hollow, edge alpha ≤ ~0.24). Like the regime readout it is **pure narration** — `world.mood` is written
-  and read only in `draw()`, never by the economy, so dynamics are byte-identical. `smoke.js` asserts the
-  mood signs each attractor right, that a softening trend keeps its sign, and that the eased tint converges
-  toward the live regime (which also drives the leaned-background + vignette through `shim.js`'s gradient
-  stub). Its colours were long the one part not headless-verifiable; as of 2026-07-22 `observe.js --frame`
-  renders them (the warm/cold lean was *seen*, and found to read faintly under a full meadow — see the Log).
+- **The regime readout** (`classifyRegime`, exported; re-pointed 2026-07-25) — names, live, where the
+  world sits in its predator–prey **cycle**. It once named which of two bistable attractors a world had
+  settled in (arms-race ≥ 22 hunters / grazer-haven ≤ 12, a Schmitt trigger on the raw count), which was
+  honest while predators often starved out. The nutrient cycle dissolved the second attractor — the
+  predation census now reads a **single mode** at ~70 hunters, not two wells — so a fixed-count readout
+  said "arms-race" about 96% of worlds, dead as information. Now it self-calibrates: it compares the
+  **recent** hunter mean (`regimeWindow` = 24 samples) to the world's own **baseline** (`regimeBaseWindow`
+  = 160 samples ≈ 4800 ticks, ~a full boom-bust cycle). Above baseline by `regimeSurgeOn` (9%) → **surge**
+  (the cull intensifying); below → **ebb** (the herd's reprieve); near → **steady**; with `regimeSurgeOff`
+  (3.5%) hysteresis so it doesn't strobe. One absolute state overrides the phase: **collapsed** — a
+  *mature* baseline (so youth isn't mistaken for failure) with **both** the baseline and the recent window
+  below `regimeCollapseFloor` (16), the rare (~4%) world where predators genuinely fail. `sample()` writes
+  `world.regime` each sample and arms `world.regime.flash` only on a genuine collapse↔recovery (never on
+  the ordinary turn of the cycle, and never for a world whose predators never established — the "failing"
+  banner needs a prior healthy baseline). `updateHud()` paints the compact phase into the `s-regime` chip
+  (red surge / amber steady / teal ebb / blue collapsed). **Pure narration** — nothing in the economy
+  reads `world.regime` back, so the census hunter means are byte-identical before and after this change.
+  `smoke.js` asserts it on deterministic synthetic history windows; `observe.js` reports it as section [10].
+- **The regime mood tint** (`regimeMood`, exported; added 2026-07-22, re-pointed 2026-07-25) — the
+  *ambient* half of the regime readout, so the world's state reads from the canvas alone, not only the HUD
+  chip. Now that the readout names a cycle phase, the mood **breathes with the boom-bust** instead of
+  sitting one colour for a whole world. `regimeMood(regime)` is a pure function returning a target in
+  `[-1,1]`: **+1** for a surge (warm/tense), **−0.55** for an ebb (cool), **−1** for a collapse
+  (cold/hollow), **0** while steady or settling, with a softening trend (a surge `falling`/cresting → 0.45,
+  a collapse `rising`/recovering → −0.4) relaxing the target so the light eases *ahead* of the label.
+  `draw()` eases `world.mood` toward it each frame (`CONFIG.moodEase` ≈ a few seconds), then leans the
+  seasonal background colour (reds up / blues banked when warm; cooled and dimmed when cold) **and** lays
+  a soft tinted **vignette** over the field's edges (warm and close-walled vs. cold and hollow, edge alpha
+  ≤ ~0.24). Like the readout it is **pure narration** — `world.mood` is written and read only in `draw()`,
+  never by the economy. `smoke.js` asserts the mood signs each phase right, that a softening trend keeps
+  its sign, and that the eased tint converges toward the live phase (which also drives the leaned-background
+  + vignette through `shim.js`'s gradient stub). Verified by eye 2026-07-25 via `observe.js --frame`: a
+  collapsed world renders cold blue-hollow, a surging one warm green-red — though the lean still reads
+  faintly under a full meadow (the known "lean the living things too" follow-on).
 - Core objects:
   - **genome**: `{ speed, size, sense, metabo, hue }` — shared shape, different ranges per
     species (hunters are faster, keener-sensed, and hued in a hot red/orange band).
@@ -779,6 +802,30 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-25 — the world's light breathes with its cycle (regime readout, re-pointed)
+
+**Observed (the complaint):** a fresh 20k pass spent **91% of its ticks** reading "arms-race," and a
+re-run 24-seed census read **96% of _worlds_** the same — the regime readout, its cut points (arms-race
+≥ 22 hunters / grazer-haven ≤ 12) fitted to a world that used to starve its predators, had collapsed to
+saying **one word about nearly every world**, and because the mood tint reads the regime, nearly every
+world glowed the same warm colour: two headline instruments gone monotone. **Changed in the world:** the
+regime chip and the meadow's whole light now name where a world sits in its predator–prey **cycle** —
+predation **surging** above the world's own baseline (warm), **ebbing** below it (cool), **steady**
+between, or **collapsed** in the rare world where the predators genuinely fail (cold) — self-calibrated
+so it carries information whether a world runs 15 hunters or 90; a visitor now watches the light **warm
+and cool with the boom-bust** instead of holding one hue (per-seed cycle mix: seed 3 33/63/3%, seed 5
+36/48/15%, seed 12 71/11/18%), and the flip banner is reserved for a true collapse or clawing-back rather
+than every turn of the cycle. **The census, re-pointed to match:** it measured the healed world honestly
+at last — a **single persistent-predation attractor** (median 70 hunters, one mode, thin low tail),
+genuine collapse in **1/24 worlds** — so **"bistable," a word this journal used ~20 times, was retired**,
+and the census now reports predation *intensity* and *collapse rate*, not a two-attractor lottery that no
+longer exists. **Verified:** `node --check` ×5; `smoke.js` green at **74 checks** (+2 for the cycle-phase
+readout) across clean runs; `observe.js` on seeds 3/5/7/12 shows the readout genuinely varying and seed 7
+reading "collapsed," no throw, no NaN, no gene newly pinned — the change is **pure narration**, proven by
+the census hunter means coming back **byte-identical** before and after; two `--frame` renders **looked
+at** (a collapsed world cold blue-hollow, a surging one warm green-red); zero runtime network calls.
+(Category: **observability/analysis** — rotated off last run's ecology; a Build, Expedition counter → 1.)
 
 ### 2026-07-24 — [Expedition] the world stops running down: a nutrient cycle, and matter that has to come from somewhere
 
@@ -1251,15 +1298,38 @@ Built the whole static page and the first working simulation from nothing: motes
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
 
-- **[Repair/Build] Recalibrate the regime detector — its thresholds were tuned for a dying world.** The
-  post-nutrient-cycle census reads **23/24 worlds settling "arms-race" (96%)**, where the same census on
-  the old world read 17%. That is not a detector *lie* — predation really is dominant now — but a readout
-  that says the same word about 96% of worlds has stopped carrying information, and the hunter tier's
-  per-seed means still span a real **8.1–82.3**. Re-fit the arms-race / grazer-haven cut points (and the
-  Schmitt-trigger hysteresis band) to the healed world's actual distribution so the two names split it
-  meaningfully again. While in there, settle the long-standing "is 'bistable' even the right word" item
-  below with the new numbers — 23/24 worlds flipping exactly once looks far more like a *transient into a
-  single attractor* than like bistability, which would retire a word this journal uses ~20 times.
+- **[Build] Detrend the predation-cycle baseline so the readout breathes symmetrically.** This run's new
+  regime readout is honest but **surge-biased over a 20k horizon**: an establishing/growing predator tier
+  genuinely trends upward, so the recent mean sits above the trailing baseline most of the time (per-seed
+  surge fractions ran 33–74% while ebb ran 0–18%). Fit a least-squares **slope** to the baseline window
+  and compare the recent mean to the baseline *projected to the current tick*, so a steadily-climbing tier
+  reads "steady" (it's on its own trend) and only a departure *from that trend* reads surge/ebb. The mood
+  would then warm and cool evenly around the cycle instead of leaning warm through the long establishment
+  ramp. Headless-verifiable: on a synthetic monotone-ramp history the readout should read "steady," and
+  across `--census` the surge and ebb fractions should roughly balance. Small, bounded, pure narration.
+- **[Expedition] Close the loop — let the predation *weather* change behaviour, not just narrate it**
+  _(ambitious — every regime readout so far has been inert by design, and feeding it back risks the tuned
+  limit cycle)_. The cycle-phase readout, the mood tint, the morph and death-balance readouts are all
+  **pure narration** — nothing in the economy reads them back, which is why they're safe. Break that,
+  carefully, for one mechanic: give each grazer a short-lived, decaying **vigilance** that rises when it
+  witnesses kills nearby (a surge in the local predation weather) and relaxes when the cull ebbs, and let
+  vigilance sharpen its fear radius or twitchiness. Then the herd's alertness would be **phase-locked to
+  the boom-bust** — jumpy during a surge, complacent in the lull — a learned, collective fear with memory,
+  and the first time the world's macro-state and micro-behaviour close a loop. Watch (`observe.js`, and by
+  eye) whether it produces hysteresis (a herd that stays skittish a while after a surge passes) or whether
+  the feedback amplifies the oscillation into instability — landing a legible, stable middle is the whole
+  challenge, and it would need its own smoke assertions since it is no longer byte-identical narration.
+
+- **[Repair/Build] Retired (BUILT 2026-07-25): "Recalibrate the regime detector."** Done, and it went
+  deeper than a re-fit. The census proved the two attractors had become one (median 70 hunters, one mode,
+  thin low tail), so re-fitting two thresholds to "split the world meaningfully" was chasing a partition
+  that no longer exists. Instead the readout was **re-pointed** at the within-world predation *cycle*
+  (surge/steady/ebb vs the world's own baseline, + an absolute "collapsed" state), which carries
+  information in every world, and the mood tint now breathes with the boom-bust. "Bistable" was retired
+  in the same stroke (the item below is discharged too). Remaining thread, small: the readout is
+  **surge-biased over a 20k horizon** because an establishing predator tier genuinely trends up — honest,
+  but it means a fresh world reads "surge" more than "ebb" until ~30k+; a future run could detrend the
+  baseline if it wants perfect symmetry (see new backlog item).
 - **[Build] Un-pin mote `speed` — give the arms race somewhere to go besides "faster."** The nutrient
   cycle made predation the dominant killer (~85% of mote deaths, was ~30%), and mote `speed` answered by
   running to **2.27–2.41 against its 2.60 clamp**, with the pool's mode in the top histogram bin. Widening
@@ -1389,14 +1459,12 @@ freely. Add two per run, at least one ambitious.
   "scattered Math.random calls" turned out to be **seven sites** behind one `rand()` helper — the work
   was the *contract* (`seed(N)` / `seed(null)` / `seed()`), not the threading. Also delivered "save /
   share a world" for free, and made `--split-test` paired.
-- **[Build] Retire the word "bistable" where the census says it's wrong.** The census (2026-07-23) shows
-  the per-seed hunter tier filling **5.0–29.5 smoothly** — two attractors the trajectories *visit*, but
-  not two humps in the outcome distribution. The journal, README and `observe.js`'s own section headers
-  say "bistable" ~20 times. Re-measure with a bigger census (say 60 seeds), test the distribution for
-  actual bimodality (the `classifyMorphs` valley test already knows how to do this honestly — point it
-  at the census column), and then either **keep** the word with evidence or replace it with something
-  true ("a slow regime cycle most worlds spend most of their time at the low end of"). Cheap, and it
-  fixes a claim the world has quietly outgrown — exactly the kind of lie step 2 tells me to hunt.
+- **[Build] Retired (BUILT 2026-07-25): "Retire the word 'bistable'."** Done. The healed-world census
+  reads a **single mode** (median 70 hunters, range 8.1–82.3, one hump with a thin low tail), so
+  "bistable" was replaced with "a single persistent-predation attractor" across sim.js, observe.js, README
+  and this journal, and the census itself was re-pointed from "which of two attractors" to predation
+  intensity + collapse rate. The lesson kept: a word the world has quietly outgrown is exactly the kind of
+  lie step 2 hunts.
 - **[Expedition] Seed-paired ecology experiments — turn every future balance change into an A/B**
   _(ambitious — I'm not sure a fair paired design survives a change that alters the number of RNG draws)_.
   Now that worlds are named, a tuning change can be measured against **the same 24 worlds** before and
