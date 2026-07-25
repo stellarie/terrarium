@@ -245,48 +245,57 @@ const cLive = classifyMorphs(world.motes);
 check(cLive.k === 1 || cLive.k === 2, `morph detector returns a sane verdict on the live pool (k=${cLive.k})`);
 check(world.morphs && world.morphs.k >= 1, `live morph readout is populated for the HUD (k=${world.morphs && world.morphs.k})`);
 
-// the regime readout must name the right attractor on deterministic synthetic history
-// windows (each sample only needs a `hunters` count), and its hysteresis must hold the
-// prior state in the ambiguous middle band. Synthetic so this can't flake on randomness.
-const hist = (fn) => Array.from({ length: 24 }, (_, i) => ({ hunters: fn(i) }));
-const rCollapse = classifyRegime(hist(() => 7), "grazer-haven");
-const rArms = classifyRegime(hist(() => 45), "grazer-haven");
-const rRecover = classifyRegime(hist((i) => 6 + i * 0.6), "grazer-haven");
-const rDecline = classifyRegime(hist((i) => 55 - i * 1.3), "arms-race");
-const midHist = hist(() => 17);
-check(rCollapse.state === "grazer-haven", `regime names a starved predator tier "grazer-haven" (hmean ${rCollapse.hmean.toFixed(1)})`);
-check(rArms.state === "arms-race", `regime names a dense predator tier "arms-race" (hmean ${rArms.hmean.toFixed(1)})`);
-check(rRecover.state === "grazer-haven" && rRecover.trend === "recovering", `regime flags a climbing tier as recovering (state=${rRecover.state}, trend=${rRecover.trend})`);
-check(rDecline.state === "arms-race" && rDecline.trend === "declining", `regime flags a sliding tier as declining (state=${rDecline.state}, trend=${rDecline.trend})`);
-check(classifyRegime(midHist, "arms-race").state === "arms-race" &&
-      classifyRegime(midHist, "grazer-haven").state === "grazer-haven",
-      "regime hysteresis holds the prior attractor in the ambiguous middle band");
+// the regime readout names the phase of the world's predator–prey CYCLE, judged by the
+// recent hunter mean RELATIVE to the world's own long baseline (so it carries info in a
+// rich or a poor world alike). Deterministic synthetic history windows (~200 samples so
+// the recent window and the baseline window genuinely differ) prove each phase; each
+// sample only needs a `hunters` count, so this can't flake on randomness.
+const hist = (n, fn) => Array.from({ length: n }, (_, i) => ({ hunters: fn(i) }));
+const rSteady = classifyRegime(hist(200, () => 70), "steady");
+const rSurge = classifyRegime(hist(200, (i) => (i < 176 ? 55 : 90)), "steady");   // recent 90 vs base ~59
+const rEbb = classifyRegime(hist(200, (i) => (i < 176 ? 75 : 45)), "steady");     // recent 45 vs base ~71
+const rCollapse = classifyRegime(hist(200, () => 8), "surge");                     // base 8 < floor 16
+const rRecover = classifyRegime(hist(200, (i) => (i < 176 ? 5 : 8 + (i - 175) * 0.25)), "collapsed"); // dead tier, recent creeping up but still sub-floor
+const rWeak = classifyRegime(hist(200, () => 20), "steady");                       // 20 > floor: alive, not collapsed
+check(rSteady.state === "steady", `regime reads a level tier "steady" (recent ${rSteady.hmean.toFixed(0)} ≈ base ${rSteady.base.toFixed(0)})`);
+check(rSurge.state === "surge", `regime reads predation above its baseline as "surge" (recent ${rSurge.hmean.toFixed(0)} vs base ${rSurge.base.toFixed(0)})`);
+check(rEbb.state === "ebb", `regime reads predation below its baseline as "ebb" (recent ${rEbb.hmean.toFixed(0)} vs base ${rEbb.base.toFixed(0)})`);
+check(rCollapse.state === "collapsed", `regime names a genuinely failed predator tier "collapsed" (base ${rCollapse.base.toFixed(1)})`);
+check(rRecover.state === "collapsed" && rRecover.trend === "rising", `regime flags a collapsed tier clawing back (state=${rRecover.state}, trend=${rRecover.trend})`);
+check(rWeak.state !== "collapsed", `the collapse floor discriminates a thin-but-alive tier (base ${rWeak.base.toFixed(0)}) from a genuine collapse → ${rWeak.state}`);
+// hysteresis: a recent level just 8% above baseline (inside the on-band) HOLDS a prior
+// surge but does NOT by itself pull a steady world into one — the Schmitt gap in action.
+const near = hist(200, (i) => (i < 176 ? 70 : 76));
+check(classifyRegime(near, "surge").state === "surge" && classifyRegime(near, "steady").state === "steady",
+      "regime hysteresis holds a prior surge in the ambiguous band but won't trigger one from steady");
 check(classifyRegime([{ hunters: 5 }], "settling").state === "settling", "regime reads 'settling' until it has enough history");
-const knownRegime = ["settling", "arms-race", "grazer-haven"].includes(world.regime.state);
+const knownRegime = ["settling", "surge", "steady", "ebb", "collapsed"].includes(world.regime.state);
 check(knownRegime && typeof world.regime.label === "string" && world.regime.label.length > 0,
       `live regime readout is populated for the HUD (${world.regime.state})`);
 
-// the regime "mood" tint must lean the right way: an arms-race is warm (+), a
-// grazer-haven cold (−), settling neutral (0), and a softening trend relaxes each
-// toward neutral. Pure function of the regime, so this can't flake on randomness.
-const mArms = regimeMood({ state: "arms-race", trend: "steady" });
-const mHaven = regimeMood({ state: "grazer-haven", trend: "steady" });
-check(mArms === 1 && mHaven === -1 && regimeMood({ state: "settling" }) === 0 && regimeMood(null) === 0,
-      `regime mood signs the attractors right (arms ${mArms}, haven ${mHaven}, settling 0)`);
-check(regimeMood({ state: "arms-race", trend: "declining" }) === 0.45 &&
-      regimeMood({ state: "grazer-haven", trend: "recovering" }) === -0.35 &&
-      mArms > 0 && mHaven < 0,
-      "a softening trend relaxes the mood toward neutral (declining/recovering) yet keeps its sign");
-// and the eased tint must actually converge toward its target across frames — this
-// also drives the leaned background + vignette through the shimmed gradient stub, so
-// a throw in the new draw path fails here, not just silently in a browser.
-world.mood = 0; world.regime = { state: "arms-race", trend: "steady", flash: 0, flashText: "", label: "x" };
+// the regime "mood" tint must lean the right way so the meadow's light BREATHES with the
+// cycle: surging is warm (+), ebbing cool (−), collapsed coldest (−1), steady/settling
+// neutral (0), and a softening trend (a surge cresting, a collapse recovering) relaxes
+// the target toward neutral yet keeps its sign. Pure function, so it can't flake.
+const mSurge = regimeMood({ state: "surge", trend: "steady" });
+const mEbb = regimeMood({ state: "ebb", trend: "steady" });
+const mColl = regimeMood({ state: "collapsed", trend: "steady" });
+check(mSurge === 1 && mEbb < 0 && mColl === -1 && regimeMood({ state: "steady" }) === 0 && regimeMood(null) === 0,
+      `regime mood signs the cycle right (surge ${mSurge}, ebb ${mEbb}, collapsed ${mColl}, steady 0)`);
+check(regimeMood({ state: "surge", trend: "falling" }) === 0.45 &&
+      regimeMood({ state: "collapsed", trend: "rising" }) === -0.4 &&
+      regimeMood({ state: "surge", trend: "falling" }) > 0 && regimeMood({ state: "collapsed", trend: "rising" }) < 0,
+      "a softening trend relaxes the mood toward neutral (a cresting surge, a recovering collapse) yet keeps its sign");
+// and the eased tint must actually converge toward its target across frames — this also
+// drives the leaned background + vignette through the shimmed gradient stub, so a throw
+// in the new draw path fails here, not just silently in a browser.
+world.mood = 0; world.regime = { state: "surge", trend: "steady", base: 70, flash: 0, flashText: "", flashWarm: true, label: "x" };
 for (let i = 0; i < 500; i++) draw();
 const moodWarm = world.mood;
-world.regime.state = "grazer-haven";
+world.regime.state = "collapsed";
 for (let i = 0; i < 500; i++) draw();
 check(moodWarm > 0.6 && world.mood < -0.6,
-      `mood eases toward the live regime (arms-race → ${moodWarm.toFixed(2)}, then grazer-haven → ${world.mood.toFixed(2)})`);
+      `mood eases toward the live cycle phase (surge → ${moodWarm.toFixed(2)}, then collapsed → ${world.mood.toFixed(2)})`);
 
 // the render path (unexercised by step()) doesn't throw — including every overlay
 // mode (off / fertility / grazing) against the shimmed canvas

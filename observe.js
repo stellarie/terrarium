@@ -14,7 +14,7 @@
  * without it no run can honestly claim to have *watched* the world before touching it.
  *
  * Run:  node observe.js [ticks] [--seed N]   (default 20000 ≈ 8+ seasonal cycles)
- *       node observe.js --census [N] [ticks]  — the regime census across N seeded worlds
+ *       node observe.js --census [N] [ticks]  — the predation census across N seeded worlds
  *       node observe.js --split-test [N] [ticks]  — the paired predation-divergence test
  *       node observe.js --frame [out.png] [ticks] [1|2]  — render one real frame to a PNG
  * Exit: 0 = a clean reading; 1 = the sim threw or NaN leaked (a real defect).
@@ -47,12 +47,12 @@ if (ARGS.includes("--split-test") || ARGS.includes("--divergence")) {
   process.exit(0);
 }
 
-// The regime census (Arc III's measuring instrument, added 2026-07-23): the world is
-// bistable, and a single unseeded run only ever visits ONE attractor — so for its whole
-// life the split between them has been a *remembered* figure, re-guessed each session
-// from whatever handful of draws that session happened to take. Now that the RNG takes
-// a seed, N reproducible worlds can be run and the rate simply *measured*, the same
-// number every time. Fires on `node observe.js --census [N] [ticks]`.
+// The predation census (added 2026-07-23 as a regime census; re-pointed 2026-07-25).
+// A single unseeded run only ever visits ONE world — so for its whole life a question
+// like "how predated is a typical world?" was a *remembered* figure, re-guessed each
+// session from whatever handful of draws it took. Now that the RNG takes a seed, N
+// reproducible worlds can be run and the distribution simply *measured*, the same table
+// every time. Fires on `node observe.js --census [N] [ticks]`.
 if (ARGS.includes("--census")) {
   census(NUMS[0] || 24, NUMS[1] || 12000, SEED == null ? 1 : SEED);
   process.exit(0);
@@ -155,10 +155,10 @@ let moteZeroTicks = 0, hunterEmptyTicks = 0;
 let hunterEpisodes = 0, curEmpty = 0, longestEmpty = 0;   // hunter extinction stretches
 let prevHunters = world.hunters.length;
 let earlySnap = null;           // boredom check: a window around tick ~1000
-// regime census: how long the live readout spent in each attractor, and how often
-// it tipped between them (the bistability, finally counted rather than eyeballed)
-const regimeTicks = { settling: 0, "arms-race": 0, "grazer-haven": 0 };
-let recoveringTicks = 0, regimeFlips = 0, prevRegime = "settling";
+// regime tally: how long the live readout spent in each phase of the predation cycle,
+// and how many times the predator tier genuinely collapsed (the rare, dramatic event)
+const regimeTicks = { settling: 0, surge: 0, steady: 0, ebb: 0, collapsed: 0 };
+let collapseEpisodes = 0, prevRegime = "settling";
 let threw = null;
 // The matter ledger (2026-07-24). This exists because the world spent its whole life
 // quietly running down and no instrument could see it: vegetation used to be created
@@ -190,9 +190,7 @@ try {
 
     const rs = world.regime.state;                       // step() refreshes this each sample
     regimeTicks[rs] = (regimeTicks[rs] || 0) + 1;
-    if (rs === "grazer-haven" && world.regime.trend === "recovering") recoveringTicks++;
-    if ((rs === "arms-race" || rs === "grazer-haven") &&
-        (prevRegime === "arms-race" || prevRegime === "grazer-haven") && rs !== prevRegime) regimeFlips++;
+    if (rs === "collapsed" && prevRegime !== "collapsed" && prevRegime !== "settling") collapseEpisodes++;
     prevRegime = rs;
 
     if (t === 1000) {
@@ -292,7 +290,7 @@ lifeMap();
 line("\n[9] GENE-POOL SHAPE  (the mean hides the shape — has the grazer pool SPLIT?)");
 shapeReport();
 
-line("\n[10] REGIME  (which bistable attractor this seed settled in — the live, hysteretic readout)");
+line("\n[10] REGIME  (where the world sits in its predator–prey cycle — the live, self-calibrated readout)");
 regimeReport();
 
 line("\n[11] MATTER  (the nutrient cycle's ledger — is the world running down?)");
@@ -461,18 +459,20 @@ function shapeReport() {
   line("    (⚑ = BC>0.555, a hint of non-unimodality; the detector needs a real valley, not just skew)");
 }
 
-// The bistability, named and counted. A single unseeded run only visits ONE of the
-// two attractors, so this says *which* one (no more decoding hunter counts by hand)
-// and how long the readout held each state — a run that flips is the interesting one.
+// Where the world sat in its predator–prey cycle, tallied. The healed world is a SINGLE
+// persistent-predation attractor (a 24-seed census reads 96% arms-race, one mode at
+// ~65–75 hunters — not two wells), so the old "which of two attractors" framing was
+// retired 2026-07-25. What varies, and is worth counting, is the CYCLE PHASE — how long
+// predation ran above/below this world's own baseline — and how often the tier genuinely
+// collapsed (the rare failure the readout still names outright).
 function regimeReport() {
   const r = world.regime;
   const pct = (n) => ((100 * n) / TICKS).toFixed(0);
-  line(`    settled in : ${r.label}`);
-  line(`    hunters    : mean ${fmt(r.hmean, 1)} over the last ${CONFIG.regimeWindow} history samples`);
-  line(`    time in    : arms-race ${pad(pct(regimeTicks["arms-race"]), 3)}%  ·  ` +
-       `grazer-haven ${pad(pct(regimeTicks["grazer-haven"]), 3)}%  ·  settling ${pad(pct(regimeTicks.settling), 3)}%`);
-  line(`    recovering : ${pad(pct(recoveringTicks), 3)}% of ticks (a predator tier visibly clawing back)`);
-  line(`    phase flips: ${regimeFlips} (attractor → attractor over the run)`);
+  line(`    now        : ${r.label}`);
+  line(`    predation  : recent ${fmt(r.hmean, 1)} hunters vs this world's baseline ${fmt(r.base, 1)}`);
+  line(`    cycle phase: surge ${pad(pct(regimeTicks.surge), 3)}%  ·  steady ${pad(pct(regimeTicks.steady), 3)}%  ·  ` +
+       `ebb ${pad(pct(regimeTicks.ebb), 3)}%  ·  settling ${pad(pct(regimeTicks.settling), 3)}%`);
+  line(`    collapsed  : ${pad(pct(regimeTicks.collapsed), 3)}% of ticks · ${collapseEpisodes} episode(s) of genuine predator failure`);
 }
 
 // Total matter is conserved by construction, so this table is a self-check on the
@@ -512,18 +512,18 @@ function matterReport() {
 
 process.exit(threw || nanFlags.length ? 1 : 0);
 
-// ---- the regime census ------------------------------------------------------
-// The bistability has been this world's headline finding for a dozen runs, and for all
-// of them the *rate* — how often a world becomes a predator arms-race rather than a
-// grazer-haven — was a number sessions remembered rather than measured, because one
-// unseeded run visits exactly one attractor and a handful of draws is not a rate. With
-// a seedable RNG the question becomes arithmetic: run N named worlds, ask each one which
-// attractor it settled in, and count. Same seeds → same table, so a future run can
-// re-measure this exact census and see whether the world has drifted underneath it.
+// ---- the predation census ---------------------------------------------------
+// Once "which of two attractors did a world settle in?" was the question this measured.
+// The nutrient cycle answered it: a 24-seed census now reads 96% arms-race, the per-world
+// hunter mean forming ONE mode at ~65–75 with a thin low tail — a single persistent-
+// predation attractor, not two wells (see JOURNAL, 2026-07-25). So the census was
+// re-pointed at what actually varies now: HOW INTENSELY is a world predated, how much does
+// predation OSCILLATE within it, and how often do the predators GENUINELY COLLAPSE (the
+// rare failure)? Same seeds → same table, so a future run can re-measure this exact census
+// and see whether the world has drifted underneath it.
 function runCensusWorld(sd, ticks) {
-  const rt = { settling: 0, "arms-race": 0, "grazer-haven": 0 };
   const hM = meter(), mM = meter(), bM = meter();
-  let flips = 0, prev = "settling", threw = null, hunterEmpty = 0;
+  let collapseTicks = 0, prev = "settling", threw = null, hunterEmpty = 0, everCollapsed = false;
   try {
     seed(sd);
     for (let t = 0; t < ticks; t++) {
@@ -532,19 +532,17 @@ function runCensusWorld(sd, ticks) {
       hM.push(hn); mM.push(world.motes.length); bM.push(biomass());
       if (hn === 0) hunterEmpty++;
       const rs = world.regime.state;
-      rt[rs] = (rt[rs] || 0) + 1;
-      if ((rs === "arms-race" || rs === "grazer-haven") &&
-          (prev === "arms-race" || prev === "grazer-haven") && rs !== prev) flips++;
+      if (rs === "collapsed") { collapseTicks++; everCollapsed = true; }
       prev = rs;
     }
   } catch (e) { threw = e; }
   const pop = world.motes;
   const meanGene = (k) => (pop.length ? pop.reduce((s, m) => s + m.g[k], 0) / pop.length : NaN);
   return {
-    sd, threw, flips, hunterEmpty,
-    state: world.regime.state, hmean: hM.mean(), hmax: hM.max,
+    sd, threw, hunterEmpty, everCollapsed,
+    hmean: hM.mean(), hmax: hM.max, hcv: hM.cv(),
     motes: mM.mean(), plants: bM.mean(), sense: meanGene("sense"), speed: meanGene("speed"),
-    armsFrac: rt["arms-race"] / ticks, havenFrac: rt["grazer-haven"] / ticks,
+    collapseFrac: collapseTicks / ticks,
     k: classifyMorphs(pop).k,
   };
 }
@@ -554,41 +552,39 @@ function census(n, ticks, from) {
   const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : "NaN");
   const bar = "─".repeat(78);
   console.log("\n" + "═".repeat(78));
-  console.log("  TERRARIUM — REGIME CENSUS");
+  console.log("  TERRARIUM — PREDATION CENSUS");
   console.log(`  ${n} worlds × ${ticks} ticks · seeds ${from}..${from + n - 1} · reproducible (same seeds → same table)`);
-  console.log("  Q: how often does this world become a predator ARMS-RACE, and how often a GRAZER-HAVEN?");
+  console.log("  Q: how intensely is a world predated, how much does it OSCILLATE, and how often do predators COLLAPSE?");
   console.log("═".repeat(78));
-  console.log("   seed   motes  plants   hunters mean/max   sense   settled in      arms%  flips");
+  console.log("   seed   motes  plants   hunters mean/max   swing   sense   collapse%");
 
   const t0 = Date.now();
   const rows = [];
   for (let i = 0; i < n; i++) {
     const r = runCensusWorld(from + i, ticks);
     rows.push(r);
-    const tag = r.state === "arms-race" ? "arms-race   " : r.state === "grazer-haven" ? "grazer-haven" : "settling    ";
     console.log(`  ${pz(r.sd, 5)}  ${pz(r.motes.toFixed(0), 6)}  ${pz(r.plants.toFixed(0), 6)}   ` +
-      `${pz(f1(r.hmean), 7)} /${pz(r.hmax, 4)}   ${pz(f1(r.sense), 5)}   ${tag}  ` +
-      `${pz(Math.round(100 * r.armsFrac), 4)}  ${pz(r.flips, 5)}${r.threw ? "  THREW" : ""}${r.hunterEmpty ? "  ⚑empty" : ""}`);
+      `${pz(f1(r.hmean), 7)} /${pz(r.hmax, 4)}   ${pz(r.hcv.toFixed(0), 4)}%   ${pz(f1(r.sense), 5)}   ` +
+      `${pz(Math.round(100 * r.collapseFrac), 7)}${r.everCollapsed ? "  ⚑collapsed" : ""}` +
+      `${r.threw ? "  THREW" : ""}`);
   }
   const secs = ((Date.now() - t0) / 1000).toFixed(0);
 
-  const count = (s) => rows.filter((r) => r.state === s).length;
-  const pctOf = (c) => Math.round((100 * c) / n);
   const hmeans = rows.map((r) => r.hmean).sort((a, b) => a - b);
   const median = hmeans[hmeans.length >> 1];
-  const armsTicks = rows.reduce((s, r) => s + r.armsFrac, 0) / n;
-  const havenTicks = rows.reduce((s, r) => s + r.havenFrac, 0) / n;
-  const flipped = rows.filter((r) => r.flips > 0).length;
+  const q = (p) => hmeans[Math.min(hmeans.length - 1, Math.max(0, Math.round(p * (hmeans.length - 1))))];
+  const cvs = rows.map((r) => r.hcv).sort((a, b) => a - b);
+  const cvMed = cvs[cvs.length >> 1];
+  const collapsedN = rows.filter((r) => r.everCollapsed).length;
+  const collapseTicksAvg = rows.reduce((s, r) => s + r.collapseFrac, 0) / n;
   const threwN = rows.filter((r) => r.threw).length;
 
   console.log("\n  " + bar);
-  console.log("  VERDICT  (the bistability, finally counted rather than remembered)");
-  console.log(`   • settled ARMS-RACE    : ${pz(count("arms-race"), 3)}/${n} worlds  (${pctOf(count("arms-race"))}%)`);
-  console.log(`   • settled GRAZER-HAVEN : ${pz(count("grazer-haven"), 3)}/${n} worlds  (${pctOf(count("grazer-haven"))}%)`);
-  console.log(`   • still settling       : ${pz(count("settling"), 3)}/${n} worlds  (${pctOf(count("settling"))}%)`);
-  console.log(`   • hunter tier          : median mean ${f1(median)}  (range ${f1(hmeans[0])}–${f1(hmeans[hmeans.length - 1])})`);
-  console.log(`   • time-weighted        : ${Math.round(100 * armsTicks)}% of all ticks arms-race · ${Math.round(100 * havenTicks)}% grazer-haven`);
-  console.log(`   • flipped attractor    : ${flipped}/${n} worlds (max ${Math.max(...rows.map((r) => r.flips))} flips)`);
+  console.log("  VERDICT  (a single persistent-predation attractor, its intensity and its rare failures)");
+  console.log(`   • predation intensity  : median ${f1(median)} hunters/world  (range ${f1(hmeans[0])}–${f1(hmeans[hmeans.length - 1])}, quartiles ${f1(q(0.25))} / ${f1(q(0.75))})`);
+  console.log(`   • within-world swing   : median ${cvMed.toFixed(0)}% CV — how hard predation oscillates over the boom-bust cycle`);
+  console.log(`   • genuine collapse     : ${pz(collapsedN, 3)}/${n} worlds ever collapsed (${Math.round((100 * collapsedN) / n)}%) · ${Math.round(100 * collapseTicksAvg)}% of all ticks collapsed`);
+  console.log(`   • the shape            : one mode with a thin low tail, NOT two wells — "bistable" retired 2026-07-25`);
   console.log(`   • integrity            : ${threwN ? threwN + " world(s) THREW — a real defect" : "no world threw"}`);
   console.log(`  ${secs}s. Re-run with the same N and ticks to compare a future world against this table.`);
   console.log("  " + bar + "\n");
@@ -621,8 +617,8 @@ function runOneWorld(ticks, sd) {
 // predation? Compare N worlds with hunters against N with hunters removed entirely (none
 // seeded, none allowed to drift back). If predation is the cause, the fast *fleer*
 // lifestyle — being built to outrun a predator — should appear ONLY when predators exist,
-// and the strategy should vary far more across predator worlds (the arms-race / grazer-
-// haven bistability picking different answers) than across the relaxed predator-free ones.
+// and the strategy should vary far more across predator worlds (which differ in how
+// intensely they are predated) than across the relaxed predator-free ones.
 // PAIRED as of 2026-07-23: both conditions now run the *same* seed list, so row 7 with
 // hunters and row 7 without start from the identical fertility map and founding herd and
 // differ only in whether predators exist. That upgrade retires the old "unpaired — read

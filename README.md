@@ -109,10 +109,10 @@ them — recover, riding on top of the grazer–plant boom and bust.
 - A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
   own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
 - A **death-balance chart** asks *what is killing the herd right now* — a diverging band that
-  swells **warm above the line when the hunters are doing the killing** (predation, an arms-race)
-  and **cool below when hunger is** (starvation, a food-limited grazer-haven). It reads the actual
-  causes of death, not a gene, so it tracks the regime honestly: it rides warm between crashes and
-  plunges cool during an overgraze die-off, making the boom-bust visible as a colour.
+  swells **warm above the line when the hunters are doing the killing** (top-down, predation)
+  and **cool below when hunger is** (bottom-up, starvation). It reads the actual causes of
+  death, not a gene, so it tracks the predation cycle honestly: it rides warm while predators
+  press the herd and plunges cool during an overgraze die-off, making the boom-bust a colour.
 - Every mote is **ringed by its lifestyle** — leaf-green for a committed hider (small, slow),
   amber for a committed fleer (fast), fading toward the ambiguous middle — so the hider/fleer
   divergence predation drives is visible on the field, in every world, at a glance.
@@ -120,17 +120,22 @@ them — recover, riding on top of the grazer–plant boom and bust.
   **split** into two morphs. A detector clusters the live herd and reports "1" for a single
   broad cloud, or e.g. "2 · swift∙slow" when it finds a genuine split — it's deliberately
   strict, so it won't cry "speciation!" over a merely wide spread.
-- A **regime readout** names, live, which of the world's two attractors you're watching:
-  **arms-race** (predators thriving, coloured red) or **grazer-haven** (predators failing,
-  coloured green), with **recovering ↑** when a collapsed hunter tier is clawing back. It's
-  hysteretic, so it won't strobe on a marginal seed, and when the world *tips* from one
-  attractor to the other a labelled banner fades across the top of the field — so the
-  phase transition, once an invisible coin-flip, is impossible to miss.
-- The **whole meadow's light leans with the regime**: an arms-race stokes a warm, tense,
-  close-walled glow, a grazer-haven cools and dims toward a hollow blue-grey, and the shift
-  eases in over a few seconds — so the world's *mood* reads at a glance, before you even
-  read the HUD chip. It's pure atmosphere (a background lean plus a soft tinted vignette);
-  nothing in the ecology reads it back.
+- A **regime readout** names, live, where the world sits in its predator–prey **cycle**:
+  predation **surging** (the cull intensifying, coloured red) above the world's own
+  baseline, **ebbing** (the herd's reprieve, coloured teal) below it, or **steady** between.
+  It self-calibrates to each world, so it carries information whether a world runs 15
+  hunters or 90. In the rare world where the predators genuinely *fail*, it reads
+  **collapsed** outright, and a banner fades across the field the moment a tier collapses
+  or claws back — reserved for that dramatic event, not the ordinary turn of the cycle.
+  (This replaced an older "which of two attractors" readout: the world used to be
+  genuinely bistable — predators often starved out — but the nutrient cycle fixed that, and
+  a census now shows a *single* persistent-predation attractor, so the honest question is
+  "how hard is predation pressing *right now*," not "which of two worlds is this.")
+- The **whole meadow's light breathes with the cycle**: a surge stokes a warm, tense,
+  close-walled glow, an ebb cools toward a hollow blue-grey, a collapse goes coldest of all,
+  and the shift eases in over a few seconds — so the world's *mood* reads at a glance, before
+  you even read the HUD chip. It's pure atmosphere (a background lean plus a soft tinted
+  vignette); nothing in the ecology reads it back.
 - The **HUD** shows tick, motes, hunters, plant biomass, births, natural deaths, motes
   eaten, the **morph** count, the **regime**, the seasonal growth multiplier, and this
   world's **seed** — its name.
@@ -179,14 +184,14 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 72 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 74 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
 concealment mechanic is monotone (a small, slow mote outhides a big fast one in cover, and
 nobody hides on bare ground), the morph detector is honest (it calls a single broad cloud one
-morph and a clean two-cluster pool two), the regime readout names each attractor correctly
-with the right hysteresis, **seeded worlds are truly reproducible** (the same seed regrows a
+morph and a clean two-cluster pool two), the regime readout names each predation-cycle phase
+correctly (surge / steady / ebb / collapsed) with the right hysteresis, **seeded worlds are truly reproducible** (the same seed regrows a
 byte-identical world, a neighbouring seed doesn't, and a shared `#s=…` link replays its world),
 and the **headless renderer** works end-to-end (it drives the real `draw()` to a valid PNG).
 Because it also exercises real randomness, run it a few times:
@@ -204,8 +209,8 @@ safety-net firings, births/deaths/kills per 1,000 ticks, an age histogram, per-g
 **both** species (with edge-of-range flags), a boredom check, coarse ASCII maps of the meadow
 and its life, a **gene-pool shape** section — each grazer gene's spread, a histogram, and
 the morph detector's verdict, so you can see whether the mean is hiding a split — a
-**regime** section that names which attractor the seed settled in and tallies how long it
-spent in each, so the regime is counted rather than eyeballed, and a **matter ledger** that
+**regime** section that names where the world sits in its predation cycle and tallies how
+long it spent surging, steady, ebbing or collapsed, and a **matter ledger** that
 tracks the world's total nutrients across veg, soil and living bodies.
 
 That last one is the instrument this project most needed and didn't have. Total matter is
@@ -221,29 +226,34 @@ node observe.js 20000 --seed 3     # pin the reading to one named, repeatable wo
 ```
 
 It's how each build session *watches the world before touching it* — and on its first run it
-revealed the ecology has **two regimes**, each world settling into either a predator arms-race
-or a predator near-collapse where grazers overgraze the meadow to nothing. A later run traced
-the collapse to a **prey-quality death spiral** (few hunters → overgrazed, energy-poor prey →
-unprofitable kills) and added hunger-driven boldness as a recovery valve, giving the two
-regimes a populated middle to travel between.
+revealed the ecology once had **two regimes**, each world settling into either a predator
+arms-race or a predator near-collapse where grazers overgraze the meadow to nothing. A later
+run traced the collapse to a **prey-quality death spiral** (few hunters → overgrazed,
+energy-poor prey → unprofitable kills) and added hunger-driven boldness as a recovery valve —
+and finally the **nutrient cycle** fixed the underlying poverty, so the collapse regime all but
+vanished and the world became a *single* persistent-predation attractor (see the census below).
 
-### Count the regimes — `--census`
+### Count the predation — `--census`
 
-For most of this project's life "how often does a world become an arms-race?" was a *remembered*
-number, because one unseeded run visits exactly one regime and a handful of runs isn't a rate.
-Now that worlds have names, it's arithmetic:
+The world used to be genuinely **bistable**, so "how often does a world become an arms-race?"
+was a real question — and a *remembered* number, because one unseeded run visits exactly one
+regime and a handful of runs isn't a rate. Now that worlds have names it's arithmetic — and the
+answer overturned the question. A 24-world census reads a **single mode**: nearly every world is
+a persistent arms-race of varying intensity, with genuine predator collapse a rare tail. So the
+census was re-pointed at what actually varies now — *how intensely* a world is predated, *how
+much* predation oscillates over its boom-bust cycle, and *how often* predators genuinely fail:
 
 ```bash
 node observe.js --census            # or: node observe.js --census 48 20000
 ```
 
-It runs N reproducible worlds, reports each one's settled regime, hunter tier, gene means and
-flip count, then gives the verdict. Same arguments → the same table, every time, so a future
-version of the world can be measured against today's. The current reading (24 worlds × 12,000
-ticks): **17% settle arms-race, 83% grazer-haven — but 28% of all _ticks_ are arms-race and 11
-of 24 worlds flip regime at least once.** In other words, reading only the final state badly
-undercounts the predators: several worlds spend two-thirds of their life in an arms-race and
-still *end* in a grazer-haven.
+It runs N reproducible worlds and reports each one's predation intensity (mean/max hunters), its
+within-world oscillation (a CV%), its collapse fraction, and its mean sense, then gives the
+verdict. Same arguments → the same table, every time, so a future version of the world can be
+measured against today's. The current reading (24 worlds × 12,000 ticks): a **median of ~70
+hunters/world** (range ~8–82, one mode with a thin low tail — **not two wells**), and genuine
+predator collapse in only **1 of 24 worlds**. "Bistable" was retired: the world is one
+attractor now, and reading it as two was reading a world that was quietly dying.
 
 ### Does predation drive the split? — `--split-test`
 
@@ -296,8 +306,8 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 72 assertions over thousands of real ticks |
-| `observe.js` | the observatory — prints readings; `--census` measures the regimes, `--split-test` runs the predation experiment, `--frame` renders a PNG |
+| `smoke.js` | headless smoke test — 74 assertions over thousands of real ticks |
+| `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
 ## How it's built
@@ -314,12 +324,27 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 72-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 74-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the world stopped running down.** Vegetation used to grow out of nothing, at a rate
+Newest: **the world's light breathes with its cycle now.** For a dozen sessions the regime readout
+named which of *two* attractors a world had tipped into — a predator **arms-race** or a
+**grazer-haven** collapse. That was honest while the world was quietly dying, because predators often
+starved out and a grazer-haven was a real second attractor. The nutrient cycle fixed the dying — and a
+24-world census then showed the two wells had become **one**: nearly every world is a persistent
+arms-race of varying intensity (median ~70 hunters, one mode with a thin low tail), so the readout had
+collapsed to saying the same word about 96% of worlds — dead as information, and the mood tint sat one
+warm colour forever. So it was **re-pointed at what actually varies**: where a world sits in its
+predator–prey *cycle*. The HUD chip now reads predation **surging** (the cull intensifying), **ebbing**
+(the herd's reprieve), or **steady**, judged against that world's own baseline so it works whether a
+world runs 15 hunters or 90 — and the whole meadow's light now **warms and cools with the boom-bust**
+instead of holding one hue. The rare world where predators genuinely fail still reads **collapsed**
+outright, with a banner reserved for that dramatic moment. "Bistable" was retired; the census now
+measures predation *intensity* and *collapse rate*, not a two-attractor lottery that no longer exists.
+
+Before that: **the world stopped running down.** Vegetation used to grow out of nothing, at a rate
 proportional to the greenery already there — so ground grazed to zero could never recover on its own,
 and nothing the herd ate was ever returned. Measured over 40,000 ticks, that was a one-way ratchet:
 bare ground climbed **25% → 54%** of the meadow, biomass slid **440 → 149**, and the predator tier
@@ -330,23 +355,23 @@ gene still drifted, so the world *looked* alive the whole time it was dying.
 Now matter is **conserved**. Plants draw nutrients from a soil bank, and grazers and hunters return
 them by feeding, breathing and dying, so a barren is just ground holding everything that starved on
 it — and it blooms again. Bare ground now settles at **11–17%** and the whole pyramid still oscillates
-at **80,000 ticks**, where the predator tier used to be dead by 30,000. The re-run census makes the
-scale of the old sickness plain: **96% of worlds now settle into a predator arms-race, against 17%
-before** — the "grazer-haven dominance" this project described for a dozen sessions was the world
-dying, not the world's nature. A new **soil overlay** shows the nutrient bank, and `observe.js` gained
-a **matter ledger** so the defect can never hide again.
+at **80,000 ticks**, where the predator tier used to be dead by 30,000. The re-run census made the
+scale of the old sickness plain: the predator tier now runs a **median ~70 hunters/world** where the
+dying world's census had scattered thin — the "grazer-haven dominance" this project described for a
+dozen sessions was the world dying, not the world's nature. A new **soil overlay** shows the nutrient
+bank, and `observe.js` gained a **matter ledger** so the defect can never hide again.
 
 Before that: **every world has a name.** The whole simulation draws its randomness from one
 seedable generator, so a world is **reproducible**: the same number regrows the same meadow, herd
 and collapse, tick for tick. The seed rides in the URL (`#s=…`) and is shown in the HUD, so a world
 you like is one copied link away from permanent — and the same machinery gave the project the
 instrument it had been missing for a dozen sessions. `node observe.js --census` runs a batch of
-named worlds and *counts* which regime each settles in, turning a figure that used to be
-remembered into one that's measured: **17% of worlds settle into a predator arms-race, 83% into a
-grazer-haven — yet 28% of all ticks are arms-race, and 11 of 24 worlds flip between them.** Reading
-only a world's final state, it turns out, badly undercounts the predators. The predation experiment
-(`--split-test`) is now **paired** by seed too, so its verdict rests on the same world with and
-without hunters rather than on a spread of lucky draws.
+named worlds and *measures* them, turning a figure that used to be remembered into one that's
+counted. (Its first verdict — 17% arms-race, 83% grazer-haven — was later shown to be a **dying
+world** read mid-decay; on the healed world the census reads a single persistent-predation
+attractor, and it was re-pointed to measure predation *intensity* rather than a two-attractor
+lottery. See the top of this section.) The predation experiment (`--split-test`) is **paired** by
+seed too, so its verdict rests on the same world with and without hunters rather than on lucky draws.
 
 Also: **the predator has a metabolism, not just a metabolic bill.** The grazers' fast/slow
 metabolism was already a real tradeoff, but a hunter's metabo scaled only its burn — pure cost —
@@ -387,15 +412,15 @@ while worlds **without** collapse to slow hiders (~0.9), and the fleer lifestyle
 predators exist. The hunters answer by **coevolving keener eyes** to find prey that hide.
 
 The honest result: predation now clearly *sets the grazers' lifestyle*, but it still **unifies** the
-herd rather than splitting it — the world's arms-race/grazer-haven **regime split** makes each world
-pick a single lifestyle, so genuine two-morph coexistence *within one world* remains the arc's open
-problem (the divergence is real and predation-driven, but it lives *between* worlds). Landing true
-coexistence — straddling that regime split — is the next Expedition.
+herd rather than splitting it — each world settles at a single predation intensity, and that intensity
+picks a single lifestyle (a fiercely-predated world fills with fast fleers; a rare predator-collapse
+world relaxes to slow hiders), so genuine two-morph coexistence *within one world* remains the arc's
+open problem (the divergence is real and predation-driven, but it lives *between* worlds). Landing true
+coexistence — sustaining both lifestyles under one sky — is the next Expedition.
 
-Earlier in the arc: a **live regime readout** names which attractor a world is in (red arms-race /
-green grazer-haven, **recovering ↑** when a collapsed tier claws back) and banners the moment it
-tips; **hunger-driven boldness** gave the predator tier a recovery valve (a starving hunter turns
-reckless and flushes pale white-hot), cutting the collapse rate from ~⅔ to ~⅖; and a **morph
-detector** clusters the live grazers with a strict valley test. That detector first **overturned the
-arc's premise** — splits are driven by **crowding, not predators** — a refutation this run's
-concealment experiment independently confirms. See the journal for the full story.
+Earlier in the arc: a **live regime readout** (now re-pointed at the world's predation *cycle* — see
+the top of this section) and its **mood tint**; **hunger-driven boldness** gave the predator tier a
+recovery valve (a starving hunter turns reckless and flushes pale white-hot), cutting the collapse rate
+from ~⅔ to ~⅖; and a **morph detector** clusters the live grazers with a strict valley test. That
+detector first **overturned the arc's premise** — splits are driven by **crowding, not predators** — a
+refutation this run's concealment experiment independently confirms. See the journal for the full story.
