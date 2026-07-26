@@ -205,6 +205,24 @@ check((huntMetaboMult(1.0) - huntMetaboMult(0.55)) > (huntMetaboMult(1.8) - hunt
 check(huntMetaboMult(0.55) > 0,
       `hunter kill-digestion stays positive across the clamp range (no negative income)`);
 
+// the SPRINT DRAG: the superlinear cost that finally gives speed an interior optimum
+// instead of the 2.60-clamp pin it used to slam. Assert its shape deterministically — it
+// must be (a) exactly zero at/below the threshold so normal grazers pay nothing new and
+// the tuned low-mid economy is byte-preserved, (b) non-negative everywhere, (c) monotone
+// increasing above the threshold, and (d) CONVEX (accelerating) — a linear cost could never
+// out-climb the linearly-rewarded speed gene, so only an accelerating one bends the arms
+// race back to an interior point. This shape is the whole reason the fix works.
+const { sprintDrag } = sim;
+const df = CONFIG.speedDragFrom;
+check(sprintDrag(df) === 0 && sprintDrag(df - 0.3) === 0 && sprintDrag(0.5) === 0,
+      `sprint drag is exactly zero at/below the threshold (speed ≤ ${df} pays nothing new)`);
+check(sprintDrag(df + 0.2) > 0 && sprintDrag(2.6) > 0,
+      `sprint drag is positive above the threshold (a fast build costs extra)`);
+check(sprintDrag(df + 0.2) < sprintDrag(df + 0.4) && sprintDrag(df + 0.4) < sprintDrag(df + 0.6),
+      `sprint drag rises monotonically with speed above the threshold`);
+check((sprintDrag(df + 0.6) - sprintDrag(df + 0.4)) > (sprintDrag(df + 0.4) - sprintDrag(df + 0.2)),
+      `sprint drag is convex — each extra notch of top speed costs more than the last (the interior-optimum guarantee)`);
+
 // the death-balance chart's metric must be HONEST — it counts the actual deaths, so
 // an all-predation window reads 1, an all-starvation window reads 0, a 50/50 window
 // reads 0.5, an empty window reads null (band breaks, never lies), and it pools ONLY

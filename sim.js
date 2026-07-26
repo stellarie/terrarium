@@ -89,6 +89,31 @@
     // the thrift story.
     metaboIntake: 2.0,       // strength of metabolism's digestive gain on energy per bite
     metaboIntakeExp: 0.5,    // concavity of that gain (0.5 = sqrt: strong diminishing returns)
+    // Sprint drag — the cost that finally gives the arms race somewhere to go besides "faster".
+    // Movement already bills a LINEAR term (v * 0.4 in step()), but a linear cost can never
+    // out-climb a linearly-selected gene: with predation ~90% of deaths, speed slammed its
+    // 2.60 clamp in every predator-heavy world (mode in the top histogram bin). The fix is a
+    // cost that BITES AT THE TOP: maintaining a speed-optimised body is superlinearly
+    // expensive, so the per-tick burn carries an extra term that grows with the SQUARE of how
+    // far the speed gene sits above a threshold. Below the threshold there is no penalty at all
+    // (normal grazers and founders, gene ≤ 1.6, are untouched, so the tuned low-mid economy is
+    // preserved); above it each extra notch of top-end speed costs more than the last, so the
+    // gene settles at an INTERIOR optimum where marginal survival gain meets marginal drag
+    // instead of running to the clamp. speed is now a genuine tradeoff, not a free ratchet.
+    speedDragFrom: 2.0,      // speed gene below which a body carries no drag penalty. Set high
+                             // on purpose: the drag only shaves the runaway TOP of the range,
+                             // leaving the whole fleer band (≤2.0) untouched, so prey stay fast
+                             // enough to flee and never tip into the slow-hider basin that
+                             // starves the predators (a lower threshold collapsed the hunter
+                             // tier in the most predation-intense worlds — measured, see below).
+    speedDragCost: 2.5,      // strength of the quadratic drag above the threshold. Tuned via
+                             // observe.js across 16 seeds: pulls the arms-race speed mode off the
+                             // 2.60 clamp to an interior ~2.1–2.25 (top-histogram-bin share fell
+                             // ~54%→~26%) with ZERO new predator collapses and the tier alive at
+                             // 80k. Stronger drag un-pins even the most intense world but flips its
+                             // herd to hiders and collapses its hunters — so this sits at the
+                             // strongest value that stays safe. Marginal drag even HELPS most
+                             // worlds' predators (slightly slower prey are more catchable).
     fertMin: 0.28,           // poorest ground's carrying capacity (richest is 1.0)
     startVegFrac: 0.7,       // initial vegetation as a fraction of each cell's fertility
 
@@ -465,6 +490,18 @@
   // smoke.js can assert its shape deterministically; nothing but the graze reads it.
   function metaboIntakeMult(metabo) {
     return Math.max(0, 1 + CONFIG.metaboIntake * (Math.pow(metabo, CONFIG.metaboIntakeExp) - 1));
+  }
+
+  // Sprint drag: the extra per-tick burn a speed-optimised body carries, as a term added
+  // to the movement cost in step(). Zero at or below speedDragFrom (normal grazers pay
+  // nothing new, so the tuned low-mid economy is untouched), then rising with the SQUARE of
+  // the excess above it — so each extra notch of top-end speed costs more than the last and
+  // the arms race settles at an interior optimum instead of slamming its clamp. Exported so
+  // smoke.js can assert its shape (zero below, convex & monotone above); only the mote burn
+  // reads it. See the CONFIG comment for how speedDragCost was tuned.
+  function sprintDrag(speed) {
+    const over = speed - CONFIG.speedDragFrom;
+    return over > 0 ? CONFIG.speedDragCost * over * over : 0;
   }
 
   // The predator side of the same tradeoff: the multiplier on the digested (assimilated)
@@ -1151,8 +1188,15 @@
       m.x = wrap(m.x + Math.cos(m.dir) * v, W);
       m.y = wrap(m.y + Math.sin(m.dir) * v, H);
 
-      // burn energy: bigger + faster costs more
-      const cost = CONFIG.baseMetabolism * m.g.metabo * (1 + m.g.size * 0.15 + v * 0.4);
+      // burn energy: bigger + faster costs more. The v*0.4 term is the LINEAR cost of the
+      // motion this tick (a fleeing sprint burns more than an idle drift). On top of it sits
+      // the SPRINT DRAG — a superlinear cost of the body's speed *build*, growing with the
+      // square of how far the speed gene sits above speedDragFrom. It's what stops the arms
+      // race from slamming the clamp: a linear cost can't out-climb a linearly-rewarded gene,
+      // but a quadratic one makes each extra notch of top speed cost more than the last, so
+      // the gene finds an interior optimum. Below the threshold it's exactly zero — normal
+      // grazers pay nothing new, so the tuned low-mid economy is untouched.
+      const cost = CONFIG.baseMetabolism * m.g.metabo * (1 + m.g.size * 0.15 + v * 0.4 + sprintDrag(m.g.speed));
       m.energy -= cost;
 
       // graze the cell underfoot
@@ -2004,7 +2048,7 @@
       world, step, seed, setSeed, randomSeed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
-      concealment, hideability, metaboIntakeMult, huntMetaboMult, predationShare, cellIndex,
+      concealment, hideability, metaboIntakeMult, huntMetaboMult, sprintDrag, predationShare, cellIndex,
     };
   }
 })();
