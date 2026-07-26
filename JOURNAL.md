@@ -232,10 +232,18 @@ two-attractor lottery. The instrument the arc depends on is also healthier: the 
 had gone monotone (one word for 96% of worlds), now names the predation *cycle* and carries information
 again — you can read a world's predation phase at a glance before asking whether it drove a split.
 
-_Runs since the last Expedition:_ **1** (the nutrient cycle was the last one). This run was a **Build**
-(observability/analysis — rotated off last run's ecology). The named debt from last run — mote `speed`
-pinned near its ceiling — is **still open** (this run was non-ecology by the anti-repetition rule); it
-remains the top backlog Build for the next ecology run.
+_Update (2026-07-26, the sprint-drag Build): arc-adjacent, and it nudged the arc's own tension._ Grazers
+are still ONE broad cloud (k=1); this run didn't attempt the split. It discharged the long-standing
+`speed`-pin debt by making a fast body superlinearly expensive. Why it touches the arc: the drag made the
+fleer↔hider tradeoff **more contestable** — under a real speed cost, ~1 world in 16 now tips into the
+slow-hider basin outright (it used to take a full grazer-haven regime to make hiding win). That's not
+within-world coexistence, but it's the first sign the two lifestyles sit closer to a fitness crossover than
+the old free-speed world let them. A future "straddle the bistability" attempt inherits a herd whose speed
+is no longer railed to the ceiling, so a hider morph is a smaller mutational step away than it was.
+
+_Runs since the last Expedition:_ **2** (the nutrient cycle was the last one, 2026-07-24). Last run
+(2026-07-25) was observability; this run was a **Build** (**ecology** — rotated off it), and it discharged
+the top named debt (`speed` pinned). Expedition becomes mandatory at 5 runs since — **3 to go**.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -247,48 +255,41 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-25 — the cycle-phase regime Build (observability).** Readings: a 20k unseeded
-`observe.js` pass, per-seed observes at 20–50k (seeds 3/5/7/12), a fresh re-run `--census 24 12000`, two
-`--frame` renders **looked at** (a collapsed world and a surging one), and `smoke.js` ×5. **This change is
-pure narration** (nothing reads `world.regime`/`world.mood` back), so the economy numbers below are
-*expected* to match `previously:` — and the census hunter means came back **byte-identical** to last run's,
-the strongest proof of that. What changed is the *readout*, not the world.
+**Last observed: 2026-07-26 — the sprint-drag Build (ecology).** Readings: a clean 20k unseeded
+`observe.js` pass, section-[9] histograms on seeds 3/10/14, a 16-seed 20k A/B (baseline vs drag), 80k
+horizon probes, per-seed trough scans at 40–80k, and `smoke.js` ×5. This run **changes the economy** (a
+new cost term), so — unlike last run — the numbers below are *expected* to move, and the moving one is
+`speed`.
 
-- **THE HEADLINE: the regime readout carries information again.** The re-run `--census 24 12000` proves the
-  world is a **single persistent-predation attractor**: predation intensity **median 70.1 hunters/world**
-  (range 8.1–82.3, quartiles **60.5 / 72.6**), within-world swing **median 47% CV**, genuine collapse in
-  only **1/24 worlds (seed 7, 60% of its ticks)** — **one mode with a thin low tail, NOT two wells.** The
-  old readout said "arms-race" about 96% of worlds; the new cycle-phase readout reads surge/steady/ebb
-  against each world's own baseline, so it *varies* (per-seed cycle mix at 30k: seed 3 **33/63/3%**, seed 5
-  **36/48/15%**, seed 12 **71/11/18%**) and seed 7 reads **"collapsed" outright**.
-- **The mood breathes now (verified by eye).** `--frame` renders: a collapsed world (seed 7) is cold
-  blue-hollow, a surging world (seed 12) warm green-red with hunters on the prowl. The tint leans warm on
-  surge, cool on ebb, coldest on collapse — though it still reads faintly under a full meadow (the known
-  "lean the living things too" follow-on).
-- **STILL-OPEN COMPLAINT (not this run's, by anti-repetition): mote `speed` pins near its 2.60 ceiling**
-  (2.32–2.38, mode top histogram bin ⚑), with `metabo` high (~1.61 ⚑) and `size` low (~2.05 ⚑) — three
-  genes cornered by the arms-race regime. **Unchanged by this run** (pure narration). Top backlog Build.
-- **motes:** min ~36, max 799–800, mean **440–540**. Unchanged (byte-identical economy).
-- **hunters:** min ~11, max ~111–135, mean **~48–82** by seed (census median 70.1). Unchanged.
-- **plants (biomass):** min ~93, max ~1300, mean **326–370**, oscillates. Unchanged.
-- **matter:** **+0.0% drift · HOLDING**. Unchanged — the nutrient cycle still closes.
-- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged.
-- **flow per 1k (20k unseeded):** mote births ~591, starved ~35, eaten ~519; hunter births ~13, aged-out
-  ~98% of hunter deaths. Death split **~94% predation / 6% starvation**. (Within the healed-world envelope.)
-- **boredom check: NOT a fixed point** — 4/5 genes shift >8% between tick 1k and the end.
-- **smoke:** **74 checks** (+2 for the cycle-phase readout), green across ×5 runs (2 fully clean; the rest
-  gated only by the pre-existing `--frame` hang below).
-- **known pre-existing flake (confirmed NOT caused by this run — I touch no render code):** `smoke.js`
-  intermittently hangs at its `observe.js --frame` subprocess check, leaving orphaned node processes.
-  Reproduced 2/6 on unmodified code in an earlier run. Worth a future Repair.
+- **THE HEADLINE: `speed` is un-pinned.** The clean 20k pass reads `speed` **0.95 → 2.23** (was ~2.37
+  against the 2.60 clamp), histogram mode **off the top bin**, **BC 0.46 — no ⚑** (was 0.57 ⚑). Across a
+  16-seed A/B the top-histogram-bin share fell **~54% → ~26%** with **0 new predator collapses**. Speed is
+  now held by a cost curve, not a clamp — still upper-range (correct in a predation world) but no longer
+  cornered. `size` (2.25) and `metabo` (1.62) still lean toward their edges — a pre-existing "small hides
+  better / hot burns win" skew — but **section [6] flags nothing pinned**.
+- **New known behaviour (the drag's honest cost): a ~1-in-16 hider tip.** Slower prey are more catchable,
+  so near a bifurcation ~1 seed in 16 tips into the slow-**hider** basin and sits at a handful of motes for
+  a stretch before recovering (never zero; reseed net untouched). Which seed tips depends on the cost value,
+  not on whether one exists. At 80k the drag deep-troughs **1/5** sampled seeds where the baseline troughs
+  **3/5** — so on aggregate it *reduces* long-horizon crashes. Watch this in future runs.
+- **motes:** min **36**, max 786, mean **454**, oscillates (CV 34%). Within envelope.
+- **hunters:** min **12**, max 105, mean **73**, oscillates (CV 36%); alive at 80k (min 3–12 across probes).
+- **plants (biomass):** min ~117, max ~1360, mean **~444**, oscillates. Within envelope.
+- **matter:** **−0.0% drift · HOLDING** — the nutrient cycle still closes.
+- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged — the arc's core untouched.
+- **flow per 1k (20k unseeded):** mote births ~557, starved ~34, eaten ~492; hunter births ~13, aged-out
+  ~97% of hunter deaths. Death split **~94% predation / 6% starvation**.
+- **boredom check: NOT a fixed point** — genes still shift >8% between tick 1k and the end.
+- **smoke:** **78 checks** (+4 asserting the sprint-drag shape: zero-below-threshold, positive, monotone,
+  convex), green across ×5 unseeded runs.
+- **known pre-existing flake (not caused by this run):** `smoke.js` can intermittently hang at its
+  `observe.js --frame` subprocess check, leaving orphaned node processes. Worth a future Repair.
 
-_previously:_ (2026-07-24, nutrient-cycle Expedition, ecology) the world had just been healed: matter
-**+0.0% drift · HOLDING**; `--census 24 12000` read **96% arms-race / 4% grazer-haven** under the old
-readout, hunter tier median 70.1 (range 8.1–82.3); motes min ~37 / max 777–800 / mean 440–540; hunters
-min 7–12 / max 82–140 / mean 48–70; biomass min 73 / mean 326–376; predator tier alive at 80k in 0/6
-seeds; mote `speed` newly pinned 2.27–2.41 while `sense` (→37–40) and `metabo` un-pinned off their floors;
-death split ~85% predation. Grazers one broad cloud (k=1); smoke 72 checks. The complaint that seeded this
-run: the regime readout said the same word about 96% of worlds.
+_previously:_ (2026-07-25, cycle-phase regime Build, observability) pure narration, economy byte-identical:
+matter **+0.0% · HOLDING**; `--census 24 12000` a **single persistent-predation attractor** (median 70.1
+hunters, range 8.1–82.3, collapse 1/24); motes min ~36 / mean 440–540; hunters min ~11 / mean 48–82;
+biomass mean 326–370; **mote `speed` pinned 2.32–2.38 (mode top bin ⚑)** with metabo ~1.61 / size ~2.05;
+grazers one broad cloud (k=1); smoke 74 checks. The complaint that seeded this run: speed pinned at its ceiling.
 
 ---
 
@@ -802,6 +803,38 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-26 — [Build] speed stops slamming the ceiling: a sprinter's drag
+
+**Observed (the complaint):** a fresh 20k pass read mote `speed` **1.07 → 2.37** against a **2.60**
+clamp, its histogram mode slammed in the top bin (BC 0.57 ⚑) — the exact debt the last two runs
+named and deferred. The arms race had one direction: faster, and nothing pulled back, because the
+only brake on speed (a `v * 0.4` movement burn) was **linear**, and a linear cost can never out-climb
+a linearly-selected gene when predation is 90% of deaths. A gene pinned at its range edge is precisely
+the defect step 2 privileges.
+
+**Changed in the world:** maintaining a speed-optimised body is now **superlinearly** expensive — a
+"sprint drag" adds a term to the per-tick burn that grows with the **square** of how far the speed gene
+sits above a threshold (2.0), and is exactly zero below it, so ordinary grazers pay nothing new and the
+tuned low-mid economy is untouched. Each extra notch of top-end speed now costs more than the last, so
+the gene settles at an **interior optimum** (~2.2) instead of the clamp. On the trait chart a visitor
+watches the herd's speed line **level off short of the ceiling** rather than climb to it and stick; the
+mode leaves the top histogram bin (top-bin share ~54% → ~26% across 16 seeds, BC flag cleared) and speed
+is a genuine tradeoff at last, not a free ratchet.
+
+**The hard part, honestly.** Slower prey are more catchable, so drag shifts the predator–prey balance —
+and near a bifurcation it tips ~1 world in 16 into the slow-**hider** basin, where predators over-harvest
+and the herd sits at a handful of motes for a long stretch before recovering (never zero — the reseed net
+is untouched). No cost value avoids this; it only moves *which* seed tips. **2.5** was chosen because it
+keeps every one of 16 seeds clean through 40k (the whole viewing horizon) and — measured at 80k — leaves
+**1/5** sampled seeds deep-troughing where the untouched baseline leaves **3/5**, so on aggregate the
+change *reduces* long-horizon crashes even as it un-pins the gene.
+
+**Verified:** `node --check` ×5; `smoke.js` green at **78 checks** (+4 asserting the drag's shape — zero
+below threshold, positive, monotone, convex) across ×5 unseeded runs; a 16-seed A/B (**0 new collapses**);
+80k horizon (predators alive, no NaN); a clean unseeded 20k (speed 2.37→**2.23**, BC 0.57→**0.46**, no
+gene pinned in section [6], matter **−0.0% HOLDING**); zero runtime network calls. (Category: **ecology**
+— rotated off last run's observability. A **Build**; Expedition counter → **2**.)
 
 ### 2026-07-25 — the world's light breathes with its cycle (regime readout, re-pointed)
 
@@ -1330,16 +1363,34 @@ freely. Add two per run, at least one ambitious.
   **surge-biased over a 20k horizon** because an establishing predator tier genuinely trends up — honest,
   but it means a fresh world reads "surge" more than "ebb" until ~30k+; a future run could detrend the
   baseline if it wants perfect symmetry (see new backlog item).
-- **[Build] Un-pin mote `speed` — give the arms race somewhere to go besides "faster."** The nutrient
-  cycle made predation the dominant killer (~85% of mote deaths, was ~30%), and mote `speed` answered by
-  running to **2.27–2.41 against its 2.60 clamp**, with the pool's mode in the top histogram bin. Widening
-  the clamp is the wrong fix — prey already nearly match hunters, and a faster herd just makes predation
-  fail. The right fix is a **cost that bites at the top of the range**: speed already multiplies the
-  metabolic burn linearly, so make it *superlinear* (a sprinter's drag term), or trade it against
-  something — very fast motes could carry a `sense` or `size` penalty. Success is measurable and cheap:
-  the same `observe.js` section [9] histogram should show an interior mode, with the predator tier still
-  alive at 80k. Note the honest context: this run *un*-pinned `sense` and `metabo` (both used to sit on
-  their floors) and pinned speed instead, so the world has one edge problem, not three.
+- **[Build] Retired (BUILT 2026-07-26): "Un-pin mote `speed`."** Done, via the superlinear **sprint drag**
+  the item itself proposed: a per-tick burn that grows with the square of speed above a 2.0 threshold, zero
+  below it. Speed's mode left the top histogram bin (top-bin share ~54%→~26% over 16 seeds, BC 0.57→0.46,
+  flag cleared) with 0 new collapses and the tier alive at 80k. The `sense`/`size` penalty variant was NOT
+  taken — a pure cost was lower-risk and landed cleanly. **The finding that fell out** seeds the two items
+  below: any drag strong enough to un-pin speed tips ~1 world in 16 into the slow-hider basin near a
+  bifurcation (a sustained low-mote trough that recovers but never zeroes) — the cost just moves *which*
+  seed tips. The reseed net catches true zeros; a sustained *near*-zero it does not.
+- **[Build] Let the reseed net catch a sustained near-extinction, not only a true zero.** The safety net
+  reseeds motes only at pop **0**; the sprint-drag finding shows a world can instead sit at 1–5 motes for
+  thousands of ticks (predators over-harvesting slowed prey) — alive, so the net never fires, but a
+  degenerate, boring stretch to watch. Give the net a *sustained-low* trigger: if the population stays
+  below a small floor (say ≤4) for more than N consecutive ticks, top it up a few, so a stalemate trough
+  recovers in tens of ticks instead of thousands. Bounded and headless-verifiable (count ticks-≤5 before
+  vs after on the seeds that trough — seed 10 at drag 2.5, seed 15 at drag 2.0); careful not to paper over
+  the *normal* deep troughs the limit cycle is supposed to have.
+- **[Expedition] Make the fleer↔hider crossover a real, mappable frontier** _(ambitious — the arc's
+  stubborn core from a fresh angle the sprint drag just opened)_. The drag proved the two lifestyles now
+  sit close enough that ~1 world in 16 tips wholesale from fleer to hider — but still one lifestyle *per
+  world*, never both at once (k=1 holds). Push on exactly that seam: the tip happens because a speed cost
+  makes hiding pay, and hiding pays *where there is cover*. Give the fertility map **persistent dense-cover
+  cores** (permanent hider country) beside **open barrens** (permanent fleer country) so the crossover is
+  **spatial** — hiding wins locally in the cores, fleeing wins locally in the open, at the same time, in one
+  world. Then check `classifyMorphs` finally reports a stable **k=2 along `speed`/`hideability`** that
+  collapses to k=1 when the map is flattened. The sprint drag is the missing precondition: with speed no
+  longer railed to the ceiling, a hider morph is a small mutational step from the herd, so the spatial
+  refuge has something to *catch*. Risk: the same "spatial structure just averages out" rock every
+  divergence attempt has hit — but the herd it starts from is, for the first time, poised on the crossover.
 - **[Expedition] Let the ground remember — succession, and a soil that isn't just a number**
   _(ambitious — I'm not sure a second plant type can be balanced without wrecking the tuned limit cycle)_.
   The nutrient cycle gave every cell a bank of soil, and right now that bank does exactly one thing: fund

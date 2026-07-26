@@ -59,6 +59,15 @@ plants run rampant) breeds **greedy fast-burners**, while a starving, overgrazed
 grazer renders **pale and washed-out**, a hot fast-burner **vividly saturated** — so you can
 read a herd's metabolic character straight off the field.
 
+**Speed**, likewise, is a tradeoff rather than a free ratchet. A fast body is **superlinearly
+expensive** to run — a "sprint drag" that costs nothing at ordinary speeds but climbs with the
+*square* of the excess once a mote is built for real velocity — so the arms race settles at an
+interior optimum instead of slamming its ceiling. Predation still rewards being fast, but each
+extra notch of top-end speed now costs more than the last, and the herd stops just short of the
+limit. There's a second edge to it: because slow prey are easier to catch, worlds that push their
+grazers slowest sometimes tip the whole herd into **hiding** instead of fleeing — the same
+fleer-or-hider choice, decided at the scale of an entire world.
+
 ## The predators
 
 **Hunters** are a second creature that eats motes instead of plants — the top of the food
