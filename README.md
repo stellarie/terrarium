@@ -122,6 +122,13 @@ them — recover, riding on top of the grazer–plant boom and bust.
   and **cool below when hunger is** (bottom-up, starvation). It reads the actual causes of
   death, not a gene, so it tracks the predation cycle honestly: it rides warm while predators
   press the herd and plunges cool during an overgraze die-off, making the boom-bust a colour.
+- **Every death leaves a mark, coloured by its cause**, so the whole mortality of the food
+  chain reads on the meadow itself — not just in a chart. A **warm ring** bursts where a hunter
+  *caught* a mote (predation, sudden); a **cool dot** softly winks out where one *starved*
+  (hunger, a quiet giving-out); and a **grey ring** dissipates where an old hunter finally
+  *made way* (senescence). Predation is by far the loudest — but in an overgrazed die-off the
+  cool starvation dots swell, and the steady grey sprinkle of aging hunters is the predator
+  tier visibly **turning over**, the thing the trait chart could only infer.
 - Every mote is **ringed by its lifestyle** — leaf-green for a committed hider (small, slow),
   amber for a committed fleer (fast), fading toward the ambiguous middle — so the hider/fleer
   divergence predation drives is visible on the field, in every world, at a glance.
@@ -145,9 +152,10 @@ them — recover, riding on top of the grazer–plant boom and bust.
   and the shift eases in over a few seconds — so the world's *mood* reads at a glance, before
   you even read the HUD chip. It's pure atmosphere (a background lean plus a soft tinted
   vignette); nothing in the ecology reads it back.
-- The **HUD** shows tick, motes, hunters, plant biomass, births, natural deaths, motes
-  eaten, the **morph** count, the **regime**, the seasonal growth multiplier, and this
-  world's **seed** — its name.
+- The **HUD** shows tick, motes, hunters, plant biomass, births, and deaths **split by
+  cause** — **eaten** (predation), **starved** (hunger), and **aged** (hunters lost to old
+  age, so the tier's turnover is a number you can watch climb) — plus the **morph** count,
+  the **regime**, the seasonal growth multiplier, and this world's **seed** — its name.
 
 ### Every world has a name
 
@@ -193,7 +201,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 74 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 79 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -315,7 +323,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 74 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 79 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -333,12 +341,25 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 74-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 79-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the world's light breathes with its cycle now.** For a dozen sessions the regime readout
+Newest: **death is legible now.** For all its talk of an energy economy, the world hid its
+dying: a mote simply *vanished*, and the only visible death was the warm kill-flash where a
+hunter made a catch. Starvation and — since the hunters were given senescence — the constant
+**turnover** of the predator tier happened off-camera, legible only in a chart. No longer:
+**every death leaves a fading mark coloured by its cause.** A **warm ring** still bursts where
+a mote is *caught* (predation), but now a **cool dot** softly winks out where one *starves*
+(hunger), and a **grey ring** dissipates where an old hunter finally *makes way* (senescence).
+Predation is the loudest by far (~90% of mote deaths) — but an overgrazed die-off now shows as a
+scatter of cool starvation dots, and the steady grey sprinkle of aging hunters is the predator
+tier visibly renewing itself. The HUD's single vague "died" tally was split to match — **eaten**,
+**starved**, and a new **aged** count — so the mortality the death-balance chart *graphs* now
+also plays out, in colour, on the meadow itself.
+
+Before that: **the world's light breathes with its cycle now.** For a dozen sessions the regime readout
 named which of *two* attractors a world had tipped into — a predator **arms-race** or a
 **grazer-haven** collapse. That was honest while the world was quietly dying, because predators often
 starved out and a grazer-haven was a real second attractor. The nutrient cycle fixed the dying — and a
