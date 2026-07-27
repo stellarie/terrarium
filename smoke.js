@@ -319,12 +319,21 @@ check(moodWarm > 0.6 && world.mood < -0.6,
 // mode (off / fertility / grazing) against the shimmed canvas
 let renderThrew = null;
 try {
-  world.sparks.push({ x: 100, y: 100, life: 0.5 }); // ensure the kill-flash branch runs
+  // one death mark of EACH cause, so all three render branches run: an untyped mark
+  // (the legacy predation ring), a hunger "starved" dot, and a senescence "aged" ring
+  world.sparks.push({ x: 100, y: 100, life: 0.5 });                        // predation (legacy shape)
+  world.sparks.push({ x: 120, y: 120, life: 0.6, kind: "starved", r: 3 }); // hunger
+  world.sparks.push({ x: 140, y: 140, life: 0.7, kind: "aged", r: 6 });    // senescence
   for (const ov of [0, 1, 2]) { world.overlay = ov; draw(); }
   world.overlay = 0;
   drawChart(); drawCountChart(); drawArmsChart(); updateHud();
 } catch (e) { renderThrew = e; }
-check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays) / charts / hud render without throwing");
+check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays + all 3 death-mark causes) / charts / hud render without throwing");
+// the HUD gained an `aged` chip so hunter senescence (the tier turning over) is counted,
+// not just marked. The shim invents a stub for any id, so presence proves nothing —
+// assert sim.js actually WROTE world.hunterAged into it on the updateHud() just above.
+check(String(document.getElementById("s-aged").textContent) === String(world.hunterAged),
+      `HUD 'aged' chip carries the hunter old-age toll (${document.getElementById("s-aged").textContent} == ${world.hunterAged})`);
 
 // senescence must stay LIVE and lethal to the ancient — the fix for the hunter
 // gerontocracy. A single stochastic run can't guarantee a natural old-age death (a hard

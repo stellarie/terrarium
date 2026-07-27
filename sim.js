@@ -1246,6 +1246,10 @@
         world.motes.splice(i, 1);
         world.died++;
         enrich(cellIndex(m.x, m.y), m.matter);   // whatever the body still held
+        // a cool dot winks out where hunger took it — the quiet death, told apart from
+        // the hunter's warm flash. View-only: no rng() here, so the economy is untouched.
+        if (world.sparks.length < 240)
+          world.sparks.push({ x: m.x, y: m.y, life: 1, kind: "starved", r: m.g.size });
       }
     }
 
@@ -1365,6 +1369,11 @@
         world.hunterDied++;
         if (aged) world.hunterAged++;
         enrich(cellIndex(h.x, h.y), h.matter);
+        // mark the fall by its cause: a grey ring for old age (the tier turning over, the
+        // thing the trait chart only inferred), a cool one for the rare starved hunter —
+        // the same hunger-colour a starved mote gets. View-only, no rng().
+        if (world.sparks.length < 240)
+          world.sparks.push({ x: h.x, y: h.y, life: 1, kind: aged ? "aged" : "starved", r: h.g.size });
       }
     }
     for (const c of newHunters) world.hunters.push(c);
@@ -1499,15 +1508,39 @@
       ctx.restore();
     }
 
-    // kill-flashes — a brief expanding ring where a mote was caught, so predation
-    // is legible even when the world is running fast
+    // death marks — every death now leaves a fading sign, coloured by its CAUSE, so the
+    // whole mortality of the food web reads at a glance without opening a chart: a warm
+    // ring bursts where a hunter CAUGHT a mote (predation, sudden and violent), a cool dot
+    // softly winks out where one STARVED (hunger, a quiet giving-out), and a weathered grey
+    // ring dissipates where an old hunter finally made way (senescence — the tier turning
+    // over, made visible where the chart only inferred it). View-only, like the old flash.
     for (const sp of world.sparks) {
-      const r = (1 - sp.life) * 13 + 3;
-      ctx.beginPath();
-      ctx.arc(sp.x, sp.y, r, 0, TAU);
-      ctx.strokeStyle = `rgba(255,${(90 + 130 * sp.life) | 0},${(70 * sp.life) | 0},${(sp.life * 0.85).toFixed(3)})`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      const t = sp.life;
+      if (sp.kind === "starved") {
+        // hunger: a soft cool disc that shrinks as it fades — a body giving out, not a strike
+        const r = (sp.r || 3) * (0.4 + 0.9 * t);
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, r, 0, TAU);
+        ctx.fillStyle = `rgba(90,${(150 + 55 * t) | 0},${(165 + 45 * t) | 0},${(t * 0.55).toFixed(3)})`;
+        ctx.fill();
+      } else if (sp.kind === "aged") {
+        // senescence: a slow, thin grey ring opening outward — dimmer and wider than a
+        // kill, sized to the hunter that dropped, reading as a quiet dissipation
+        const r = (1 - t) * ((sp.r || 5) * 2.6) + 3;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, r, 0, TAU);
+        ctx.strokeStyle = `rgba(${(140 + 40 * t) | 0},${(134 + 36 * t) | 0},${(150 + 34 * t) | 0},${(t * 0.5).toFixed(3)})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      } else {
+        // predation (the original kill-flash): a brief expanding warm-red ring
+        const r = (1 - t) * 13 + 3;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, r, 0, TAU);
+        ctx.strokeStyle = `rgba(255,${(90 + 130 * t) | 0},${(70 * t) | 0},${(t * 0.85).toFixed(3)})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
     }
 
     // mood vignette — a soft, tinted darkening of the field's edges that reads as the
@@ -1902,8 +1935,9 @@
     hunters: document.getElementById("s-hunt"),
     food: document.getElementById("s-food"),
     born: document.getElementById("s-born"),
-    died: document.getElementById("s-died"),
+    died: document.getElementById("s-died"),     // motes lost to hunger (chip labelled "starved")
     eaten: document.getElementById("s-eaten"),
+    aged: document.getElementById("s-aged"),      // hunters lost to old age (senescence turnover)
     morphs: document.getElementById("s-morphs"),
     regime: document.getElementById("s-regime"),
     season: document.getElementById("s-season"),
@@ -1930,8 +1964,9 @@
     el.hunters.textContent = world.hunters.length;
     el.food.textContent = Math.round(biomass());
     el.born.textContent = world.born;
-    el.died.textContent = world.died;
-    el.eaten.textContent = world.eaten;
+    el.died.textContent = world.died;             // starvation deaths (cool marks in the field)
+    el.eaten.textContent = world.eaten;           // predation deaths (warm kill-flashes)
+    if (el.aged) el.aged.textContent = world.hunterAged;  // hunter senescence (grey marks) — the tier turning over
     // morph readout: "1" for a single cloud, "2 · keen∙dull" when the pool has split
     const mo = world.morphs;
     el.morphs.textContent = mo.k >= 2 && mo.gene ? `${mo.k} · ${morphAxisLabel(mo.gene)}` : String(mo.k);

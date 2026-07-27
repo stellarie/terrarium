@@ -241,9 +241,17 @@ within-world coexistence, but it's the first sign the two lifestyles sit closer 
 the old free-speed world let them. A future "straddle the bistability" attempt inherits a herd whose speed
 is no longer railed to the ceiling, so a hider morph is a smaller mutational step away than it was.
 
-_Runs since the last Expedition:_ **2** (the nutrient cycle was the last one, 2026-07-24). Last run
-(2026-07-25) was observability; this run was a **Build** (**ecology** — rotated off it), and it discharged
-the top named debt (`speed` pinned). Expedition becomes mandatory at 5 runs since — **3 to go**.
+_Update (2026-07-27, the death-mark Build): arc-adjacent legibility, not the split._ Grazers are still
+ONE broad cloud (k=1); this run didn't attempt the split. It made **death visible in the field** —
+every death now leaves a mark coloured by cause (warm=eaten, cool=starved, grey=aged hunter). Why it
+touches the arc: the grey aged-hunter marks make the predator tier's **turnover** — the coevolving-
+predator lever the arc keeps eyeing as its route through the bistability — legible at a glance on the
+meadow, where before it lived only in the trait chart. A future "does a coevolving predator crack the
+split?" attempt now has the turnover it depends on visible while it runs, not just inferred after.
+
+_Runs since the last Expedition:_ **3** (the nutrient cycle was the last one, 2026-07-24). The three
+since: cycle-phase regime (observability, 07-25), sprint-drag (ecology, 07-26), death-marks (visuals,
+07-27) — a clean category rotation. Expedition becomes mandatory at 5 runs since — **2 to go**.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -255,41 +263,43 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-26 — the sprint-drag Build (ecology).** Readings: a clean 20k unseeded
-`observe.js` pass, section-[9] histograms on seeds 3/10/14, a 16-seed 20k A/B (baseline vs drag), 80k
-horizon probes, per-seed trough scans at 40–80k, and `smoke.js` ×5. This run **changes the economy** (a
-new cost term), so — unlike last run — the numbers below are *expected* to move, and the moving one is
-`speed`.
+**Last observed: 2026-07-27 — the death-mark Build (visuals).** Readings: two clean 20k unseeded
+`observe.js` passes, a forced-mark `draw()`→PNG **looked at**, and `smoke.js` ×3+. This run is
+**view-only** (marks are pushed to the existing view-only `sparks` array with no `rng()` call), so the
+economy is byte-identical by construction — the numbers below move only because each pass is a fresh
+unseeded draw, and all sit inside the standing envelope.
 
-- **THE HEADLINE: `speed` is un-pinned.** The clean 20k pass reads `speed` **0.95 → 2.23** (was ~2.37
-  against the 2.60 clamp), histogram mode **off the top bin**, **BC 0.46 — no ⚑** (was 0.57 ⚑). Across a
-  16-seed A/B the top-histogram-bin share fell **~54% → ~26%** with **0 new predator collapses**. Speed is
-  now held by a cost curve, not a clamp — still upper-range (correct in a predation world) but no longer
-  cornered. `size` (2.25) and `metabo` (1.62) still lean toward their edges — a pre-existing "small hides
-  better / hot burns win" skew — but **section [6] flags nothing pinned**.
-- **New known behaviour (the drag's honest cost): a ~1-in-16 hider tip.** Slower prey are more catchable,
-  so near a bifurcation ~1 seed in 16 tips into the slow-**hider** basin and sits at a handful of motes for
-  a stretch before recovering (never zero; reseed net untouched). Which seed tips depends on the cost value,
-  not on whether one exists. At 80k the drag deep-troughs **1/5** sampled seeds where the baseline troughs
-  **3/5** — so on aggregate it *reduces* long-horizon crashes. Watch this in future runs.
-- **motes:** min **36**, max 786, mean **454**, oscillates (CV 34%). Within envelope.
-- **hunters:** min **12**, max 105, mean **73**, oscillates (CV 36%); alive at 80k (min 3–12 across probes).
-- **plants (biomass):** min ~117, max ~1360, mean **~444**, oscillates. Within envelope.
+- **THE HEADLINE isn't a number, it's that death is now visible.** Every death drops a fading mark
+  coloured by cause: warm ring = eaten, cool dot = starved, grey ring = aged hunter. Confirmed by eye
+  from a rendered frame (all three read distinctly). The economy check is the *absence* of movement: no
+  throw, no NaN, no new pin, matter holding — exactly as a pure-view change must.
+- **`speed` stays un-pinned.** 20k reads `speed` ~**2.20** (mode off the top bin, BC ~0.42–0.48, no ⚑),
+  holding last run's win. `size` ~2.0–2.2 and `metabo` ~1.57–1.64 still lean high (the pre-existing
+  "small hides / hot burns win" skew; metabo BC hovers ~0.51–0.56 either side of the 0.555 flag from
+  draw to draw) — **section [6] flags nothing pinned**.
+- **motes:** min **36–38**, max ~800, mean **464–497**, oscillates (CV 36–37%). Within envelope.
+- **hunters:** min **12**, max 105–140, mean **72–91**, oscillates (CV 43–44%).
+- **plants (biomass):** min ~54–82, max ~1365, mean **~391–416**, oscillates. Within envelope.
 - **matter:** **−0.0% drift · HOLDING** — the nutrient cycle still closes.
 - **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged — the arc's core untouched.
-- **flow per 1k (20k unseeded):** mote births ~557, starved ~34, eaten ~492; hunter births ~13, aged-out
-  ~97% of hunter deaths. Death split **~94% predation / 6% starvation**.
+- **flow per 1k (20k unseeded):** mote births ~556–721, starved ~24–39, eaten ~484–662; hunter births
+  ~13–16, **aged-out 99–100% of hunter deaths**. Death split **~93–96% predation / 4–7% starvation** —
+  which is exactly why the new cool starvation dots are a *rare* punctuation and the grey aged-hunter
+  marks a *steady* sprinkle.
+- **regime is surge-biased over 20k** (surge ~57–78% vs ebb ~0–27%): an establishing predator tier
+  trends up, so "recent vs flat baseline" reads surge through the ramp. Honest but asymmetric — the
+  detrend backlog item still stands. (This run's complaint #1; not this run's target.)
 - **boredom check: NOT a fixed point** — genes still shift >8% between tick 1k and the end.
-- **smoke:** **78 checks** (+4 asserting the sprint-drag shape: zero-below-threshold, positive, monotone,
-  convex), green across ×5 unseeded runs.
+- **smoke:** **79 checks** (+1: the `aged` HUD chip carries `world.hunterAged`; the render check now
+  drives all three death-mark branches), green across ×3+ unseeded runs.
 - **known pre-existing flake (not caused by this run):** `smoke.js` can intermittently hang at its
   `observe.js --frame` subprocess check, leaving orphaned node processes. Worth a future Repair.
 
-_previously:_ (2026-07-25, cycle-phase regime Build, observability) pure narration, economy byte-identical:
-matter **+0.0% · HOLDING**; `--census 24 12000` a **single persistent-predation attractor** (median 70.1
-hunters, range 8.1–82.3, collapse 1/24); motes min ~36 / mean 440–540; hunters min ~11 / mean 48–82;
-biomass mean 326–370; **mote `speed` pinned 2.32–2.38 (mode top bin ⚑)** with metabo ~1.61 / size ~2.05;
-grazers one broad cloud (k=1); smoke 74 checks. The complaint that seeded this run: speed pinned at its ceiling.
+_previously:_ (2026-07-26, sprint-drag Build, ecology) economy-changing: `speed` **un-pinned** 0.95→2.23
+(was ~2.37 vs the 2.60 clamp), top-bin share ~54%→~26% over a 16-seed A/B, BC 0.46 no ⚑; motes min 36 /
+mean 454; hunters min 12 / mean 73, alive at 80k; biomass mean ~444; matter −0.0% HOLDING; grazers k=1;
+a new ~1-in-16 slow-hider tip near a bifurcation (recovers, never zeroes); smoke 78 checks. The complaint
+that seeded this run: the food web's dying was invisible in the default view.
 
 ---
 
@@ -530,9 +540,10 @@ the backlog.**
   so no zlib is needed and the encoder is a few dozen lines. Exercised by `observe.js --frame` and guarded
   by 11 `smoke.js` render checks (incl. an end-to-end real-`draw()`→PNG subprocess).
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **74 checks** (the "60" claimed here for several runs was
+  runs 7200 ticks (3 seasons), and asserts **79 checks** (the "60" claimed here for several runs was
   always wrong — the true pre-2026-07-23 count was 64; the seedable world added 8, the cycle-phase
-  regime readout +2 on 2026-07-25). Of those, **8 cover the seedable
+  regime readout +2 on 2026-07-25, the sprint drag +4 on 2026-07-26, the death-mark HUD chip +1 on
+  2026-07-27). Of those, **8 cover the seedable
   world** (2026-07-23): the same seed regrows a byte-identical world after 900 ticks, a neighbouring seed
   doesn't, `world.seedValue` reports the name, `seed(null)` restores free randomness, two unseeded worlds
   differ, the `s-seed` HUD chip carries the seed, and two **subprocess boots** with a faked `location`
@@ -563,8 +574,10 @@ the backlog.**
   three properties that make metabolism a live interior-optimum axis rather than a dead floored one**
   (3 checks); **the death-balance metric `predationShare` is honest by construction — it reads 1 when
   only hunters kill, 0 when only hunger does, 0.5 on an even split, null when nothing died, and pools
-  only its trailing window** (6 checks); plus every render path — all three overlay modes, all three
-  charts, hunters and kill-flashes — runs without throwing.
+  only its trailing window** (6 checks); **the HUD `aged` chip carries `world.hunterAged` so hunter
+  turnover is counted, not just marked** (1 check, 2026-07-27); plus every render path — all three
+  overlay modes, all three charts, hunters and **all three death-mark causes (eaten / starved / aged)** —
+  runs without throwing.
   Because it uses real randomness, tune by running it across several seeds.
   It is the parachute that makes Expeditions safe. **It is not a microscope:** it answers "is
   anything broken?" with pass/fail and says nothing about what the world is _doing_. (Caveat
@@ -689,8 +702,11 @@ the backlog.**
   - **The hunt:** each hunter always stalks the nearest **visible** mote in sense range (steering
     toward it), but can only **strike** when its digestion timer `cool` is 0. A catch (within
     `size+size+huntRange`, shrunk by cover — see below) absorbs a share of the prey's energy, kills
-    the mote (`world.eaten++`), drops a fading **kill-flash** into `world.sparks`, resets
-    `cool = huntCooldown`.
+    the mote (`world.eaten++`), drops a fading **death mark** (`kind:'eaten'`, a warm ring) into
+    `world.sparks`, resets `cool = huntCooldown`. As of 2026-07-27 `world.sparks` is the world's
+    **death-mark layer**, not just kill-flashes: a mote that starves pushes a cool `kind:'starved'`
+    dot, and a hunter that dies pushes a grey `kind:'aged'` ring (or a cool `'starved'` one if it
+    starved) — so `draw()` renders each death coloured by its cause. All view-only, no `rng()`.
   - **Concealment / the two lifestyles** (Arc III — added 2026-07-22) — the second way to survive a
     hunter, and the axis predation now visibly splits the herd along. `hideability(g)` is a genome's
     intrinsic capacity to hide, `small × slow` in `[0,1]` (small body = inconspicuous; slow gene =
@@ -803,6 +819,37 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-27 — [Build] death is legible: every death leaves a mark coloured by its cause
+
+**Observed (the complaint):** the world talks endlessly about an energy economy, but a visitor
+watching the meadow sees almost none of its dying. A fresh 20k pass reads **93–96% of mote deaths
+are predation** and **~11.6 hunters/1k age out (99–100% of hunter deaths are old age)** — yet the
+*only* visible death was the warm kill-flash where a hunter caught a mote. Starvation was invisible,
+and the predator **turnover** that the last two senescence/chart runs went to such trouble to build
+was legible only as a line on a chart. A world whose whole subject is life and death was hiding the
+death.
+
+**Changed in the world:** every death now leaves a fading mark whose **colour names its cause**, so
+the food chain's mortality reads on the meadow itself. The old kill-flash generalised into three
+kinds: a **warm ring** bursts where a hunter *caught* a mote (predation, sudden), a **cool dot**
+softly winks out where one *starved* (hunger, a quiet giving-out), and a **grey ring** dissipates
+where an old hunter finally *made way* (senescence). Predation stays the loudest — but an overgrazed
+die-off now shows as a scatter of cool dots, and the steady grey sprinkle of aging hunters is the
+predator tier **visibly turning over**, the thing the trait chart could only infer. The HUD's single
+vague "died" tally was split to match — **eaten** (predation), **starved** (hunger), and a new
+**aged** count that climbs as the predator tier renews itself.
+
+**Verified:** `node --check` ×5; `smoke.js` green at **79 checks** (+1: the `aged` HUD chip carries
+`world.hunterAged`; the render check now drives all three mark branches) across ×3 unseeded runs; a
+clean 20k `observe.js` (no throw, no NaN, tiers oscillate, matter **−0.0% HOLDING**, grazers k=1, no
+gene newly pinned — speed un-pinned at 2.20); the change is **view-only** (no `rng()` at either death
+site, so the economy and seeded reproducibility are byte-identical, which the smoke reproducibility
+checks confirm still pass); and — since this is a *visuals* run — the three marks were **rendered and
+looked at** via a forced-mark `draw()`→PNG, reading warm-ring / cool-disc / grey-ring exactly as
+designed. Zero runtime network calls. Also fixed a stale README claim (it said "74 assertions"; the
+true count was 78, now 79). (Category: **visuals** — rotated off last run's ecology. A **Build**;
+Expedition counter → **3**.)
 
 ### 2026-07-26 — [Build] speed stops slamming the ceiling: a sprinter's drag
 
@@ -1330,6 +1377,28 @@ Built the whole static page and the first working simulation from nothing: motes
 
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
+
+- **[Build] Show the nutrient return at each death — a soil-bloom pulse where a body falls.** This run
+  made *death* visible (marks by cause); the conserved-matter headline — "the dead feed the ground" — is
+  still only visible via the soil overlay nobody has toggled. Every death calls `enrich()` at the death
+  cell; drop a brief, soft soil-coloured bloom there (spent-violet→loam, the soil palette) that fades over
+  a second or two, so a visitor watching the *default* view sees the ground being fed by its own dead —
+  the cool starvation dot and the grey aged-hunter ring each leaving a little warmth in the earth behind
+  it. Bounded, view-only (no economy read-back), headless-verifiable via `--frame`. Pairs naturally with
+  giving the death marks per-cause fade rates (quiet deaths lingering longer than the violent kill-flash).
+- **[Expedition] Turn the death marks into a *danger field* the herd actually reads — emergent refugia**
+  _(ambitious — the first narration→behaviour loop from the death side, and I'm not sure the signal is
+  strong enough to steer without destabilising the cycle)_. Accumulate death locations (weighted toward
+  predation) into a decaying scalar field, then give grazers a cheap fear response to high local
+  death-density — steer away from recent killing grounds. If it works, no-go zones and **refugia** emerge
+  purely from where the dying has been: the herd learns, collectively and with memory, which ground is
+  lethal, and hunters must range wider to find prey that avoids their territory. This is a genuinely
+  different route at the arc's stubborn core than the regime-vigilance item below: spatial avoidance could
+  manufacture the **within-world heterogeneity** — safe-but-crowded refugia beside dangerous-but-open
+  feeding grounds — that "straddle the bistability" has always needed, and a hider stronghold is exactly a
+  refugium. Risk: deaths may be too diffuse to form legible fields, or avoidance runs away (the herd
+  abandons the hunters' whole range, the predators starve, the cycle destabilises). It also stops being
+  pure narration, so it needs its own smoke assertions. Landing a stable, legible middle is the challenge.
 
 - **[Build] Detrend the predation-cycle baseline so the readout breathes symmetrically.** This run's new
   regime readout is honest but **surge-biased over a 20k horizon**: an establishing/growing predator tier
