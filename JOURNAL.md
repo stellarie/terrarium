@@ -249,9 +249,25 @@ predator lever the arc keeps eyeing as its route through the bistability — leg
 meadow, where before it lived only in the trait chart. A future "does a coevolving predator crack the
 split?" attempt now has the turnover it depends on visible while it runs, not just inferred after.
 
-_Runs since the last Expedition:_ **3** (the nutrient cycle was the last one, 2026-07-24). The three
+_Update (2026-07-28, the detrend Build): arc-adjacent — the readout the arc leans on is now honest
+during establishment._ Grazers are still ONE broad cloud (k=1); this run didn't attempt the split. It
+fixed the regime readout's long-standing **surge-bias**: every fresh world's predator tier climbs for
+its first ~30k ticks, and the old recent-vs-trailing-mean comparison read that climb as a perpetual
+"surge" (and leaned the mood tint warm) because a rising series always sits above its own average. The
+baseline is now **detrended** (least-squares slope, projected forward), so an establishing tier reads
+**building ↑** — a new state that fires through 40–60% of a young world's ticks — and only a departure
+from the trend reads surge/ebb. Why it touches the arc: before asking whether predation drove a split,
+you read the regime to see how hard predation is pressing; that instrument now tells establishment
+(building) apart from a real boom (surge) instead of conflating them, so a future "straddle the
+bistability" attempt reads the predation pressure it's manipulating without an establishment artifact
+in the way. Note: this is the *second* run in four to touch the regime readout — the next run should
+rotate firmly away from regime/observability (ecology or a new behaviour is overdue).
+
+_Runs since the last Expedition:_ **4** (the nutrient cycle was the last one, 2026-07-24). The four
 since: cycle-phase regime (observability, 07-25), sprint-drag (ecology, 07-26), death-marks (visuals,
-07-27) — a clean category rotation. Expedition becomes mandatory at 5 runs since — **2 to go**.
+07-27), detrend (observability, 07-28) — no two-in-a-row repeats, though regime/observability has now
+come up twice. Expedition becomes mandatory at 5 runs since — **1 to go** (next run, unless a defect
+forces a Repair).
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -263,43 +279,45 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-27 — the death-mark Build (visuals).** Readings: two clean 20k unseeded
-`observe.js` passes, a forced-mark `draw()`→PNG **looked at**, and `smoke.js` ×3+. This run is
-**view-only** (marks are pushed to the existing view-only `sparks` array with no `rng()` call), so the
-economy is byte-identical by construction — the numbers below move only because each pass is a fresh
-unseeded draw, and all sit inside the standing envelope.
+**Last observed: 2026-07-28 — the detrend Build (observability).** Readings: several 20k/30k `observe.js`
+passes (unseeded + seeds 3/5/7), a scratch `rel`-distribution probe over 25k mature samples on seeds 3
+& 7, a building-fraction probe on seeds 3/11/19/23, and `smoke.js` ×4. This run is **pure narration**
+(the regime is never read back into the economy and the detrend adds no `rng()` call), so the economy is
+byte-identical by construction — the numbers below move only because each unseeded pass is a fresh draw.
 
-- **THE HEADLINE isn't a number, it's that death is now visible.** Every death drops a fading mark
-  coloured by cause: warm ring = eaten, cool dot = starved, grey ring = aged hunter. Confirmed by eye
-  from a rendered frame (all three read distinctly). The economy check is the *absence* of movement: no
-  throw, no NaN, no new pin, matter holding — exactly as a pure-view change must.
-- **`speed` stays un-pinned.** 20k reads `speed` ~**2.20** (mode off the top bin, BC ~0.42–0.48, no ⚑),
-  holding last run's win. `size` ~2.0–2.2 and `metabo` ~1.57–1.64 still lean high (the pre-existing
-  "small hides / hot burns win" skew; metabo BC hovers ~0.51–0.56 either side of the 0.555 flag from
-  draw to draw) — **section [6] flags nothing pinned**.
-- **motes:** min **36–38**, max ~800, mean **464–497**, oscillates (CV 36–37%). Within envelope.
-- **hunters:** min **12**, max 105–140, mean **72–91**, oscillates (CV 43–44%).
-- **plants (biomass):** min ~54–82, max ~1365, mean **~391–416**, oscillates. Within envelope.
-- **matter:** **−0.0% drift · HOLDING** — the nutrient cycle still closes.
+- **THE HEADLINE: the regime readout is detrended, and the surge-bias is measurably gone.** On a fresh
+  unseeded 20k the regime went from last run's **surge ~55% / ebb ~30%** to **surge 7% / steady 92%**,
+  and the recent-vs-baseline `rel` now **centres on ~0** (probe median rel: seed 3 −0.005, seed 7 +0.001)
+  where it used to sit systematically positive. Ebb is **no longer suppressed** (old ~0–18%; a genuinely
+  cyclic world now reads it freely). The new **building ↑** state fires through **44–63%** of a young
+  world's ticks (seeds 3/11/19/23), with **thinning ↓** ~9–13% — so "steady" is subdivided into five
+  honest states, not a monotone word.
+- **`speed` stays un-pinned.** 20k reads `speed` ~**2.13–2.19** (no ⚑), holding the sprint-drag win.
+  `size` ~2.0–2.2, `metabo` ~1.6 lean high (pre-existing skew); **section [6] flagged nothing pinned**
+  across the passes checked.
+- **motes:** min **35**, max ~800, mean **~504**, oscillates (CV ~33%). Within envelope.
+- **hunters:** min **12**, max ~116, mean **~81**, oscillates (CV ~32%). Within envelope.
+- **plants (biomass):** min ~113, max ~1421, mean **~452**, oscillates. Within envelope.
+- **matter:** **HOLDING** (−0.0% unseeded; +0.4% over a 30k collapse-heavy seed, still HOLDING).
 - **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged — the arc's core untouched.
-- **flow per 1k (20k unseeded):** mote births ~556–721, starved ~24–39, eaten ~484–662; hunter births
-  ~13–16, **aged-out 99–100% of hunter deaths**. Death split **~93–96% predation / 4–7% starvation** —
-  which is exactly why the new cool starvation dots are a *rare* punctuation and the grey aged-hunter
-  marks a *steady* sprinkle.
-- **regime is surge-biased over 20k** (surge ~57–78% vs ebb ~0–27%): an establishing predator tier
-  trends up, so "recent vs flat baseline" reads surge through the ramp. Honest but asymmetric — the
-  detrend backlog item still stands. (This run's complaint #1; not this run's target.)
+- **flow per 1k (20k unseeded):** mote births ~665, starved ~43, eaten ~586; hunter births ~15,
+  **aged-out ~98% of hunter deaths**. Death split **~93% predation / 7% starvation**.
+- **the detrend discriminates, it doesn't flatten:** a genuinely quiet world (seed 3, `rel` p95 0.050,
+  max 0.068) reads honestly steady; a dramatic one (seed 7, 65% collapsed) reads collapse/surge/ebb.
+  The 32% tick-CV that survives as "steady" is fast noise the 720-tick window averages out — real, and
+  correct to ignore. (This run's complaint #1 from last run, now discharged.)
 - **boredom check: NOT a fixed point** — genes still shift >8% between tick 1k and the end.
-- **smoke:** **79 checks** (+1: the `aged` HUD chip carries `world.hunterAged`; the render check now
-  drives all three death-mark branches), green across ×3+ unseeded runs.
+- **smoke:** **83 checks** (+4 detrend proofs: a climbing ramp reads steady/building though its recent
+  mean ≫ its trailing mean; a receding tier reads thinning; a spike above the trend still surges), green
+  across ×4 runs.
 - **known pre-existing flake (not caused by this run):** `smoke.js` can intermittently hang at its
-  `observe.js --frame` subprocess check, leaving orphaned node processes. Worth a future Repair.
+  `observe.js --frame` subprocess check (two back-to-back smoke runs timed out this session, likely the
+  same cause), leaving orphaned node processes. Worth a future Repair.
 
-_previously:_ (2026-07-26, sprint-drag Build, ecology) economy-changing: `speed` **un-pinned** 0.95→2.23
-(was ~2.37 vs the 2.60 clamp), top-bin share ~54%→~26% over a 16-seed A/B, BC 0.46 no ⚑; motes min 36 /
-mean 454; hunters min 12 / mean 73, alive at 80k; biomass mean ~444; matter −0.0% HOLDING; grazers k=1;
-a new ~1-in-16 slow-hider tip near a bifurcation (recovers, never zeroes); smoke 78 checks. The complaint
-that seeded this run: the food web's dying was invisible in the default view.
+_previously:_ (2026-07-27, death-mark Build, visuals) view-only: death now leaves a mark by cause
+(warm=eaten/cool=starved/grey=aged); `speed` ~2.20 no ⚑; motes min 36–38 / mean 464–497; hunters min 12 /
+mean 72–91; biomass ~391–416; matter −0.0% HOLDING; grazers k=1; **regime surge-biased 57–78% vs ebb 0–27%
+(the complaint this run fixed)**; smoke 79 checks.
 
 ---
 
@@ -819,6 +837,33 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-28 — [Build] detrend the regime baseline: an establishing tier reads "building ↑", not a false "surge"
+
+**Observed (the complaint):** a fresh 20k pass showed the regime readout at **surge ~55% / steady 14% /
+ebb 30%** — and the HUD label literally read *"predation ebbing"* while the cycle-phase tally was
+surge-dominant. This was last run's re-confirmed **complaint #1**: every fresh world's predator tier
+*establishes* (climbs steadily for its first ~30k ticks), and comparing a 720-tick recent mean to a
+4800-tick **trailing mean** reads that climb as a perpetual surge, because a rising series always sits
+above its own average. The whole meadow's mood tint leaned warm through minutes of ordinary establishment.
+
+**Built:** the baseline is now **detrended**. `classifyRegime` fits a least-squares slope over the
+baseline window and projects it forward to the recent window, so surge/ebb mean "above/below where this
+world's own trend predicts," not "above its trailing mean." A steady secular climb now reads a new state,
+**building ↑** (and a decline, **thinning ↓**), surfaced on the HUD chip and in `observe.js`.
+
+**What a visitor sees:** open a new world and the regime chip reads **building ↑** as the predators
+establish — honest — instead of a false **surging ↑**, and the meadow's light no longer sits warm through
+the whole ramp; it warms only on a *real* boom and cools on a *real* bust. The chip now shows five
+distinct states (surging / building / steady / thinning / ebbing) where establishment used to jam it on
+surge.
+
+**Verified:** economy byte-identical by construction (pure narration, no `rng()`, never read back). Fresh
+20k: surge 55%→7%; probe over 25k mature samples shows median `rel` → ~0 (was systematically +), ebb
+un-suppressed. `building` fires 44–63% of a young world's ticks (seeds 3/11/19/23). The detrend
+discriminates rather than flattens: quiet seed 3 (`rel` p95 0.050) reads steady, dramatic seed 7 (65%
+collapsed) reads collapse/surge/ebb. `node --check` clean on all 5 files; **smoke 83 checks** (+4 detrend
+proofs) green ×4 seeds; matter HOLDING; no new gene pin; no runtime network calls.
 
 ### 2026-07-27 — [Build] death is legible: every death leaves a mark coloured by its cause
 
@@ -1400,15 +1445,43 @@ freely. Add two per run, at least one ambitious.
   abandons the hunters' whole range, the predators starve, the cycle destabilises). It also stops being
   pure narration, so it needs its own smoke assertions. Landing a stable, legible middle is the challenge.
 
-- **[Build] Detrend the predation-cycle baseline so the readout breathes symmetrically.** This run's new
-  regime readout is honest but **surge-biased over a 20k horizon**: an establishing/growing predator tier
-  genuinely trends upward, so the recent mean sits above the trailing baseline most of the time (per-seed
-  surge fractions ran 33–74% while ebb ran 0–18%). Fit a least-squares **slope** to the baseline window
-  and compare the recent mean to the baseline *projected to the current tick*, so a steadily-climbing tier
-  reads "steady" (it's on its own trend) and only a departure *from that trend* reads surge/ebb. The mood
-  would then warm and cool evenly around the cycle instead of leaning warm through the long establishment
-  ramp. Headless-verifiable: on a synthetic monotone-ramp history the readout should read "steady," and
-  across `--census` the surge and ebb fractions should roughly balance. Small, bounded, pure narration.
+- **[Build] Retired (BUILT 2026-07-28): "Detrend the predation-cycle baseline."** Done: `classifyRegime`
+  fits a least-squares slope over the baseline window and judges the recent mean against the baseline
+  *projected forward*, so an establishing tier reads a new **building ↑** state instead of a false surge.
+  Fresh-world surge dropped 55%→7%, median `rel` centred on ~0, ebb un-suppressed; the mood tint stops
+  leaning warm through establishment. **Went beyond the spec** (the "steady/building/thinning" split adds
+  a genuine new readout state, not just a bias patch). **The caveat that became a finding:** the
+  acceptance test "census surge and ebb roughly balance" is only half-right — a quiet world (seed 3,
+  smoothed `rel` p95 0.050) honestly reads ~all-steady; balance appears only where a real cycle exists,
+  and even there real ecology skews surge>ebb (booms spike, busts are gentle). The load-bearing metric is
+  median `rel`→0, not equal fractions.
+- **[Build] Let the mood tint lean *gently* warm/cool during building/thinning, and give the surge/ebb
+  threshold a per-world amplitude scale.** The detrend left a thread: (a) `building ↑` currently drives a
+  neutral mood (correct — it stopped the warm-lean), but a slow secular *rise* arguably deserves a faint
+  warmth and a *decline* a faint cool, so the meadow reads its long-arc trajectory too, not only the fast
+  cycle — try a small mood offset ∝ `secular` (bounded so it can't recreate the old bias). (b) A genuinely
+  quiet world (seed 3) reads 99% steady because its smoothed cycle amplitude never clears the fixed 0.09
+  `regimeSurgeOn`; scale the threshold to each world's own `rel` spread (e.g. a rolling MAD) so a
+  low-amplitude world still shows *its* surges/ebbs and a violent one isn't strobing. Bounded, pure
+  narration, headless-verifiable (per-seed surge/ebb fractions should become non-trivial on quiet worlds
+  without exceeding the loud ones). Careful: an amplitude-relative threshold can manufacture signal from
+  noise — the MAD floor must keep a genuinely flat tier reading flat.
+- **[Expedition] Give hunters *territories*, so predation pressure becomes spatially patchy — refugia from
+  the predator side** _(ambitious — I'm not sure territoriality won't either tile the whole map, leaving no
+  gaps, or destabilise the tuned predator population)_. Today every hunter roams the whole torus, so
+  predation pressure is spatially uniform and the herd has nowhere that is reliably *safer*. Give each
+  hunter a slowly-drifting **home range** it prefers to patrol (a cheap attractor point, re-anchored where
+  it makes kills) and a mild aversion to ranges already dense with other hunters — so the tier self-spaces
+  into patrolled territories with **gaps between them**. Then predation intensity varies by *place*, not
+  just by *time*: a grazer in a gap is genuinely safer than one in a hunter's core. This is the arc's
+  stubborn core (within-world coexistence) attacked from the **predator** side and distinct from the
+  prey-side "danger field / emergent refugia" item — instead of the herd *remembering* where death was, the
+  *landscape of danger* is set by where the hunters choose to be. If it holds, the persistent safe gaps are
+  hider country and the patrolled cores are fleer country **at the same time in one world**, which is
+  exactly the k=2 the divergence needs; check `classifyMorphs` for a stable split that collapses when
+  territoriality is switched off. Rotates firmly to ecology/behaviour. Risk: ranges may tile the map (no
+  refugia), or the spacing rule may over-disperse hunters into starvation; it stops being pure narration,
+  so it needs its own smoke assertions and a careful watch on the limit cycle.
 - **[Expedition] Close the loop — let the predation *weather* change behaviour, not just narrate it**
   _(ambitious — every regime readout so far has been inert by design, and feeding it back risks the tuned
   limit cycle)_. The cycle-phase readout, the mood tint, the morph and death-balance readouts are all

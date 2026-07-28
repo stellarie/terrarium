@@ -264,10 +264,11 @@ check(cLive.k === 1 || cLive.k === 2, `morph detector returns a sane verdict on 
 check(world.morphs && world.morphs.k >= 1, `live morph readout is populated for the HUD (k=${world.morphs && world.morphs.k})`);
 
 // the regime readout names the phase of the world's predator–prey CYCLE, judged by the
-// recent hunter mean RELATIVE to the world's own long baseline (so it carries info in a
-// rich or a poor world alike). Deterministic synthetic history windows (~200 samples so
-// the recent window and the baseline window genuinely differ) prove each phase; each
-// sample only needs a `hunters` count, so this can't flake on randomness.
+// recent hunter mean RELATIVE to the world's own long baseline — DETRENDED (2026-07-28): the
+// baseline is a fitted slope projected forward, so surge/ebb mean "above/below where this
+// world's own trend predicts", not "above/below its trailing mean". Deterministic synthetic
+// history windows (~200 samples so the recent and baseline windows genuinely differ) prove
+// each phase; each sample only needs a `hunters` count, so this can't flake on randomness.
 const hist = (n, fn) => Array.from({ length: n }, (_, i) => ({ hunters: fn(i) }));
 const rSteady = classifyRegime(hist(200, () => 70), "steady");
 const rSurge = classifyRegime(hist(200, (i) => (i < 176 ? 55 : 90)), "steady");   // recent 90 vs base ~59
@@ -281,11 +282,27 @@ check(rEbb.state === "ebb", `regime reads predation below its baseline as "ebb" 
 check(rCollapse.state === "collapsed", `regime names a genuinely failed predator tier "collapsed" (base ${rCollapse.base.toFixed(1)})`);
 check(rRecover.state === "collapsed" && rRecover.trend === "rising", `regime flags a collapsed tier clawing back (state=${rRecover.state}, trend=${rRecover.trend})`);
 check(rWeak.state !== "collapsed", `the collapse floor discriminates a thin-but-alive tier (base ${rWeak.base.toFixed(0)}) from a genuine collapse → ${rWeak.state}`);
-// hysteresis: a recent level just 8% above baseline (inside the on-band) HOLDS a prior
-// surge but does NOT by itself pull a steady world into one — the Schmitt gap in action.
-const near = hist(200, (i) => (i < 176 ? 70 : 76));
+// hysteresis: a recent level just inside the on-band (above the PROJECTED baseline) HOLDS a
+// prior surge but does NOT by itself pull a steady world into one — the Schmitt gap in action.
+// (Recent stepped to 78 over a flat 70 baseline: the detrend absorbs part of the step, so this
+// lands mid-band ~0.057, comfortably between regimeSurgeOff 0.035 and regimeSurgeOn 0.09.)
+const near = hist(200, (i) => (i < 176 ? 70 : 78));
 check(classifyRegime(near, "surge").state === "surge" && classifyRegime(near, "steady").state === "steady",
       "regime hysteresis holds a prior surge in the ambiguous band but won't trigger one from steady");
+// THE DETREND, proven: a tier climbing on a steady secular ramp (no boom-bust) must read
+// "steady", NOT "surge" — even though its recent mean sits far above its trailing MEAN (which
+// is exactly what the old readout mistook for a perpetual surge through every world's ramp).
+const rRamp = classifyRegime(hist(200, (i) => 30 + i * 0.3), "steady");
+check(rRamp.state === "steady" && rRamp.hmean > rRamp.base * 1.2,
+      `detrend: a pure climbing ramp reads "steady" though recent ${rRamp.hmean.toFixed(0)} ≫ trailing-mean ${rRamp.base.toFixed(0)} (old readout would say surge) → ${rRamp.state}`);
+check(rRamp.building > 0, `detrend: a climbing ramp is annotated "building" (secular +${(100 * rRamp.secular).toFixed(0)}%/window)`);
+const rDrop = classifyRegime(hist(200, (i) => 90 - i * 0.3), "steady");
+check(rDrop.state === "steady" && rDrop.building < 0,
+      `detrend: a steadily receding tier reads "steady/thinning", not "ebb" (secular ${(100 * rDrop.secular).toFixed(0)}%/window) → ${rDrop.state}`);
+// but the detrend must NOT go blind to a genuine departure: a spike ABOVE the ramp still surges.
+const rRampSpike = classifyRegime(hist(200, (i) => (30 + i * 0.3) + (i >= 176 ? 22 : 0)), "steady");
+check(rRampSpike.state === "surge",
+      `detrend still catches a real departure: a spike above the climbing trend reads "surge" → ${rRampSpike.state}`);
 check(classifyRegime([{ hunters: 5 }], "settling").state === "settling", "regime reads 'settling' until it has enough history");
 const knownRegime = ["settling", "surge", "steady", "ebb", "collapsed"].includes(world.regime.state);
 check(knownRegime && typeof world.regime.label === "string" && world.regime.label.length > 0,

@@ -324,15 +324,22 @@
     // SINGLE persistent-predation attractor with a boom-bust cycle riding on it, and the
     // live readout now names the phase of THAT cycle, self-calibrated to each world so it
     // carries information whether the world runs 15 hunters or 90.) The recent hunter mean
-    // is compared to the world's own long BASELINE: above it = predation surging (the
-    // boom), below = ebbing (the bust), near = steady. An absolute floor still catches the
-    // rare world where predators genuinely fail ("collapsed"). Schmitt hysteresis on the
-    // surge/ebb crossing stops it strobing. Pure narration — nothing reads world.regime back.
+    // is compared to the world's own long BASELINE — but the baseline is DETRENDED (2026-07-28):
+    // a least-squares slope is fit over the baseline window and PROJECTED forward to the recent
+    // window, so surge/ebb mean "above/below where this world's own trend says it should be",
+    // not "above/below its trailing mean". Without this, an establishing predator tier (which
+    // climbs for the first ~30k ticks) read "surging" for minutes on end purely because a rising
+    // series always sits above its own trailing average — the readout, and the mood tint, leaned
+    // warm through every fresh world's ramp. Detrended, a steady secular climb reads "building ↑"
+    // (a distinct, honest state) and only a genuine departure from the trend reads surge/ebb. An
+    // absolute floor still catches the rare world where predators genuinely fail ("collapsed").
+    // Schmitt hysteresis on the crossing stops it strobing. Pure narration — nothing reads back.
     regimeWindow: 24,         // history samples (~720 ticks) — the RECENT hunter level
     regimeBaseWindow: 160,    // history samples (~4800 ticks) — the world's own baseline to judge phase against
     regimeCollapseFloor: 16,  // baseline hunters below which predators have genuinely FAILED (not a cycle trough)
-    regimeSurgeOn: 0.09,      // recent this fraction above/below baseline to ENTER surging/ebbing
+    regimeSurgeOn: 0.09,      // recent this fraction above/below the PROJECTED baseline to ENTER surging/ebbing
     regimeSurgeOff: 0.035,    // …and must fall back inside this band to leave it (hysteresis)
+    regimeBuildOn: 0.12,      // baseline's fractional rise/fall across its whole window to annotate a steady phase "building ↑" / "thinning ↓"
     regimeFlashTicks: 150,    // how long the on-canvas banner lingers after a collapse/recovery
     moodEase: 0.012,          // per-frame easing of the regime "mood" tint toward its target (~a few seconds)
   };
@@ -694,7 +701,8 @@
     world._morphPendK = 1;
     world._morphPendN = 0;
     world.regime = { state: "settling", trend: "steady", label: "settling — reading the world…",
-                     hmean: 0, base: 0, flash: 0, flashText: "", flashWarm: true };
+                     hmean: 0, base: 0, projBase: 0, secular: 0, building: 0,
+                     flash: 0, flashText: "", flashWarm: true };
     world.mood = 0;          // eased predation-cycle atmosphere: +1 surging (warm/tense), -1 collapsed (cold/hollow)
     for (let i = 0; i < CONFIG.startMotes; i++) {
       world.motes.push(makeMote(rand(0, W), rand(0, H)));
@@ -980,7 +988,8 @@
   // reads world.regime back — it is pure narration, like the charts.
   function classifyRegime(history, prev) {
     if (!history || history.length < 8) {
-      return { state: "settling", trend: "steady", label: "settling — reading the world…", hmean: 0, base: 0 };
+      return { state: "settling", trend: "steady", label: "settling — reading the world…",
+               hmean: 0, base: 0, projBase: 0, secular: 0, building: 0 };
     }
     const win = Math.min(CONFIG.regimeWindow, history.length);
     const s = history.slice(history.length - win);
@@ -994,7 +1003,24 @@
     const bs = history.slice(history.length - bwin);
     let bsum = 0;
     for (let i = 0; i < bwin; i++) bsum += bs[i].hunters;
-    const base = bsum / bwin;
+    const base = bsum / bwin;                        // window mean (still the collapse gate)
+
+    // DETREND the baseline: fit a least-squares line to the window and project it forward to
+    // the recent window's centre, so a steadily-CLIMBING tier isn't perpetually read "surging"
+    // just because a rising series always sits above its own trailing mean. slope is per-sample;
+    // projBase is where the fitted line predicts the level at the recent window's centre.
+    const meanX = (bwin - 1) / 2;
+    let num = 0, den = 0;
+    for (let i = 0; i < bwin; i++) {
+      const dx = i - meanX;
+      num += dx * (bs[i].hunters - base);
+      den += dx * dx;
+    }
+    const baseSlope = den > 0 ? num / den : 0;           // hunters per history-sample
+    const projBase = base + baseSlope * (bwin - win) / 2; // baseline carried to the recent window
+    // secular = the baseline's fractional change across the WHOLE window — a slow establishment
+    // ramp or a slow decline, distinct from the fast boom-bust the surge/ebb phase reads
+    const secular = (baseSlope * bwin) / Math.max(1, base);
 
     // trend: mean of the recent window's first half vs its second half — is predation
     // climbing or falling right now (colours the label and softens the mood ease)
@@ -1017,7 +1043,7 @@
     if (mature && base < CONFIG.regimeCollapseFloor && hmean < CONFIG.regimeCollapseFloor) {
       state = "collapsed";
     } else {
-      const rel = (hmean - base) / Math.max(1, base);
+      const rel = (hmean - projBase) / Math.max(1, projBase);  // recent vs the PROJECTED baseline
       const on = CONFIG.regimeSurgeOn, off = CONFIG.regimeSurgeOff;
       const wasSurge = prev === "surge", wasEbb = prev === "ebb";
       if (rel >= on || (wasSurge && rel > off)) state = "surge";
@@ -1025,12 +1051,19 @@
       else state = "steady";
     }
 
+    // a "steady" phase riding a strong secular slope is annotated "building"/"thinning" — the
+    // tier is establishing or receding over the long horizon even though it isn't departing
+    // from its own trend right now. This is the state the detrend rescued from a false "surge".
+    const building = state === "steady" && secular >= CONFIG.regimeBuildOn ? 1
+                   : state === "steady" && secular <= -CONFIG.regimeBuildOn ? -1 : 0;
     const label =
       state === "collapsed" ? (trend === "rising" ? "predators collapsed — clawing back ↑" : "predators collapsed — the herd runs free") :
       state === "surge"     ? "predation surging — the cull intensifies ↑" :
       state === "ebb"       ? "predation ebbing — the herd's reprieve ↓" :
+      building > 0          ? "predation building — the tier is establishing ↑" :
+      building < 0          ? "predation thinning — the tier is receding ↓" :
                               "predation steady — the cycle holds";
-    return { state, trend, label, hmean, base };
+    return { state, trend, label, hmean, base, projBase, secular, building };
   }
 
   // The world's "mood" target for a given regime phase: warm/tense when predation is
@@ -1123,6 +1156,9 @@
     world.regime.label = rg.label;
     world.regime.hmean = rg.hmean;
     world.regime.base = rg.base;
+    world.regime.projBase = rg.projBase;
+    world.regime.secular = rg.secular;
+    world.regime.building = rg.building;
   }
 
   // ---- simulation step ----------------------------------------------------
@@ -1956,6 +1992,10 @@
     if (r.state === "collapsed") return { text: r.trend === "rising" ? "collapsed ↑" : "collapsed", color: "#7fb0e0" };
     if (r.state === "surge")     return { text: "surging ↑", color: "#ff6b6b" };
     if (r.state === "ebb")       return { text: "ebbing ↓", color: "#5fc8b0" };
+    // a steady phase on a strong secular slope reads "building/thinning" — a slow establishment
+    // ramp or decline, warmer/cooler in tone than a flat "steady" but not a boom-bust departure
+    if (r.building > 0)          return { text: "building ↑", color: "#d69a5c" };
+    if (r.building < 0)          return { text: "thinning ↓", color: "#6ca8a0" };
     return { text: "steady", color: "#e0b04a" };
   }
   function updateHud() {

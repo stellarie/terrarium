@@ -469,7 +469,8 @@ function regimeReport() {
   const r = world.regime;
   const pct = (n) => ((100 * n) / TICKS).toFixed(0);
   line(`    now        : ${r.label}`);
-  line(`    predation  : recent ${fmt(r.hmean, 1)} hunters vs this world's baseline ${fmt(r.base, 1)}`);
+  line(`    predation  : recent ${fmt(r.hmean, 1)} hunters vs this world's baseline ${fmt(r.base, 1)}` +
+       ` (detrended → ${fmt(r.projBase, 1)}; secular ${r.secular >= 0 ? "+" : ""}${(100 * r.secular).toFixed(0)}%/window)`);
   line(`    cycle phase: surge ${pad(pct(regimeTicks.surge), 3)}%  ·  steady ${pad(pct(regimeTicks.steady), 3)}%  ·  ` +
        `ebb ${pad(pct(regimeTicks.ebb), 3)}%  ·  settling ${pad(pct(regimeTicks.settling), 3)}%`);
   line(`    collapsed  : ${pad(pct(regimeTicks.collapsed), 3)}% of ticks · ${collapseEpisodes} episode(s) of genuine predator failure`);
