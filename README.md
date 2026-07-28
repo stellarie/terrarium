@@ -139,10 +139,15 @@ them — recover, riding on top of the grazer–plant boom and bust.
 - A **regime readout** names, live, where the world sits in its predator–prey **cycle**:
   predation **surging** (the cull intensifying, coloured red) above the world's own
   baseline, **ebbing** (the herd's reprieve, coloured teal) below it, or **steady** between.
-  It self-calibrates to each world, so it carries information whether a world runs 15
-  hunters or 90. In the rare world where the predators genuinely *fail*, it reads
-  **collapsed** outright, and a banner fades across the field the moment a tier collapses
-  or claws back — reserved for that dramatic event, not the ordinary turn of the cycle.
+  The baseline is **detrended** — a slope is fit to the world's own history and projected
+  forward — so a young world whose predators are simply *establishing* (a slow secular
+  climb over its first tens of thousands of ticks) reads **building ↑** rather than a false
+  perpetual "surge," and only a genuine departure *from that trend* reads surge or ebb. A
+  steadily thinning tier reads **thinning ↓** the same way. It self-calibrates to each
+  world, so it carries information whether a world runs 15 hunters or 90. In the rare world
+  where the predators genuinely *fail*, it reads **collapsed** outright, and a banner fades
+  across the field the moment a tier collapses or claws back — reserved for that dramatic
+  event, not the ordinary turn of the cycle.
   (This replaced an older "which of two attractors" readout: the world used to be
   genuinely bistable — predators often starved out — but the nutrient cycle fixed that, and
   a census now shows a *single* persistent-predation attractor, so the honest question is
@@ -208,7 +213,9 @@ hunt, breed and oscillate without pinning at their cap or wiping the motes out),
 concealment mechanic is monotone (a small, slow mote outhides a big fast one in cover, and
 nobody hides on bare ground), the morph detector is honest (it calls a single broad cloud one
 morph and a clean two-cluster pool two), the regime readout names each predation-cycle phase
-correctly (surge / steady / ebb / collapsed) with the right hysteresis, **seeded worlds are truly reproducible** (the same seed regrows a
+correctly (surge / steady / ebb / collapsed) with the right hysteresis **and detrends its
+baseline** (a steadily climbing tier reads "steady/building," not a false "surge," while a real
+spike above the trend still reads "surge"), **seeded worlds are truly reproducible** (the same seed regrows a
 byte-identical world, a neighbouring seed doesn't, and a shared `#s=…` link replays its world),
 and the **headless renderer** works end-to-end (it drives the real `draw()` to a valid PNG).
 Because it also exercises real randomness, run it a few times:
@@ -341,12 +348,24 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 79-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, an 83-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **death is legible now.** For all its talk of an energy economy, the world hid its
+Newest: **the regime readout stopped crying wolf.** Every fresh world spends its first tens of
+thousands of ticks with its predator tier *establishing* — a slow, steady climb — and the readout
+used to mistake that climb for a perpetual **surge**, leaning the whole meadow's light warm through
+minutes of ordinary establishment, because a rising series always sits above its own trailing
+average. The baseline is now **detrended**: a slope is fit to the world's own history and projected
+forward, so an establishing tier reads **building ↑** (a new, honest state that fires through 40–60%
+of a young world's ticks), a receding one reads **thinning ↓**, and only a genuine departure *from
+the trend* reads surge or ebb. The bias is measurably gone — the recent-vs-baseline offset now
+centres on zero, and a world's down-phases (ebb) are no longer masked by the establishment climb.
+The mood tint breathes evenly around the cycle instead of stuck warm; a real boom still warms it,
+a real bust still cools it.
+
+Before that: **death is legible now.** For all its talk of an energy economy, the world hid its
 dying: a mote simply *vanished*, and the only visible death was the warm kill-flash where a
 hunter made a catch. Starvation and — since the hunters were given senescence — the constant
 **turnover** of the predator tier happened off-camera, legible only in a chart. No longer:
@@ -359,7 +378,7 @@ tier visibly renewing itself. The HUD's single vague "died" tally was split to m
 **starved**, and a new **aged** count — so the mortality the death-balance chart *graphs* now
 also plays out, in colour, on the meadow itself.
 
-Before that: **the world's light breathes with its cycle now.** For a dozen sessions the regime readout
+Earlier still: **the world's light breathes with its cycle now.** For a dozen sessions the regime readout
 named which of *two* attractors a world had tipped into — a predator **arms-race** or a
 **grazer-haven** collapse. That was honest while the world was quietly dying, because predators often
 starved out and a grazer-haven was a real second attractor. The nutrient cycle fixed the dying — and a
