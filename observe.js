@@ -113,8 +113,9 @@ const TICKS = Math.max(1000, NUMS[0] || 20000);
 // "pinned at the edge" means pinned at a clamp, not merely at a founder bound. Keep
 // these in sync with makeGenome / makeHunterGenome if those ranges ever change.
 const GENES = ["speed", "size", "sense", "metabo", "hue"];
+const MOTE_GENES = ["speed", "size", "sense", "metabo", "hue", "social"];  // motes carry the extra sociability axis
 const RANGE = {
-  mote:   { speed: [0.25, 2.6], size: [1.6, 6.5], sense: [12, 120], metabo: [0.6, 1.8], hue: [0, 359] },
+  mote:   { speed: [0.25, 2.6], size: [1.6, 6.5], sense: [12, 120], metabo: [0.6, 1.8], hue: [0, 359], social: [-1.0, 1.2] },
   hunter: { speed: [0.6, 3.2],  size: [2.4, 9],   sense: [24, 170], metabo: [0.55, 1.8], hue: [0, 45] },
 };
 const MC = 48, MR = 16;   // ASCII map dimensions (declared here so the hoisted map fns can read it)
@@ -124,10 +125,10 @@ const finite = (x) => typeof x === "number" && Number.isFinite(x);
 const fmt = (x, d = 2) => (finite(x) ? x.toFixed(d) : "NaN");
 const pad = (s, n) => String(s).padStart(n);
 
-function geneAverages(pop) {
+function geneAverages(pop, genes = GENES) {
   const out = {};
   const n = pop.length || 1;
-  for (const k of GENES) {
+  for (const k of genes) {
     let s = 0;
     for (const c of pop) s += c.g[k];
     out[k] = s / n;
@@ -148,7 +149,7 @@ function meter() {
 
 // ---- run --------------------------------------------------------------------
 seed(SEED == null ? undefined : SEED);
-const founders = { mote: geneAverages(world.motes), hunter: geneAverages(world.hunters) };
+const founders = { mote: geneAverages(world.motes, MOTE_GENES), hunter: geneAverages(world.hunters) };
 
 const mPop = meter(), hPop = meter(), bio = meter();
 let moteZeroTicks = 0, hunterEmptyTicks = 0;
@@ -195,7 +196,7 @@ try {
 
     if (t === 1000) {
       earlySnap = { pop: p, hunters: hn, bio: b,
-                    mote: geneAverages(world.motes), hunter: geneAverages(world.hunters) };
+                    mote: geneAverages(world.motes, MOTE_GENES), hunter: geneAverages(world.hunters) };
     }
     if (t % MATTER_EVERY === 0) matterLog.push({ t, veg: b, soil: soilSum(), body: bodySum() });
   }
@@ -205,10 +206,10 @@ const secs = ((Date.now() - t0) / 1000).toFixed(1);
 
 // ---- integrity --------------------------------------------------------------
 let nanFlags = [];
-const cleanCreature = (m) => finite(m.x) && finite(m.y) && finite(m.energy) &&
-  GENES.every((k) => finite(m.g[k]));
-if (!world.motes.every(cleanCreature)) nanFlags.push("motes");
-if (!world.hunters.every(cleanCreature)) nanFlags.push("hunters");
+const cleanCreature = (genes) => (m) => finite(m.x) && finite(m.y) && finite(m.energy) &&
+  genes.every((k) => finite(m.g[k]));
+if (!world.motes.every(cleanCreature(MOTE_GENES))) nanFlags.push("motes");
+if (!world.hunters.every(cleanCreature(GENES))) nanFlags.push("hunters");
 for (let i = 0; i < world.veg.length; i++) {
   if (!finite(world.veg[i]) || world.veg[i] < 0) { nanFlags.push("veg grid"); break; }
 }
@@ -276,8 +277,8 @@ ageReport("motes", world.motes);
 ageReport("hunters", world.hunters);
 
 line("\n[6] TRAIT DRIFT  (founder avg → final avg · [clamp range] · ⚑ = pinned at an edge)");
-driftReport("motes", world.motes, founders.mote, RANGE.mote);
-driftReport("hunters", world.hunters, founders.hunter, RANGE.hunter);
+driftReport("motes", world.motes, founders.mote, RANGE.mote, MOTE_GENES);
+driftReport("hunters", world.hunters, founders.hunter, RANGE.hunter, GENES);
 
 line("\n[7] BOREDOM CHECK  (window near tick 1000 vs the final tick — is it still a live system?)");
 boredomReport();
@@ -320,11 +321,11 @@ function ageReport(name, pop) {
   for (const b of bars) line(b);
 }
 
-function driftReport(name, pop, founder, range) {
+function driftReport(name, pop, founder, range, genes = GENES) {
   line(`    ${name}:`);
   if (!pop.length) { line("      (none alive to read)"); return; }
-  const now = geneAverages(pop);
-  for (const k of GENES) {
+  const now = geneAverages(pop, genes);
+  for (const k of genes) {
     const [lo, hi] = range[k];
     const span = hi - lo || 1;
     const a = founder[k], b = now[k];
@@ -337,7 +338,7 @@ function driftReport(name, pop, founder, range) {
 
 function boredomReport() {
   if (!earlySnap) { line("    (run too short for an early window)"); return; }
-  const lateMote = geneAverages(world.motes), lateHunt = geneAverages(world.hunters);
+  const lateMote = geneAverages(world.motes, MOTE_GENES), lateHunt = geneAverages(world.hunters);
   const rows = [
     ["motes", earlySnap.pop, world.motes.length, 0],
     ["hunters", earlySnap.hunters, world.hunters.length, 0],
@@ -345,6 +346,7 @@ function boredomReport() {
     ["mote.speed", earlySnap.mote.speed, lateMote.speed, 2],
     ["mote.sense", earlySnap.mote.sense, lateMote.sense, 1],
     ["mote.metabo", earlySnap.mote.metabo, lateMote.metabo, 2],
+    ["mote.social", earlySnap.mote.social, lateMote.social, 2],
     ["hunt.speed", earlySnap.hunter.speed, lateHunt.speed, 2],
     ["hunt.sense", earlySnap.hunter.sense, lateHunt.sense, 1],
   ];
@@ -421,6 +423,30 @@ function binCell(x, y) {
   return my * MC + mx;
 }
 
+// How clustered the herd actually is: mean neighbours within socialRadius per mote,
+// divided by the count a uniform-random scatter of the same population would give. So
+// 1 ≈ random, <1 spaced out (wary), >1 clustered. This is the phenotype the `social`
+// gene bends — quiet against the resource/flee clustering, but a real, readable signal.
+function clumpingIndex(pop) {
+  const n = pop.length;
+  if (n < 20) return NaN;
+  const R2 = CONFIG.socialRadius * CONFIG.socialRadius;
+  const W = GRID.cols * CONFIG.vegCell, H = GRID.rows * CONFIG.vegCell, HW = W / 2, HH = H / 2;
+  let tot = 0;
+  for (let i = 0; i < n; i++) {
+    const a = pop[i];
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const b = pop[j];
+      let dx = a.x - b.x; if (dx > HW) dx -= W; else if (dx < -HW) dx += W;
+      let dy = a.y - b.y; if (dy > HH) dy -= H; else if (dy < -HH) dy += H;
+      if (dx * dx + dy * dy <= R2) tot++;
+    }
+  }
+  const obs = tot / n, expect = (n - 1) * (Math.PI * R2) / (W * H);
+  return expect > 0 ? obs / expect : NaN;
+}
+
 // The distribution the mean throws away. For each grazer gene: mean, spread (sd),
 // a 24-bin histogram over its clamp range so a split shows as two humps with a
 // valley, and a bimodality coefficient (BC > 0.555 hints at a non-unimodal shape).
@@ -428,7 +454,7 @@ function binCell(x, y) {
 function shapeReport() {
   const pop = world.motes;
   if (!pop.length) { line("    (no grazers alive to read)"); return; }
-  const genes = ["speed", "size", "sense", "metabo"];
+  const genes = ["speed", "size", "sense", "metabo", "social"];
   const ramp = " .:-=+*#%@";
   line(`    grazer gene distributions (final tick, n=${pop.length})`);
   line("    gene      mean      sd     BC     shape (histogram over the clamp range)");
@@ -457,6 +483,17 @@ function shapeReport() {
     : "ONE broad cloud — no genuine split";
   line(`    morph detector: ${verdict}`);
   line("    (⚑ = BC>0.555, a hint of non-unimodality; the detector needs a real valley, not just skew)");
+  // sociability & spacing — the wary axis. A crowd is a killing ground in this world (the
+  // hunter homes on the densest prey), so under predation the herd evolves social<0 (wary,
+  // keeps its distance). The clumping index is observed near-neighbours ÷ the uniform-random
+  // expectation: <1 spaced out, ≈1 random, >1 clustered — the phenotype behind the gene.
+  const soc = pop.reduce((s, m) => s + m.g.social, 0) / pop.length;
+  const mood = soc < -0.15 ? "WARY — motes steer away from the crowd" :
+               soc > 0.15 ? "sociable — motes steer toward the crowd" : "neutral — no strong social pull";
+  const ci = clumpingIndex(pop);
+  line(`    sociability: mean ${fmt(soc)}  → ${mood}`);
+  line(`                 clumping ${fmt(ci)}× uniform (resource/flee clustering dominates the raw texture;`);
+  line(`                 the wary gene only bends it — the signal lives in the gene mean, not the map)`);
 }
 
 // Where the world sat in its predator–prey cycle, tallied. The healed world is a SINGLE

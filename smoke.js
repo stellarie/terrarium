@@ -174,6 +174,37 @@ world.veg[coverCell] = 0;                         // bare ground: nobody hides
 check(concealment(hider) === 0, `on bare ground even a perfect hider has zero cover (${concealment(hider)})`);
 world.veg[coverCell] = savedVeg;                  // restore so nothing downstream is perturbed
 
+// sociability (Arc III): the SIGNED `social` gene bends a mote's steering toward the
+// local crowd (>0) or away from it (<0, wary). Prove the sign semantics deterministically:
+// plant three neighbours to one side, then read senseFlock's steer for a wary vs a sociable
+// focal genome — it must point away from the crowd for one and toward it for the other.
+const { rebuildFlock, senseFlock } = sim;
+const savedMotes = world.motes;
+world.motes = [                                   // a little crowd 15px to the +x side of (100,100)
+  { x: 115, y: 100, g: { social: 0 } },
+  { x: 115, y: 110, g: { social: 0 } },
+  { x: 115, y: 90,  g: { social: 0 } },
+];
+rebuildFlock();
+const waryS = senseFlock({ x: 100, y: 100, g: { social: -0.8 } });
+const warySx = waryS.sx, waryCrowd = waryS.crowd;
+const socS = senseFlock({ x: 100, y: 100, g: { social: 0.8 } });
+const socSx = socS.sx;
+world.motes = savedMotes;                          // restore before anything downstream reads it
+check(waryCrowd === 3, `the neighbour query counts the local crowd (${waryCrowd} of 3)`);
+check(warySx < 0 && socSx > 0,
+      `a wary genome steers AWAY from the crowd and a sociable one TOWARD it (${warySx.toFixed(2)} vs +${socSx.toFixed(2)})`);
+// and the live world's `social` stays a finite, in-range, non-degenerate axis after the run
+let socMin = Infinity, socMax = -Infinity, socSum = 0, socBad = false;
+for (const m of world.motes) {
+  const s = m.g.social;
+  if (!(typeof s === "number" && Number.isFinite(s)) || s < -1.0 || s > 1.2) socBad = true;
+  if (s < socMin) socMin = s; if (s > socMax) socMax = s; socSum += s;
+}
+check(!socBad, "every mote's social gene stayed finite and inside its [-1, 1.2] clamp");
+check(world.motes.length === 0 || socMax > socMin,
+      `the social gene carries real variance to select on (${socMin.toFixed(2)}..${socMax.toFixed(2)})`);
+
 // the metabolism tradeoff: a fast-burner digests each bite more thoroughly (higher
 // intake multiplier) while paying a linearly higher always-on burn, so metabolism finds
 // a food-dependent interior optimum instead of sliding to its floor. Assert the intake
@@ -251,10 +282,10 @@ let _s = 987654321;
 const rnd = () => (_s = (_s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
 const jit = (c, w) => c + (rnd() - 0.5) * w;
 const uniPool = [];
-for (let i = 0; i < 300; i++) uniPool.push({ g: { speed: jit(1.3, 0.4), size: jit(3.2, 0.8), sense: jit(45, 16), metabo: jit(1.0, 0.2) } });
+for (let i = 0; i < 300; i++) uniPool.push({ g: { speed: jit(1.3, 0.4), size: jit(3.2, 0.8), sense: jit(45, 16), metabo: jit(1.0, 0.2), social: jit(0.0, 0.3) } });
 const biPool = [];
-for (let i = 0; i < 150; i++) biPool.push({ g: { speed: jit(0.6, 0.1), size: jit(2.1, 0.2), sense: jit(22, 5), metabo: jit(0.7, 0.06) } });
-for (let i = 0; i < 150; i++) biPool.push({ g: { speed: jit(2.3, 0.1), size: jit(5.0, 0.2), sense: jit(105, 5), metabo: jit(1.5, 0.06) } });
+for (let i = 0; i < 150; i++) biPool.push({ g: { speed: jit(0.6, 0.1), size: jit(2.1, 0.2), sense: jit(22, 5), metabo: jit(0.7, 0.06), social: jit(-0.4, 0.1) } });
+for (let i = 0; i < 150; i++) biPool.push({ g: { speed: jit(2.3, 0.1), size: jit(5.0, 0.2), sense: jit(105, 5), metabo: jit(1.5, 0.06), social: jit(0.5, 0.1) } });
 const cUni = classifyMorphs(uniPool);
 const cBi = classifyMorphs(biPool);
 check(cUni.k === 1, `morph detector calls a single broad cloud ONE morph (k=${cUni.k})`);

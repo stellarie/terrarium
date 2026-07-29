@@ -5,8 +5,11 @@ three-tier food chain: a living meadow, soft **motes** that graze it, and hot-co
 **hunters** that chase and eat the motes. Each creature carries a small genome and lives on
 an energy economy — grazers seek the greenest ground, and survive a hunter one of two ways:
 **fleers** (fast, keen) outrun it in the open, while **hiders** (small, slow) freeze and
-vanish into dense vegetation. There's no score and no goal, just selection: leave it running
-and watch plants, grazers and predators rise and fall against one another.
+vanish into dense vegetation. A third gene, **sociability**, decides how a mote holds itself
+among its neighbours — and because the hunter homes on the *densest* prey, the herd learns
+that a crowd is a killing ground and evolves to keep its distance (see *The wary herd*). There's
+no score and no goal, just selection: leave it running and watch plants, grazers and predators
+rise and fall against one another.
 
 ## The living ground
 
@@ -106,6 +109,22 @@ the hunters **coevolve keener eyes** to find prey that hide.
 Predators and prey settle into the classic **phase-lagged cycle**: hunters thrive and thin
 the herd, then starve back as prey grows scarce, letting the motes — and the meadow beneath
 them — recover, riding on top of the grazer–plant boom and bust.
+
+## The wary herd
+
+Motes also feel their **neighbours**. A heritable **sociability** gene decides how a mote holds
+itself in a crowd: steer *toward* the local knot of grazers, or *away* from it. It began as an
+experiment in safety-in-numbers — but the world overturned the idea. Because a hunter homes on the
+**nearest** prey, a dense crowd is a killing ground, not a shelter: grouping raises your chance of
+being the one caught faster than any confusion of numbers lowers it. So under predation the herd
+evolves the opposite instinct — **wariness**, keeping its distance from the crowds that draw the
+cull — and relaxes back toward indifference only when the hunters thin. You can read it two ways:
+each mote trails a **heading whisker tinted by its sociability** (cool blue for a wary loner, warm
+orange for a joiner, pale for the neutral middle), and the herd's densest knots wear a soft
+**shimmer** — the very crowds the hunters pick apart, so you can watch them fray as the herd turns
+wary and pool again in a lull. It is a quiet trait in the herd's raw texture (food and flight still
+pack the motes together), but a strong one at the gene: another axis, set by the predators, for the
+population to move along.
 
 ## Watch it evolve
 
