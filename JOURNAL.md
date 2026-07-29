@@ -263,11 +263,26 @@ bistability" attempt reads the predation pressure it's manipulating without an e
 in the way. Note: this is the *second* run in four to touch the regime readout — the next run should
 rotate firmly away from regime/observability (ecology or a new behaviour is overdue).
 
-_Runs since the last Expedition:_ **4** (the nutrient cycle was the last one, 2026-07-24). The four
-since: cycle-phase regime (observability, 07-25), sprint-drag (ecology, 07-26), death-marks (visuals,
-07-27), detrend (observability, 07-28) — no two-in-a-row repeats, though regime/observability has now
-come up twice. Expedition becomes mandatory at 5 runs since — **1 to go** (next run, unless a defect
-forces a Repair).
+_Update (2026-07-29, the sociability Expedition — a new gene, and the premise it overturned):_ Grazers
+are still ONE broad cloud along the four old genes (k=1), but the herd gained a **fifth axis**, and the
+arc got a genuinely new regime-set force to work with. I set out to build **"safety in numbers"** — a
+heritable `social` gene and boids-style flocking, meant to be a **third** anti-predator strategy beside
+fleeing and hiding, paid for by predator DILUTION. The world **refused**, across five couplings (bare
+dilution, a gated confusion effect, a fleeing murmuration, many-eyes vigilance, lock-on disruption):
+gregariousness stayed flat-to-selected-**against** under predation, because the hunter is a **density-
+seeker** — it homes on the nearest prey, so a crowd is a killing ground and grouping raises your
+encounter rate faster than any confusion effect lowers your per-strike risk. So the gene's adaptive
+direction is the **mirror image**: `social < 0` is **WARY** — it steers a mote away from local density.
+Under predation the herd now evolves wary (measured **−0.44 … −0.76**, Δ vs predator-free **−0.5 … −0.7**,
+robust across seeds 3/7/11/19 + unseeded); lift the hunters and it relaxes to ~0. A new regime-set axis,
+parallel to hide↔flee and thrifty↔greedy, and one the divergence could someday split along. This is the
+first run to touch **ecology/behaviour** with a new mechanic since the sprint-drag, and it rotates hard
+off the regime/observability rut the last two runs were stuck in.
+
+_Runs since the last Expedition:_ **0** — the sociability Expedition (2026-07-29) is the reset. Previous
+Expedition was the nutrient cycle (2026-07-24); the four Builds between were cycle-phase regime
+(observability, 07-25), sprint-drag (ecology, 07-26), death-marks (visuals, 07-27), detrend
+(observability, 07-28). Next Expedition becomes mandatory 5 runs from now.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -279,45 +294,43 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-07-28 — the detrend Build (observability).** Readings: several 20k/30k `observe.js`
-passes (unseeded + seeds 3/5/7), a scratch `rel`-distribution probe over 25k mature samples on seeds 3
-& 7, a building-fraction probe on seeds 3/11/19/23, and `smoke.js` ×4. This run is **pure narration**
-(the regime is never read back into the economy and the detrend adds no `rng()` call), so the economy is
-byte-identical by construction — the numbers below move only because each unseeded pass is a fresh draw.
+**Last observed: 2026-07-29 — the sociability Expedition (ecology/behaviour).** Readings: `observe.js` 20k
+on seeds 3, 7 & unseeded; a scratch predation on/off selection probe over seeds 3/7/11/19 (5 couplings
+tested and discarded before the reversal); a `--frame` render on seed 7; and `smoke.js` ×5. This run
+**changes the economy** (a new gene + neighbour-steering), so unlike a narration run the numbers below are
+its verdict, not a fresh draw of the old world. Neighbour query roughly **doubled** the tick cost (20k now
+~24s, was ~12s) — still fine per seed, but census/split-test are heavier now; keep to ≤2 long seeds/call.
 
-- **THE HEADLINE: the regime readout is detrended, and the surge-bias is measurably gone.** On a fresh
-  unseeded 20k the regime went from last run's **surge ~55% / ebb ~30%** to **surge 7% / steady 92%**,
-  and the recent-vs-baseline `rel` now **centres on ~0** (probe median rel: seed 3 −0.005, seed 7 +0.001)
-  where it used to sit systematically positive. Ebb is **no longer suppressed** (old ~0–18%; a genuinely
-  cyclic world now reads it freely). The new **building ↑** state fires through **44–63%** of a young
-  world's ticks (seeds 3/11/19/23), with **thinning ↓** ~9–13% — so "steady" is subdivided into five
-  honest states, not a monotone word.
-- **`speed` stays un-pinned.** 20k reads `speed` ~**2.13–2.19** (no ⚑), holding the sprint-drag win.
-  `size` ~2.0–2.2, `metabo` ~1.6 lean high (pre-existing skew); **section [6] flagged nothing pinned**
-  across the passes checked.
-- **motes:** min **35**, max ~800, mean **~504**, oscillates (CV ~33%). Within envelope.
-- **hunters:** min **12**, max ~116, mean **~81**, oscillates (CV ~32%). Within envelope.
-- **plants (biomass):** min ~113, max ~1421, mean **~452**, oscillates. Within envelope.
-- **matter:** **HOLDING** (−0.0% unseeded; +0.4% over a 30k collapse-heavy seed, still HOLDING).
-- **gene-pool shape:** grazers **ONE broad cloud** (detector k=1). Unchanged — the arc's core untouched.
-- **flow per 1k (20k unseeded):** mote births ~665, starved ~43, eaten ~586; hunter births ~15,
-  **aged-out ~98% of hunter deaths**. Death split **~93% predation / 7% starvation**.
-- **the detrend discriminates, it doesn't flatten:** a genuinely quiet world (seed 3, `rel` p95 0.050,
-  max 0.068) reads honestly steady; a dramatic one (seed 7, 65% collapsed) reads collapse/surge/ebb.
-  The 32% tick-CV that survives as "steady" is fast noise the 720-tick window averages out — real, and
-  correct to ignore. (This run's complaint #1 from last run, now discharged.)
-- **boredom check: NOT a fixed point** — genes still shift >8% between tick 1k and the end.
-- **smoke:** **83 checks** (+4 detrend proofs: a climbing ramp reads steady/building though its recent
-  mean ≫ its trailing mean; a receding tier reads thinning; a spike above the trend still surges), green
-  across ×4 runs.
+- **THE HEADLINE: `social` is a live, strongly predation-driven gene — and it evolves WARY, not gregarious.**
+  Founders ~+0.14; under predation the herd settles **−0.44 … −0.76** (seeds 3/7/11/19 + unseeded), vs
+  **~0** predator-free — a Δ of **−0.5 … −0.7**, robust across seeds. The intended "safety in numbers"
+  was refuted (grouping raises encounter with a density-seeking hunter); the mirror trait, wariness, is
+  what pays. `observe.js` [6]/[9] now report it, incl. a **clumping index** (~1.9–5× uniform: the herd is
+  still packed by food/flee — the wary gene only bends the texture; the signal lives in the gene mean).
+- **no gene newly pinned.** Unseeded 20k: `speed` **2.35**, `sense` **45.96** (held — a predation-healthy
+  world, no ⚑), `size` **2.03**, `metabo` **1.66** lean-high (pre-existing skew), `social` **−0.76** (not
+  at its −1.0 clamp; span-2% pin needs ≤ −0.956). Section [6] flagged nothing pinned across seeds 3/7/unseeded.
+  _Caveat:_ in a **low-predation** unseeded draw `sense` can still pin LO (~13.75) — honest ecology (no
+  threat to detect), pre-existing and unrelated to this run (see backlog).
+- **motes:** min **36**, max ~766, mean **~455**, oscillates (CV ~33%). Within envelope.
+- **hunters:** min **11**, max ~121, mean **~85**, oscillates (CV ~32%). Within envelope.
+- **plants (biomass):** min ~128, max ~1383, mean **~437**, oscillates. Within envelope.
+- **matter:** **HOLDING** (−0.1% unseeded, −0.0% seed 3). The nutrient ledger is untouched by this run.
+- **gene-pool shape:** grazers **ONE broad cloud** on the four old genes AND on `social` (detector k=1,
+  now a 5-gene space). Only `size` still carries a BC⚑ skew (0.60), as for months. Arc core untouched.
+- **flow per 1k (20k seed 3):** mote births ~564, starved ~17, eaten ~514; hunter births ~13, **aged-out
+  ~99% of hunter deaths**. Death split **~97% predation / 3% starvation** — hunters dominate, as designed.
+- **boredom check: NOT a fixed point** — 4–5/5 genes shift >8% between tick 1k and end; `social` swings
+  the hardest (+0.14 → −0.76).
+- **smoke:** **87 checks** (+4 sociability proofs: the neighbour query counts a crowd of 3; a wary genome
+  steers −0.96 away while a sociable one steers +0.96 toward; `social` stays finite in [−1, 1.2]; the pool
+  keeps real variance), green across ×5 runs — and the `--frame` subprocess check did **not** hang this session.
 - **known pre-existing flake (not caused by this run):** `smoke.js` can intermittently hang at its
-  `observe.js --frame` subprocess check (two back-to-back smoke runs timed out this session, likely the
-  same cause), leaving orphaned node processes. Worth a future Repair.
+  `observe.js --frame` subprocess check, leaving orphaned node processes. Did not recur here; still worth a Repair.
 
-_previously:_ (2026-07-27, death-mark Build, visuals) view-only: death now leaves a mark by cause
-(warm=eaten/cool=starved/grey=aged); `speed` ~2.20 no ⚑; motes min 36–38 / mean 464–497; hunters min 12 /
-mean 72–91; biomass ~391–416; matter −0.0% HOLDING; grazers k=1; **regime surge-biased 57–78% vs ebb 0–27%
-(the complaint this run fixed)**; smoke 79 checks.
+_previously:_ (2026-07-28, detrend Build, observability) regime detrended, surge-bias gone (surge 7% /
+steady 92%, median `rel`→0); `speed` ~2.13–2.19 no ⚑; motes min 35 / mean ~504; hunters min 12 / mean ~81;
+biomass ~452; matter −0.0% HOLDING; grazers k=1; smoke 83 checks.
 
 ---
 
@@ -837,6 +850,40 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-07-29 — [Expedition] the herd learns to keep its distance (a `social` gene, and "safety in numbers" refuted)
+
+**Observed (the complaint):** the herd is behaviourally one-dimensional. After ~15 runs it has exactly two
+answers to a hunter — flee and hide — whose single optimum each world settles on, which is *why* every
+divergence attempt averages out; grazers are still ONE broad cloud (k=1, seed 3 shows only the old `size`
+BC⚑ hint). And a fresh unseeded low-predation draw had `sense` **pinned at its floor (⚑LO, 13.75)** — with
+no threat to detect and food easy, every grazer collapses onto the same cheap generalist. The world needed
+a genuinely new axis to act on. This was a mandatory-Expedition run (5th since the nutrient cycle) and the
+category rotation was overdue for ecology/behaviour, so I built one.
+
+**Built — and the reversal that named it.** A sixth heritable gene, `social`, and an O(n) neighbour grid
+(a spatial hash, reusable infra). The plan was **"safety in numbers":** motes flock, and predator DILUTION
+makes grouping a *third* anti-predator strategy. The world refused. I tested **five couplings** — bare
+dilution, a gated confusion effect, a fleeing murmuration, many-eyes vigilance, and lock-on disruption —
+and every one left gregariousness flat-to-selected-**against** under predation, because the hunter homes on
+the *nearest* prey: a crowd is a killing ground, and grouping raises your encounter rate faster than any
+confusion effect lowers your per-strike risk (forcing full schooling only starved the hunters to collapse).
+So I flipped the gene: `social < 0` is **WARY** — it steers a mote *away* from local density. That the world
+selects **hard**: under predation the herd evolves **−0.44 … −0.76** (Δ vs predator-free −0.5…−0.7, robust
+across seeds 3/7/11/19 + unseeded); remove the hunters and it relaxes to ~0. I then stripped all the refuted
+benefit machinery, so the wariness is the world's own honest verdict, not a tuned artifact.
+
+**What a visitor now sees.** Motes react to each other for the first time — each trails a **heading whisker
+tinted by sociability** (cool blue = wary, keeps its distance; warm orange = sociable; pale = neutral), and a
+soft **density shimmer** glows on the herd's packed knots — which, in this world, are the risky crowds the
+hunters cull, so you can watch them thin as the herd turns wary under predation and pool again in a lull.
+`observe.js` reports the new axis in [6]/[9] with a wary/sociable verdict and a **clumping index**. Honest
+limit: the gene is *quiet* in the raw texture (resource/flee clustering still packs the herd, index ~1.9–5×);
+the strong signal lives in the gene mean, and the tint/readout are what make it legible.
+
+**Verified.** No exceptions/NaN; populations oscillate healthily (motes ~455, hunters ~85, plants ~437,
+unseeded); matter **HOLDING** (−0.1%); no gene newly pinned; `smoke.js` **87 checks** (+4 sociability proofs)
+green ×5 seeds; `--frame` renders; zero runtime network calls. Neighbour query ~doubled tick cost (24s/20k).
 
 ### 2026-07-28 — [Build] detrend the regime baseline: an establishing tier reads "building ↑", not a false "surge"
 
@@ -1422,6 +1469,27 @@ Built the whole static page and the first working simulation from nothing: motes
 
 A garden, not a queue. Tags are the scope tier each idea probably wants; overrule them
 freely. Add two per run, at least one ambitious.
+
+- **[Build] Give the wary axis a live HUD chip and pair it in the split-test.** `social` is a strong,
+  live gene but it's only legible via the per-mote whisker tint and `observe.js`. Add a HUD chip beside
+  the regime/seed chips — "herd: wary −0.6 / sociable / neutral", mean sociability updated live — so a
+  browser visitor reads the new axis at a glance the way they read the predation regime. And extend
+  `observe.js --split-test` to report `social` alongside the lifestyle Δ, so the predation→wariness claim
+  becomes **paired-by-seed** (with-hunters vs without, same worlds) instead of the ad-hoc probe this run
+  used. Bounded, legibility + instrumentation; touches `index.html`/`updateHud` and the split-test printer.
+- **[Expedition] Make predation SPATIALLY patchy so the wary axis SPLITS within a world — a density-seeking
+  hunter and a k=2 along `social`** _(ambitious — every within-world split attempt has averaged out, and a
+  hunter that actively chases crowds might over-harvest and crash the prey)_. `social` is strongly selected
+  (wary under predation) but stays ONE cloud (k=1). Give it a reason to fracture: make the hunter a *visible*
+  density-seeker — steer it up the local prey-density gradient, not just at the nearest mote — so crowds are
+  causally, watchably lethal. Then in **cover-rich refuges** a small hider freezes and wariness is pointless
+  (you're hidden, not fleeing), while in the **open** wariness is the whole defence — two habitats, two
+  optima on `social` at once. Check `classifyMorphs` for a stable **k=2 along `social`** that collapses when
+  the density preference is switched off. Note for a future session: the *dilution/"safety in numbers"*
+  framing was tried five ways this run and is **refuted** — the hunter's density-seeking is exactly why
+  grouping never pays, so lean into it as the splitting force, don't fight it. Risk: over-harvest crashes
+  the tuned limit cycle, or spatial structure averages out yet again; needs its own smoke assertions and a
+  careful watch on the pyramid.
 
 - **[Build] Show the nutrient return at each death — a soil-bloom pulse where a body falls.** This run
   made *death* visible (marks by cause); the conserved-matter headline — "the dead feed the ground" — is

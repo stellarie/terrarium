@@ -275,6 +275,29 @@
     coverStrikeShield: 0.6,   // how much concealment also shrinks the catch radius (0..1),
                               // so a hidden mote is hard to grab even once a hunter is close
 
+    // Sociability (Arc III — The Great Divergence) — a heritable `social` gene, and the
+    // reversal that named it. It began as "safety in numbers": motes flock, and a dilution
+    // /confusion payoff was meant to make grouping a THIRD anti-predator strategy beside
+    // fleeing and hiding. The world refused. Across five couplings (bare dilution, a gated
+    // confusion effect, a fleeing murmuration, many-eyes vigilance, and lock-on disruption)
+    // gregariousness stayed flat-to-selected-AGAINST under predation — because the hunter is
+    // a density-seeker: it homes on the nearest prey, so a crowd is a killing ground, and
+    // grouping raises your encounter rate faster than any confusion effect lowers your per-
+    // strike risk. So the gene's ADAPTIVE direction is the mirror image: `social < 0` is
+    // WARY — it steers a mote away from local density, keeping its distance from the crowds
+    // that draw the cull; `social > 0` is sociable and clusters. Under predation the herd
+    // evolves wary (measured ≈ −0.5, robust across seeds); in a predator-lull it relaxes
+    // toward 0. A genuinely live, regime-set axis — quiet in the herd's texture (resource
+    // and flee dynamics dominate raw position) but strong at the gene, and now legible by
+    // tint and readout. See senseFlock()/the step() blend, and observe.js's social report.
+    socialCell: 20,           // px per neighbour bucket (20 divides 960×540 → 48×27). A 3×3
+                              // scan of these covers socialRadius, so the neighbour query is O(n).
+    socialRadius: 20,         // px: how close another mote has to be to register as a neighbour
+    socialSep: 8,             // px: closer than this, motes push apart regardless of gene (no stacking)
+    socialCohesion: 1.2,      // steer weight scaled by the SIGNED social gene: >0 pulls toward the
+                              // local centre of mass (cluster), <0 pushes away from it (keep distance)
+    socialSeparation: 1.4,    // gene-independent close-range spacing, so even a clusterer never piles up
+
     // Hunger-driven boldness — the recovery valve for a collapsing predator tier.
     // (Historically ~half of seeds fell into a "grazer haven" where hunters bled to a
     // handful, motes overpopulated, and the meadow was grazed bare — a prey-quality
@@ -465,6 +488,80 @@
   }
   const vegAtPoint = (x, y) => world.veg[cellIndex(x, y)];
 
+  // Neighbour grid — a coarser bucket grid than the veg cells, sized so a 3×3 scan of
+  // buckets covers socialRadius. Rebuilt each tick from the herd's positions (mote object
+  // refs), so the cohesion/avoidance/crowd query stays O(n) instead of the naive O(n²).
+  // Kept separate from the veg grid because the social scale (20px) is not the food scale.
+  const FLOCK = { cols: Math.ceil(W / CONFIG.socialCell), rows: Math.ceil(H / CONFIG.socialCell) };
+  FLOCK.n = FLOCK.cols * FLOCK.rows;
+  const flockBuckets = new Array(FLOCK.n);
+  for (let i = 0; i < FLOCK.n; i++) flockBuckets[i] = [];
+  function flockCell(x, y) {
+    let cx = Math.floor(x / CONFIG.socialCell);
+    let cy = Math.floor(y / CONFIG.socialCell);
+    cx = ((cx % FLOCK.cols) + FLOCK.cols) % FLOCK.cols;
+    cy = ((cy % FLOCK.rows) + FLOCK.rows) % FLOCK.rows;
+    return cy * FLOCK.cols + cx;
+  }
+  // Snapshot every mote into its flock bucket and freeze its start-of-tick position, so
+  // neighbour reads during the loop are consistent even as motes move and splice. Called
+  // once at the top of each step() before the herd moves. Returns nothing; fills buckets.
+  function rebuildFlock() {
+    for (let i = 0; i < FLOCK.n; i++) flockBuckets[i].length = 0;
+    const ms = world.motes;
+    for (let i = 0; i < ms.length; i++) {
+      const m = ms[i];
+      m._px = m.x; m._py = m.y;                    // frozen reference position for this tick
+      flockBuckets[flockCell(m.x, m.y)].push(m);
+    }
+  }
+  // Scan the 3×3 neighbour-cell neighbourhood of mote m and fill two outputs on `_flock`:
+  // `crowd` (neighbours within socialRadius — the density signal, for the tint and readout)
+  // and a steer (`sx`,`sy`) blending the SIGNED cohesion (>0 toward the crowd, <0 away from
+  // it — wariness) with gene-independent close-range separation. Reads frozen positions
+  // (_px/_py). No RNG, so it never perturbs the seedable stream.
+  const _flock = { crowd: 0, sx: 0, sy: 0 };
+  function senseFlock(m) {
+    const R2 = CONFIG.socialRadius * CONFIG.socialRadius;
+    const SEP2 = CONFIG.socialSep * CONFIG.socialSep;
+    let crowd = 0, cx = 0, cy = 0, ncoh = 0, rx = 0, ry = 0;
+    const bcx = Math.floor(m.x / CONFIG.socialCell);
+    const bcy = Math.floor(m.y / CONFIG.socialCell);
+    for (let oy = -1; oy <= 1; oy++) {
+      for (let ox = -1; ox <= 1; ox++) {
+        let gx = ((bcx + ox) % FLOCK.cols + FLOCK.cols) % FLOCK.cols;
+        let gy = ((bcy + oy) % FLOCK.rows + FLOCK.rows) % FLOCK.rows;
+        const bucket = flockBuckets[gy * FLOCK.cols + gx];
+        for (let k = 0; k < bucket.length; k++) {
+          const p = bucket[k];
+          if (p === m) continue;
+          let dx = p._px - m.x; if (dx > HW) dx -= W; else if (dx < -HW) dx += W;
+          let dy = p._py - m.y; if (dy > HH) dy -= H; else if (dy < -HH) dy += H;
+          const d2 = dx * dx + dy * dy;
+          if (d2 > R2) continue;
+          crowd++;
+          cx += dx; cy += dy; ncoh++;              // toward the local centre of mass
+          if (d2 < SEP2 && d2 > 0) {               // too close: steer away, harder when nearer
+            const w = (SEP2 - d2) / SEP2;
+            const inv = w / Math.sqrt(d2);
+            rx -= dx * inv; ry -= dy * inv;
+          }
+        }
+      }
+    }
+    // a signed cohesion unit vector toward the centroid — the gene's sign flips it: a
+    // sociable mote (social>0) steers into the crowd, a wary one (social<0) steers out of
+    // it. Separation is gene-independent, so even a clusterer never stacks bodies.
+    let sx = 0, sy = 0;
+    if (ncoh > 0) {
+      const clen = Math.sqrt(cx * cx + cy * cy);
+      if (clen > 0) { sx = (cx / clen) * m.g.social * CONFIG.socialCohesion; sy = (cy / clen) * m.g.social * CONFIG.socialCohesion; }
+    }
+    sx += rx * CONFIG.socialSeparation; sy += ry * CONFIG.socialSeparation;
+    _flock.crowd = crowd; _flock.sx = sx; _flock.sy = sy;
+    return _flock;
+  }
+
   // A genome's intrinsic capacity to hide, in [0, 1] — its *lifestyle*, independent of
   // where it is standing. Hiding needs a small body (inconspicuous) AND a slow gene
   // (able to hold still — motion gives you away). 1 = a perfect hider genotype, 0 = a
@@ -576,6 +673,7 @@
         sense: rand(24, 70),
         metabo: rand(0.8, 1.3),
         hue: rand(120, 200),
+        social: rand(-0.3, 0.5),   // sociability: <0 herd-averse (spaces out), >0 herd-seeking
       };
     }
     return {
@@ -584,6 +682,7 @@
       sense: mutate(parent.sense, 8, 12, 120),
       metabo: mutate(parent.metabo, 0.12, 0.6, 1.8),
       hue: mutate(parent.hue, 12, 0, 359),
+      social: mutate(parent.social, 0.1, -1.0, 1.2),
     };
   }
 
@@ -864,10 +963,11 @@
   // "speciation!" is worthless. Only a real valley between two substantial clusters
   // counts. Pure measurement — nothing in the economy ever reads world.morphs back.
   const MORPH_GENES = [
-    { key: "speed",  lo: 0.25, hi: 2.6,  hiName: "swift",  loName: "slow"    },
-    { key: "size",   lo: 1.6,  hi: 6.5,  hiName: "large",  loName: "small"   },
-    { key: "sense",  lo: 12,   hi: 120,  hiName: "keen",   loName: "dull"    },
-    { key: "metabo", lo: 0.6,  hi: 1.8,  hiName: "greedy", loName: "thrifty" },
+    { key: "speed",  lo: 0.25, hi: 2.6,  hiName: "swift",      loName: "slow"     },
+    { key: "size",   lo: 1.6,  hi: 6.5,  hiName: "large",      loName: "small"    },
+    { key: "sense",  lo: 12,   hi: 120,  hiName: "keen",       loName: "dull"     },
+    { key: "metabo", lo: 0.6,  hi: 1.8,  hiName: "greedy",     loName: "thrifty"  },
+    { key: "social", lo: -1.0, hi: 1.2,  hiName: "sociable",   loName: "wary"     },
   ];
   const MORPH = {
     minPop: 30,        // fewer grazers than this: don't presume to name morphs
@@ -1172,10 +1272,18 @@
     sowSeeds();
     decayGraze();
 
+    // bucket the herd for this tick so cohesion and crowd-counting stay cheap
+    rebuildFlock();
+
     const newborns = [];
     for (let i = world.motes.length - 1; i >= 0; i--) {
       const m = world.motes[i];
       m.age++;
+
+      // how many neighbours are pressed close right now (the density the tint/readout show)
+      // and the signed cohesion/avoidance steer this mote will fold into its foraging
+      const fl = senseFlock(m);
+      m._crowd = fl.crowd;
 
       // fear first: if a hunter is within this mote's perception, flee straight away
       // from the nearest one — survival overrides grazing. The fear radius is the mote's
@@ -1200,7 +1308,7 @@
         if (concealment(m) >= CONFIG.coverFreeze) {
           hiding = true;                            // hunker down and stay hidden
         } else {
-          m.dir = torusAngle(thx, thy, m.x, m.y);   // bearing away from the hunter
+          m.dir = torusAngle(thx, thy, m.x, m.y);   // bolt straight away from the hunter
         }
       } else {
         // steer toward the greenest direction within sense range (chemotaxis):
@@ -1214,7 +1322,16 @@
           if (val > bestVal) { bestVal = val; bestDir = a; }
         }
         if (bestDir >= 0) m.dir = bestDir;
-        else if (rng() < 0.08) m.dir += rand(-0.6, 0.6); // idle wander
+        else if (rng() < 0.08) m.dir += rand(-0.6, 0.6); // idle wander (unchanged)
+        // then fold the social steer (signed cohesion/avoidance + separation) onto that
+        // heading WITHOUT erasing the forage/idle choice: foraging is the unit baseline, the
+        // social pull a nudge. With no neighbours in range fl is zero and the heading is
+        // byte-identical to the old forage-only world, so the tuned economy shifts only as
+        // the gene evolves — wary under predation, near-neutral in a lull.
+        if (fl.sx !== 0 || fl.sy !== 0) {
+          const dx = Math.cos(m.dir) + fl.sx, dy = Math.sin(m.dir) + fl.sy;
+          if (dx !== 0 || dy !== 0) m.dir = Math.atan2(dy, dx);
+        }
       }
 
       // move — a bolting mote sprints (and pays for it in the burn below); a hiding
@@ -1486,6 +1603,17 @@
     for (const m of world.motes) {
       const glow = clamp(m.energy / CONFIG.reproEnergy, 0.25, 1);
       const H = hideability(m.g);                       // 1 = hider, 0 = fleer
+      // density shimmer: a mote pressed among neighbours casts a soft halo that deepens
+      // with its local crowd, so the herd's dense knots glow and open ground stays dark —
+      // and in this world those bright knots are the risky crowds the hunters cull, so you
+      // can watch them thin as the herd turns wary under predation and pool again in a lull
+      const crowd = m._crowd || 0;
+      if (crowd > 1) {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.g.size + 3 + crowd * 0.7, 0, TAU);
+        ctx.fillStyle = `hsl(205 60% 66% / ${clamp(crowd * 0.018, 0, 0.13).toFixed(3)})`;
+        ctx.fill();
+      }
       // saturation carries the metabolic life-history: a thrifty grazer (low metabo) is
       // pale and washed-out, a hot fast-burner is vividly saturated — the fast/slow axis
       // made visible, on a channel that doesn't fight the hue gene or the lifestyle ring
@@ -1504,11 +1632,18 @@
       ctx.arc(m.x, m.y, m.g.size + 1.6, 0, TAU);
       ctx.stroke();
       ctx.lineWidth = 1;
-      // a little heading whisker
-      ctx.strokeStyle = `hsl(${m.g.hue.toFixed(0)} 65% 72% / 0.5)`;
+      // heading whisker, tinted by SOCIABILITY so the quiet third axis reads per mote: a
+      // wary mote (social<0, keeps its distance) trails a cool blue whisker, a sociable one
+      // (social>0, seeks the crowd) a warm orange one, neutral a plain pale line. Length
+      // grows a touch with the gene's conviction, so a committed loner reads as a long cool dart.
+      const soc = clamp(m.g.social / 1.0, -1, 1);          // −1 wary … +1 sociable
+      const whHue = soc < 0 ? 210 : 30;                    // cool for wary, warm for sociable
+      const whSat = (20 + 55 * Math.abs(soc)).toFixed(0);  // pale at neutral, vivid at an extreme
+      ctx.strokeStyle = `hsl(${whHue} ${whSat}% 70% / 0.55)`;
+      const whLen = m.g.size + 3 + Math.abs(soc) * 2.5;
       ctx.beginPath();
       ctx.moveTo(m.x, m.y);
-      ctx.lineTo(m.x + Math.cos(m.dir) * (m.g.size + 3), m.y + Math.sin(m.dir) * (m.g.size + 3));
+      ctx.lineTo(m.x + Math.cos(m.dir) * whLen, m.y + Math.sin(m.dir) * whLen);
       ctx.stroke();
     }
 
@@ -2124,6 +2259,7 @@
       draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
       concealment, hideability, metaboIntakeMult, huntMetaboMult, sprintDrag, predationShare, cellIndex,
+      rebuildFlock, senseFlock,
     };
   }
 })();
