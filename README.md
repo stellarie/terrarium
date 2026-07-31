@@ -118,9 +118,12 @@ experiment in safety-in-numbers — but the world overturned the idea. Because a
 **nearest** prey, a dense crowd is a killing ground, not a shelter: grouping raises your chance of
 being the one caught faster than any confusion of numbers lowers it. So under predation the herd
 evolves the opposite instinct — **wariness**, keeping its distance from the crowds that draw the
-cull — and relaxes back toward indifference only when the hunters thin. You can read it two ways:
-each mote trails a **heading whisker tinted by its sociability** (cool blue for a wary loner, warm
-orange for a joiner, pale for the neutral middle), and the herd's densest knots wear a soft
+cull — and relaxes back toward indifference only when the hunters thin. You can read it three ways:
+a **`herd` chip** in the HUD names the whole herd's temperament at a glance — `wary −0.45` in cool
+blue, `sociable` in warm orange, `neutral` in grey — deepening and cooling as a cull presses and
+easing back toward neutral in a lull, exactly the way the regime chip reads the predation cycle. Up
+close, each mote trails a **heading whisker tinted by its sociability** (cool blue for a wary loner,
+warm orange for a joiner, pale for the neutral middle), and the herd's densest knots wear a soft
 **shimmer** — the very crowds the hunters pick apart, so you can watch them fray as the herd turns
 wary and pool again in a lull. It is a quiet trait in the herd's raw texture (food and flight still
 pack the motes together), but a strong one at the gene: another axis, set by the predators, for the
@@ -179,7 +182,8 @@ population to move along.
 - The **HUD** shows tick, motes, hunters, plant biomass, births, and deaths **split by
   cause** — **eaten** (predation), **starved** (hunger), and **aged** (hunters lost to old
   age, so the tier's turnover is a number you can watch climb) — plus the **morph** count,
-  the **regime**, the seasonal growth multiplier, and this world's **seed** — its name.
+  the **herd** temperament (mean sociability: `wary` / `neutral` / `sociable`, colour-matched
+  to the whiskers), the **regime**, the seasonal growth multiplier, and this world's **seed** — its name.
 
 ### Every world has a name
 
@@ -225,7 +229,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 79 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 88 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -311,8 +315,11 @@ node observe.js --split-test          # or: node observe.js --split-test 8 20000
 The answer is clear: predation pushes the herd hard toward the fleer end (mean grazer speed
 ~1.5–1.9 with hunters vs ~0.8–0.9 without, and **every matched pair** moves that way), and the
 fast fleer is **predation-only** — remove the predators and every world collapses to slow, cheap
-hiders. (What predation does *not* do is make two lifestyles coexist *within one* world — each
-world still settles on a single answer. See the journal for that open thread.)
+hiders. It also reports the **sociability** axis the same paired way, and the result is just as
+clean: **every matched pair evolves a warier herd with hunters** (mean sociability negative with
+predators, ~neutral without) — so the "predation → wariness" story is a reproducible A/B, not a
+remembered one. (What predation does *not* do is make two lifestyles coexist *within one* world —
+each world still settles on a single answer. See the journal for that open thread.)
 
 ### See it — render a frame to a PNG
 
@@ -349,7 +356,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 79 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 88 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -367,12 +374,32 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, an 83-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, an 88-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the regime readout stopped crying wolf.** Every fresh world spends its first tens of
+Newest: **the herd's temperament is legible at a glance now.** The last change gave motes a
+sociability gene that evolves toward **wariness** under predation — but that headline lived only
+in a headless report and a faint per-mote whisker; a visitor opening the page saw nothing of it.
+Now a **`herd` chip** in the HUD names the whole herd's mean sociability, worded and colour-matched
+to the whiskers — `wary −0.45` in cool blue, `sociable` in warm orange, `neutral` in grey — and it
+deepens and cools as a cull presses, easing back toward neutral in a lull, so the wariness axis is
+finally as readable as the predation regime it answers to. The headless side got the matching
+instrument: `observe.js --split-test` now reports sociability **paired by seed**, and its first
+reading was unanimous — **every world evolves a warier herd with hunters than without** — so the
+predation→wariness claim is reproducible, not remembered. Pure legibility: nothing in the ecology
+reads the chip back, so the same seed still replays byte-identical.
+
+Before that: **the herd learned to keep its distance.** A sixth heritable gene, **sociability**, and
+the motes began reacting to *each other* for the first time. It started as an experiment in
+safety-in-numbers, and the world refuted it: because a hunter homes on the **nearest** prey, a dense
+crowd is a killing ground, not a shelter. So the herd evolves the mirror instinct — **wariness**,
+spacing out from the crowds that draw the cull under predation and relaxing back only when the hunters
+thin. It's a strong axis at the gene though a quiet one in the herd's raw texture (food and flight
+still pack the motes together). See *The wary herd* above for the full picture.
+
+Before that: **the regime readout stopped crying wolf.** Every fresh world spends its first tens of
 thousands of ticks with its predator tier *establishing* — a slow, steady climb — and the readout
 used to mistake that climb for a perpetual **surge**, leaning the whole meadow's light warm through
 minutes of ordinary establishment, because a rising series always sits above its own trailing

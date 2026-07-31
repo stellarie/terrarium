@@ -2110,6 +2110,7 @@
     eaten: document.getElementById("s-eaten"),
     aged: document.getElementById("s-aged"),      // hunters lost to old age (senescence turnover)
     morphs: document.getElementById("s-morphs"),
+    herd: document.getElementById("s-herd"),      // mean sociability — the wary↔sociable axis, live
     regime: document.getElementById("s-regime"),
     season: document.getElementById("s-season"),
     seed: document.getElementById("s-seed"),
@@ -2133,6 +2134,17 @@
     if (r.building < 0)          return { text: "thinning ↓", color: "#6ca8a0" };
     return { text: "steady", color: "#e0b04a" };
   }
+  // herd sociability readout: the mean of the third grazer axis, worded and colour-matched
+  // to the per-mote whisker (cool blue = wary, warm orange = sociable, pale = neutral). Under a
+  // density-seeking hunter the herd evolves WARY (steers apart); lift predation and it relaxes
+  // toward 0. mean=null (no motes, mid-reseed) reads "—" rather than a phantom number.
+  function herdDisplay(mean) {
+    if (mean == null || !Number.isFinite(mean)) return { text: "—", color: "#8ba3b8" };
+    const num = (mean >= 0 ? "+" : "−") + Math.abs(mean).toFixed(2);
+    if (mean <= -0.15) return { text: `wary ${num}`, color: "#5f9fd6" };
+    if (mean >= 0.15)  return { text: `sociable ${num}`, color: "#e0a04a" };
+    return { text: `neutral ${num}`, color: "#9aa7b0" };
+  }
   function updateHud() {
     el.tick.textContent = world.tick;
     el.pop.textContent = world.motes.length;
@@ -2145,6 +2157,23 @@
     // morph readout: "1" for a single cloud, "2 · keen∙dull" when the pool has split
     const mo = world.morphs;
     el.morphs.textContent = mo.k >= 2 && mo.gene ? `${mo.k} · ${morphAxisLabel(mo.gene)}` : String(mo.k);
+    // herd wariness readout: mean sociability over the live grazers, at a glance like the regime.
+    // The last Expedition's headline (predation → WARY) lived only in observe.js and a faint
+    // per-mote whisker; this makes it legible in the browser without squinting at individuals.
+    if (el.herd) {
+      const n = world.motes.length;
+      let mean = null;
+      if (n > 0) { let s = 0; for (const m of world.motes) s += m.g.social; mean = s / n; }
+      const hd = herdDisplay(mean);
+      el.herd.textContent = hd.text;
+      el.herd.style.color = hd.color;
+      el.herd.title = mean == null
+        ? "no grazers to read"
+        : `mean sociability ${mean.toFixed(2)} of [-1.00 … +1.20] — ${
+            mean <= -0.15 ? "the herd keeps its distance (wary), the anti-predator strategy that pays against a hunter which homes on the densest prey"
+            : mean >= 0.15 ? "the herd seeks the crowd (sociable)"
+            : "no strong pull either way (neutral)"}`;
+    }
     // regime readout: where the world sits in its predation cycle, colour-coded, with
     // the full sentence tucked into the tooltip for anyone who hovers it
     if (el.regime) {

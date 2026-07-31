@@ -639,14 +639,14 @@ function runOneWorld(ticks, sd) {
   try { seed(sd); for (let t = 0; t < ticks; t++) step(); }
   catch (e) { threw = e; }
   const pop = world.motes, n = pop.length || 1;
-  let sp = 0, sz = 0, se = 0, Hs = 0, hid = 0, fle = 0;
+  let sp = 0, sz = 0, se = 0, so = 0, Hs = 0, hid = 0, fle = 0;
   for (const m of pop) {
-    sp += m.g.speed; sz += m.g.size; se += m.g.sense;
+    sp += m.g.speed; sz += m.g.size; se += m.g.sense; so += m.g.social;
     const Hh = hideability(m.g); Hs += Hh;
     if (Hh > 0.55) hid++; else if (Hh < 0.20) fle++;
   }
   const cls = classifyMorphs(pop);
-  return { threw, n: pop.length, speed: sp / n, size: sz / n, sense: se / n,
+  return { threw, n: pop.length, speed: sp / n, size: sz / n, sense: se / n, social: so / n,
            H: Hs / n, hiderPct: (100 * hid) / n, fleerPct: (100 * fle) / n,
            k: cls.k, gene: cls.gene, hunters: world.hunters.length };
 }
@@ -683,26 +683,26 @@ function splitTest(seeds, ticks) {
     CONFIG.hunterStart = baseStart; CONFIG.hunterReseedPrey = baseReseed;  // reset to baseline
     cond.setup();
     console.log(`\n  ${cond.name}`);
-    console.log("  seed   n   speed  size  sense    H   hider%  fleer%  morphs   hunters");
+    console.log("  seed   n   speed  size  sense  social    H   hider%  fleer%  morphs   hunters");
     const rows = [];
     for (let s = 0; s < seeds; s++) {
       const r = runOneWorld(ticks, s + 1);   // the same seed list in both conditions
       rows.push(r);
       const morph = r.k >= 2 ? `2·${r.gene || "?"}` : "1";
       console.log(`  ${pz(s + 1, 3)} ${pz(r.n, 5)}  ${pz(f2(r.speed), 5)} ${pz(f2(r.size), 5)} ` +
-        `${pz(f2(r.sense), 5)} ${pz(f2(r.H), 5)}  ${pz(r.hiderPct.toFixed(0), 5)}  ${pz(r.fleerPct.toFixed(0), 5)}  ` +
+        `${pz(f2(r.sense), 5)} ${pz(f2(r.social), 6)} ${pz(f2(r.H), 5)}  ${pz(r.hiderPct.toFixed(0), 5)}  ${pz(r.fleerPct.toFixed(0), 5)}  ` +
         `${morph.padEnd(6)}  ${pz(r.hunters, 5)}${r.threw ? "  THREW" : ""}`);
     }
     const spd = rows.map((r) => r.speed);
     const mean = (f) => rows.reduce((s, r) => s + f(r), 0) / rows.length;
     summary[cond.name] = {
       rows, spdMin: Math.min(...spd), spdMax: Math.max(...spd),
-      meanSpeed: mean((r) => r.speed), meanH: mean((r) => r.H),
+      meanSpeed: mean((r) => r.speed), meanH: mean((r) => r.H), meanSocial: mean((r) => r.social),
       morph2: rows.filter((r) => r.k >= 2).length,
     };
     const su = summary[cond.name];
     console.log(`  → mean speed ${f2(su.meanSpeed)} (range ${f2(su.spdMin)}–${f2(su.spdMax)})  ·  ` +
-      `mean hideability ${f2(su.meanH)}  ·  within-world 2-morph ${su.morph2}/${seeds}`);
+      `mean hideability ${f2(su.meanH)}  ·  mean social ${f2(su.meanSocial)}  ·  within-world 2-morph ${su.morph2}/${seeds}`);
   }
   CONFIG.hunterStart = baseStart; CONFIG.hunterReseedPrey = baseReseed;  // restore
 
@@ -716,20 +716,29 @@ function splitTest(seeds, ticks) {
   console.log(`   • predation & hiding: mean hideability ${f2(wH.meanH)} WITH vs ${f2(nH.meanH)} without — ` +
     `${nH.meanH > wH.meanH + 0.05 ? "without a predator to outrun, grazers default to the small-slow hider genotype" :
       "similar"}.`);
+  console.log(`   • predation & WARINESS: mean sociability ${f2(wH.meanSocial)} WITH vs ${f2(nH.meanSocial)} without — ` +
+    `${nH.meanSocial > wH.meanSocial + 0.1 ? "predators make the herd WARY (it spaces out); remove them and it relaxes toward neutral" :
+      "no clear wariness signal this sweep (short run? add ticks/seeds)"}.`);
   // The paired reading: the same seed, with and without predators. A spread across
   // unrelated worlds could always be blamed on the worlds; a matched difference can't.
   {
     const pairs = wH.rows.map((r, i) => ({
       sd: i + 1, dSpeed: r.speed - nH.rows[i].speed, dH: r.H - nH.rows[i].H,
+      dSocial: r.social - nH.rows[i].social,
     }));
     const faster = pairs.filter((p) => p.dSpeed > 0).length;
     const hidesLess = pairs.filter((p) => p.dH < 0).length;
+    const warier = pairs.filter((p) => p.dSocial < 0).length;
     const mean = (f) => pairs.reduce((s, p) => s + f(p), 0) / pairs.length;
     console.log(`   • PAIRED (same seed, ± predators): ${faster}/${seeds} worlds evolve a FASTER herd with hunters ` +
       `(mean Δspeed ${f2(mean((p) => p.dSpeed))}), ${hidesLess}/${seeds} a LESS hideable one ` +
       `(mean Δhideability ${f2(mean((p) => p.dH))}) — ${faster >= Math.ceil(seeds * 0.75) ?
         "a consistent within-world effect, not a spread across lucky draws" :
         "an inconsistent effect — the direction is not reliable seed by seed"}.`);
+    console.log(`   • PAIRED wariness: ${warier}/${seeds} worlds evolve a WARIER herd with hunters ` +
+      `(mean Δsocial ${f2(mean((p) => p.dSocial))}) — ${warier >= Math.ceil(seeds * 0.75) ?
+        "predation drives the wary axis within-world, not just across lucky draws (the sociability Expedition's claim, now paired)" :
+        "an inconsistent effect — the wariness direction is not reliable seed by seed"}.`);
   }
   console.log(`   • predation & COEXISTENCE (the arc's hypothesis): within-world 2-morph splits ` +
     `${wH.morph2}/${seeds} WITH vs ${nH.morph2}/${seeds} without — ${wH.morph2 > nH.morph2 ?
