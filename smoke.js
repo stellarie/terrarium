@@ -383,6 +383,34 @@ check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.st
 check(String(document.getElementById("s-aged").textContent) === String(world.hunterAged),
       `HUD 'aged' chip carries the hunter old-age toll (${document.getElementById("s-aged").textContent} == ${world.hunterAged})`);
 
+// the HUD gained a 'herd' chip: the live mean sociability, WORDED (wary / neutral /
+// sociable) and signed, so a browser visitor reads the wary↔sociable axis at a glance the
+// way they read the regime — the last Expedition's headline gene, previously legible only
+// headlessly. The shim invents a stub for any id, so presence proves nothing — drive all
+// three worded branches (and the empty-herd "—") through the REAL updateHud and read the
+// chip back, proving sim writes the correct word AND number, not just that an element exists.
+{
+  const herdEl = document.getElementById("s-herd");
+  const realMotes = world.motes;
+  const synth = (soc, n) => Array.from({ length: n }, () => ({ g: { social: soc } }));
+  const cases = [
+    { motes: synth(-0.50, 10), want: "wary −0.50" },     // ≤ −0.15 → wary, unicode-minus number
+    { motes: synth(0.00, 10),  want: "neutral +0.00" },        // in the neutral band
+    { motes: synth(0.50, 10),  want: "sociable +0.50" },       // ≥ +0.15 → sociable
+    { motes: [],               want: "—" },               // no grazers → em-dash
+  ];
+  let herdBad = null;
+  for (const c of cases) {
+    world.motes = c.motes;
+    updateHud();
+    if (String(herdEl.textContent) !== c.want) herdBad = `got "${herdEl.textContent}", want "${c.want}"`;
+  }
+  world.motes = realMotes;
+  updateHud();
+  check(!herdBad, herdBad ? `HUD 'herd' chip wrong: ${herdBad}`
+    : "HUD 'herd' chip words the mean sociability correctly (wary / neutral / sociable / — signed)");
+}
+
 // senescence must stay LIVE and lethal to the ancient — the fix for the hunter
 // gerontocracy. A single stochastic run can't guarantee a natural old-age death (a hard
 // collapse can starve every hunter before its prime ends), so prove the mechanism
