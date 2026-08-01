@@ -154,6 +154,17 @@ check(world.history.length > 10, `history buffer filled for the charts (${world.
   check(hFinite > 0, `hunter curves have real data to plot (${hFinite} samples with hunters, ${hNull} empty)`);
 }
 
+// social axis on the trait chart: every history sample carries a finite, in-range social mean
+{
+  const SOCIAL_LO = -1.0, SOCIAL_HI = 1.2;
+  let sBad = false;
+  for (const s of world.history) {
+    if (!("social" in s) || !finite(s.social) || s.social < SOCIAL_LO || s.social > SOCIAL_HI)
+      sBad = true;
+  }
+  check(!sBad, `social gene mean recorded in every history sample (in [${SOCIAL_LO}, ${SOCIAL_HI}])`);
+}
+
 // concealment (Arc III): a mote hides from hunters only when it is small AND slow AND
 // standing on dense vegetation — the trade-off that lets predation split the herd into
 // hiders and fleers. Test the mechanic deterministically by planting motes on a cell
