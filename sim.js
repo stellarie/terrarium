@@ -370,9 +370,10 @@
   // Traits plotted on the live chart, each normalized to its full genetic range
   // (the mutation clamp bounds) so three very different scales share one axis.
   const TRAITS = [
-    { key: "speed", label: "speed", color: "#f4a259", lo: 0.25, hi: 2.6 },
-    { key: "size",  label: "size",  color: "#7fd1c1", lo: 1.6,  hi: 6.5 },
-    { key: "sense", label: "sense", color: "#a78bfa", lo: 12,   hi: 120 },
+    { key: "speed",  label: "speed",  color: "#f4a259", lo: 0.25, hi: 2.6  },
+    { key: "size",   label: "size",   color: "#7fd1c1", lo: 1.6,  hi: 6.5  },
+    { key: "sense",  label: "sense",  color: "#a78bfa", lo: 12,   hi: 120  },
+    { key: "social", label: "social", color: "#60a5fa", lo: -1.0, hi: 1.2  },
   ];
 
   // The same three genes for the *hunter* pool, drawn as dashed lines over the same
@@ -1186,11 +1187,12 @@
   // and the raw population/biomass counts (for the boom-and-bust chart).
   function sample() {
     const n = world.motes.length;
-    let speed = 0, size = 0, sense = 0;
+    let speed = 0, size = 0, sense = 0, social = 0;
     for (const m of world.motes) {
       speed += m.g.speed;
       size += m.g.size;
       sense += m.g.sense;
+      social += m.g.social;
     }
     const inv = n > 0 ? 1 / n : 0;
     // hunter gene means, tracked so the predator pool has its own curves on the
@@ -1214,6 +1216,7 @@
       speed: speed * inv,
       size: size * inv,
       sense: sense * inv,
+      social: social * inv,   // mean grazer sociability — <0 wary, >0 sociable
       hspeed: hn > 0 ? hspeed * hinv : null,
       hsize: hn > 0 ? hsize * hinv : null,
       hsense: hn > 0 ? hsense * hinv : null,
@@ -1919,20 +1922,21 @@
     const fmt = (v) => (v == null ? "–" : v.toFixed(v >= 10 ? 0 : 2));
     let lx = padL;
     for (let gi = 0; gi < TRAITS.length; gi++) {
-      const t = TRAITS[gi], ht = HUNTER_TRAITS[gi];
+      const t = TRAITS[gi];
+      const ht = gi < HUNTER_TRAITS.length ? HUNTER_TRAITS[gi] : null;
       cctx.fillStyle = t.color;
       cctx.fillRect(lx, padT / 2 - 4, 8, 8);
       lx += 12;
       const g = latest ? latest[t.key] : null;
-      const h = latest ? latest[ht.key] : null;
-      const text = `${t.label} ${fmt(g)}·${fmt(h)}`;
+      const h = (ht && latest) ? latest[ht.key] : null;
+      const text = ht ? `${t.label} ${fmt(g)}·${fmt(h)}` : `${t.label} ${fmt(g)}`;
       cctx.fillStyle = "#cdd8e4";
       cctx.fillText(text, lx, padT / 2);
       lx += cctx.measureText(text).width + 16;
     }
     // trailing key so the dashed lines aren't a mystery
     cctx.fillStyle = "#6b7d8f";
-    cctx.fillText(hist.length <= 1 ? "gathering data…" : "grazer·hunter", lx, padT / 2);
+    cctx.fillText(hist.length <= 1 ? "gathering data…" : "grazer·hunter (social: grazer)", lx, padT / 2);
   }
 
   // ---- trophic cascade chart ----------------------------------------------
