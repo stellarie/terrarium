@@ -131,12 +131,15 @@ population to move along.
 
 ## Watch it evolve
 
-- A **live trait chart** plots the population-average speed, size, and sense over time for
-  **both** species — grazers as solid lines, hunters as dashed lines — each normalized to its
-  own genetic range, so the coevolutionary arms race reads on both sides at once. Watch **both**
-  sets of curves climb — as the solid grazer lines escalate speed, the dashed predator lines now
-  chase them, a genuine reciprocal spiral. (Earlier versions had near-immortal hunters whose curves
-  sat frozen; senescence gave the tier turnover, so its genes finally move.)
+- A **live trait chart** plots the population-average speed, size, sense, and **sociability**
+  over time for **both** species — grazers as solid lines, hunters as dashed lines — each
+  normalized to its own genetic range, so the coevolutionary arms race reads on both sides at
+  once. Watch **both** sets of curves climb — as the solid grazer lines escalate speed, the
+  dashed predator lines now chase them, a genuine reciprocal spiral. And now the **social line**
+  dives as predation pressure builds and relaxes in a lull — you can watch the herd *learn to
+  keep its distance* as a curve, not just read it on the HUD chip. (Earlier versions had
+  near-immortal hunters whose curves sat frozen; senescence gave the tier turnover, so its
+  genes finally move.)
 - A **trophic-cascade chart** plots plants, motes and hunters together — each scaled to its
   own peak, so you can watch a bloom ripple up the food chain with a lag at every tier.
 - A **death-balance chart** asks *what is killing the herd right now* — a diverging band that
@@ -229,7 +232,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 88 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 89 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -356,7 +359,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 88 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 89 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -379,17 +382,21 @@ onto the hidden landscape, a conserved **nutrient cycle**, an 88-check headless 
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the herd's temperament is legible at a glance now.** The last change gave motes a
-sociability gene that evolves toward **wariness** under predation — but that headline lived only
-in a headless report and a faint per-mote whisker; a visitor opening the page saw nothing of it.
-Now a **`herd` chip** in the HUD names the whole herd's mean sociability, worded and colour-matched
-to the whiskers — `wary −0.45` in cool blue, `sociable` in warm orange, `neutral` in grey — and it
-deepens and cools as a cull presses, easing back toward neutral in a lull, so the wariness axis is
-finally as readable as the predation regime it answers to. The headless side got the matching
-instrument: `observe.js --split-test` now reports sociability **paired by seed**, and its first
-reading was unanimous — **every world evolves a warier herd with hunters than without** — so the
-predation→wariness claim is reproducible, not remembered. Pure legibility: nothing in the ecology
-reads the chip back, so the same seed still replays byte-identical.
+Newest: **the wariness axis has a history now.** The `social` gene — the strongest-drifting
+gene in the world — joins the trait chart as a fourth grazer line (cool blue, normalized over
+its [−1, 1.2] clamp). A visitor who opens the page can now watch the herd's wariness *evolve*
+as a curve: the line starts near zero with the founding generation, then dives toward −0.5 as
+predation pressure builds and the herd learns to space out, and eases back toward neutral in a
+lull. The chip reads the herd's temperament *now*; the chart reads how it got there. The legend
+adapts: `social` has no hunter counterpart so it shows as `social −0.45` without the
+`·hunter` pair. One new smoke check confirms every history sample carries a finite in-range
+`social` mean (89 total).
+
+Before that: **the herd's temperament is legible at a glance.** A **`herd` chip** in the HUD
+names the whole herd's mean sociability, worded and colour-matched to the per-mote whiskers —
+`wary −0.45` in cool blue, `sociable` in warm orange, `neutral` in grey — and `observe.js
+--split-test` reports sociability **paired by seed** (3/3 worlds evolve a warier herd with
+hunters than without). See *The wary herd* above.
 
 Before that: **the herd learned to keep its distance.** A sixth heritable gene, **sociability**, and
 the motes began reacting to *each other* for the first time. It started as an experiment in
