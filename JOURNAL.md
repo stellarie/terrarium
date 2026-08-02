@@ -288,9 +288,10 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **2** — the sociability Expedition (2026-07-29) was the reset; the
-wariness-legibility Build (07-31, UI/instrumentation) was first; this social-on-chart Build (08-01,
-dataviz) is second. Next Expedition becomes mandatory 3 runs from now.
+_Runs since the last Expedition:_ **3** — the sociability Expedition (2026-07-29) was the reset; the
+wariness-legibility Build (07-31, UI/instrumentation) was first; the social-on-chart Build (08-01,
+dataviz) was second; this smooth-meadow Build (08-02, visuals) is third. Next Expedition becomes
+mandatory 2 runs from now.
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -302,34 +303,25 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-01 — the social-on-chart Build (dataviz).** Readings: `observe.js` 20k
-unseeded ×2 + seed 3; `--split-test 3 10000`; `smoke.js` ×3 clean. This run added `social` to the
-history sample and trait chart — **pure chart extension** (nothing reads the field back) — so the economy
-is byte-identical to 07-31. Tick cost ~24–26s/20k.
+**Last observed: 2026-08-02 — the smooth-meadow Build (visuals).** Readings: `observe.js` seed 3 ×10k;
+`smoke.js` ×3 clean. This run replaced the vegetation `fillRect`-per-cell loop with a **bilinear-interpolation
+pass** — pure view change, economy byte-identical, confirmed by smoke reproducibility checks + matter HOLDING −0.0%.
 
-- **`social` now has a history.** The trait chart gained a fourth grazer line (cool blue, [−1, 1.2]), so a
-  visitor can watch the herd learn wariness as a *curve* rather than reading it only on the HUD chip.
-  The split-test gained a new finding: **2/3 no-hunter worlds show within-world 2-morph splits** (seed 1
-  along `speed`, seed 3 along `sense`) — crowding-driven speciation, live and detectable, for the first
-  time visible alongside the predation-driven wariness in the same report.
-- **`social` (this draw):** unseeded 20k mean **−0.35 to −0.48**, wary. No gene newly pinned.
-  `speed` **2.23**, `size` **2.19** (⚑ BC 0.61, pre-existing), `sense` **46.38**, `metabo` **1.60** (interior),
-  `social` **−0.35** (unseeded).
-- **motes:** min **39**, max **756**, mean **461**, oscillates (CV **33%**). Within envelope.
-- **hunters:** min **11**, max **121**, mean **80**, oscillates (CV **41%**). Within envelope.
-- **plants (biomass):** min **81**, max **1344**, mean **378**, oscillates (CV **52%**). Within envelope.
-- **matter:** **HOLDING** (−0.0%; bare ground 20.8%). Ledger untouched.
-- **gene-pool shape:** grazers **ONE broad cloud** on all six genes incl `social` (detector k=1). Arc core
-  untouched — this was a chart run, not a split attempt.
-- **flow per 1k (unseeded 20k):** mote births ~537–681, starved ~18, eaten ~537–630; hunter births ~13–16,
-  **aged-out ~99% of hunter deaths**. Death split ~97% predation / 3% starvation.
-- **boredom check: NOT a fixed point** — 6/6 genes shift >8% between tick 1k and end; `social` among the
-  largest movers.
-- **smoke:** **89 checks** (+1: every history sample carries a finite in-range `social` mean). Green ×3.
+- **Meadow.** Bilinear interpolation at 5px steps; the 15px mosaic is gone. The 64×36 discrete economy is untouched.
+- **`social` (seed 3, 10k):** mean **−0.31** (wary), drifting from 0.16 founder. No gene newly pinned.
+  `speed` **2.08**, `size` **2.89** (BC 0.46, no ⚑), `sense` **46.55**, `metabo` **1.36** (interior).
+- **motes:** min **35**, max **699**, mean **461**, oscillates (CV **32%**). Within envelope.
+- **hunters:** min **12**, max **93**, mean **63**, oscillates (CV **44%**). Within envelope.
+- **plants (biomass):** min **107**, max **1370**, mean **396**, oscillates (CV **57%**). Within envelope.
+- **matter:** **HOLDING** (+0.0%; bare ground 15.3%). Ledger untouched.
+- **gene-pool shape:** grazers **ONE broad cloud** on all six genes (detector k=1). Arc core untouched.
+- **boredom check: NOT a fixed point** — 5/6 genes shift >8% between tick 1k and end. Live system.
+- **regime:** predation **steady** (98% of ticks). Cycle holds.
+- **smoke:** **89 checks** (unchanged). Green ×3.
 
-_previously:_ (2026-07-31, herd-chip Build, UI/instrumentation) `social` −0.45 unseeded / −0.57 seed 3;
-speed 2.29 / sense 45.09 / metabo 1.63; motes min 38 / mean ~495; hunters min 12 / mean ~86; biomass ~445;
-matter HOLDING; grazers k=1; smoke 88 checks.
+_previously:_ (2026-08-01, social-on-chart Build, dataviz) `social` −0.35 unseeded; speed 2.23 / size 2.19
+(⚑ BC 0.61, pre-existing) / sense 46.38 / metabo 1.60; motes min 39 / mean 461; hunters min 11 / mean 80;
+biomass ~378; matter HOLDING; grazers k=1; smoke 89 checks.
 
 ---
 
@@ -570,11 +562,11 @@ the backlog.**
   so no zlib is needed and the encoder is a few dozen lines. Exercised by `observe.js --frame` and guarded
   by 11 `smoke.js` render checks (incl. an end-to-end real-`draw()`→PNG subprocess).
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **88 checks** (the "60" claimed here for several runs was
+  runs 7200 ticks (3 seasons), and asserts **89 checks** (the "60" claimed here for several runs was
   always wrong — the true pre-2026-07-23 count was 64; the seedable world added 8, the cycle-phase
   regime readout +2 on 2026-07-25, the sprint drag +4 on 2026-07-26, the death-mark HUD chip +1 on
   2026-07-27, the sociability Expedition +4 on 2026-07-29, the herd-chip legibility Build +1 on
-  2026-07-31). Of those, **8 cover the seedable
+  2026-07-31, the social-history Build +1 on 2026-08-01). Of those, **8 cover the seedable
   world** (2026-07-23): the same seed regrows a byte-identical world after 900 ticks, a neighbouring seed
   doesn't, `world.seedValue` reports the name, `seed(null)` restores free randomness, two unseeded worlds
   differ, the `s-seed` HUD chip carries the seed, and two **subprocess boots** with a faked `location`
@@ -850,6 +842,26 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-02 — [Build] smooth the meadow: bilinear interpolation kills the 15px tile grid
+
+**Observed (the complaint):** the rasterizer Expedition (07-22) rendered the meadow for the first time and
+the finding went straight into the backlog: the living ground draws as a hard-edged **15px mosaic** of solid
+squares — green tiles, black-square barrens — not organic soil. This run is the fix.
+
+**Built.** Replaced the vegetation `fillRect`-per-cell loop in `draw()` with a **bilinear-interpolation pass**:
+sample every 5px across the canvas, compute cell-centred fractional grid coordinates (−0.5 offset centres
+samples on cell midpoints), look up the four surrounding cell centres with full toroidal wrapping
+(`((i % dim) + dim) % dim` handles negative `Math.floor` near the seam), interpolate by `(1−fx)(1−fy)`
+weights, then index into a **25-level colour palette pre-built once per frame** (hueBase shifts with the
+season, so the palette rebuilds each draw, but doing it once avoids per-sample string construction — a
+`lastQ` guard skips repeated `fillStyle` assignments). Economy (discrete 64×36 grid) and `step()` untouched.
+
+**What a visitor now sees.** The meadow reads as continuous organic ground: a grazed-bare corridor blends
+into a lush patch through a soft gradient rather than a hard cell boundary, the seasonal olive-to-green
+pulse ripples across the field as a wave, and the herd's grazing pressure carves visible gradients into
+the grass. The mosaic is gone. Economy untouched; smoke **89 checks** (unchanged), green ×3; matter
+**HOLDING** (−0.0%). (Category: **visuals** — rotates off last run's dataviz. Expedition counter → **3**.)
 
 ### 2026-08-01 — [Build] wariness gets a history: `social` joins the trait chart as a fourth grazer line
 
@@ -1843,12 +1855,9 @@ freely. Add two per run, at least one ambitious.
   `draw()` to a hand-encoded PNG. The 13-run pixel-blindness is over; the first two rendered regimes are in
   the Log. What it does NOT image: **text** (labels/banner) and the **chart canvases** (`--frame` renders
   only the world). Those, and prettying what the render revealed, are the follow-ons below.
-- **[Build] Smooth the meadow — kill the 15px mosaic** _(a finding the rasterizer surfaced)_. Seeing the
-  world revealed the meadow renders as hard-edged 15px cells: a lush field is a green *mosaic*, every grazed
-  cell a sharp black square. Soften it — bilinearly interpolate `veg` density across cell centres when
-  drawing (sample the four neighbours per pixel-block), or draw each cell as a soft radial blob instead of a
-  `fillRect`, so the meadow reads as organic ground rather than a tile grid. Bounded, view-only (the economy
-  keeps its discrete grid), and now **verifiable by eye** via `--frame` — render before/after and compare.
+- **[Build] Retired (BUILT 2026-08-02): "Smooth the meadow — kill the 15px mosaic."** Done: a bilinear-interpolation pass (every 5px, four surrounding cell centres, toroidal wrapping, 25-level pre-built colour palette + `lastQ` skip) replaced the per-cell `fillRect` loop. The meadow now reads as continuous organic ground; the tile grid is gone. Economy untouched; smoke 89 checks unchanged.
+- **[Build] Smooth the overlays too — bilinear-interpolate fertility, grazing, and soil.** The meadow now draws as continuous organic ground, but the overlay modes (fertility / grazing / soil) still tile as hard 15px squares. Apply the same bilinear pass to each overlay's scalar field (share the palette-building helpers, vary only the colour function). Bounded, view-only, headless-verifiable via `--frame 1` and `--frame 2`. The data lenses should match the ground they're painted on.
+- **[Expedition] Let the meadow tell time — a plant-age scalar that makes old-growth look different from freshly-colonised ground** _(ambitious — I'm not sure a third vegetation field can be balanced without wrecking the tuned limit cycle or making the visual too noisy)_. Each cell carries density (`veg`) and nutrient bank (`soil`); add a slowly-accumulating **age** scalar: increments while density exceeds a threshold, resets toward zero when grazed bare. Draw it as a slight colour shift — young pioneer patches thin and pale, old-growth patches deeper and richer — so a visitor can read a meadow's *history* from its look: a freshly-bloomed clearing is lighter than a patch that has never been grazed. The age field is view-only (step() never reads it back for food value), headless-verifiable via `--frame` at different tick horizons (a 1k-tick render should look lighter than a 20k one), and pairs naturally with the two-plant-type Expedition already in the backlog (age could gate which plant type dominates). Risk: subtle enough to see clearly without noise — and not so slow to accumulate that a visitor never notices it in a casual viewing session.
 - **[Expedition] A watchable time-lapse — render a whole boom→crash→recover cycle to an animated file**
   _(ambitious — I'm not sure I can hand-roll a compressed animation format cleanly)_. `--frame` freezes one
   instant; the world's real drama is the *cycle*. Extend the rasterizer to dump a numbered PNG sequence

@@ -1580,19 +1580,46 @@
     ctx.fillStyle = `rgb(${br}, ${bg}, ${bb})`;
     ctx.fillRect(0, 0, W, H);
 
-    // the living ground — each vegetated cell tinted by its density, the whole
-    // meadow shifting from olive in winter toward green in summer
+    // the living ground — bilinear-smooth: sample every 5px and interpolate from
+    // surrounding cell centres, so the meadow reads as continuous organic ground
+    // rather than a hard 15px tile grid. The economy keeps its discrete cells;
+    // only the draw path blends them.
     const cell = CONFIG.vegCell, cols = GRID.cols, rows = GRID.rows;
     const hueBase = 80 + p * 34;
     const veg = world.veg;
-    for (let y = 0; y < rows; y++) {
-      const row = y * cols;
-      for (let x = 0; x < cols; x++) {
-        const d = veg[row + x];
-        if (d <= 0.02) continue;
-        const t = d > 1 ? 1 : d;
-        ctx.fillStyle = `hsl(${(hueBase - t * 8).toFixed(0)} ${(30 + t * 36).toFixed(0)}% ${(6 + t * 40).toFixed(0)}%)`;
-        ctx.fillRect(x * cell, y * cell, cell, cell);
+    const step = 5;
+    // pre-build 25 colour strings once per frame (hueBase shifts with season)
+    const N = 24;
+    const vegColors = new Array(N + 1);
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      vegColors[i] = `hsl(${(hueBase - t * 8) | 0} ${(30 + t * 36) | 0}% ${(6 + t * 40) | 0}%)`;
+    }
+    const nCols = Math.ceil(W / step), nRows = Math.ceil(H / step);
+    let lastQ = -1;
+    for (let sy = 0; sy < nRows; sy++) {
+      // cell-centred fractional grid coordinate of this sample row
+      const gy = (sy * step + step * 0.5) / cell - 0.5;
+      const iy = Math.floor(gy);
+      const gy0 = ((iy % rows) + rows) % rows;
+      const gy1 = (gy0 + 1) % rows;
+      const fy = gy - iy;
+      const row0 = gy0 * cols, row1 = gy1 * cols;
+      for (let sx = 0; sx < nCols; sx++) {
+        const gx = (sx * step + step * 0.5) / cell - 0.5;
+        const ix = Math.floor(gx);
+        const gx0 = ((ix % cols) + cols) % cols;
+        const gx1 = (gx0 + 1) % cols;
+        const fx = gx - ix;
+        const d = veg[row0 + gx0] * (1 - fx) * (1 - fy)
+                + veg[row0 + gx1] *       fx  * (1 - fy)
+                + veg[row1 + gx0] * (1 - fx)  *      fy
+                + veg[row1 + gx1] *       fx  *      fy;
+        if (d < 0.015) continue;
+        const t = d < 1 ? d : 1;
+        const qi = (t * N + 0.5) | 0;
+        if (qi !== lastQ) { ctx.fillStyle = vegColors[qi]; lastQ = qi; }
+        ctx.fillRect(sx * step, sy * step, step, step);
       }
     }
 
