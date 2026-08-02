@@ -377,20 +377,25 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, an 88-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, an 89-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the wariness axis has a history now.** The `social` gene — the strongest-drifting
+Newest: **the meadow is smooth.** The living ground used to render as a hard-edged 15px tile
+mosaic — solid green squares beside sharp black barrens. The vegetation draw path now samples
+every 5px and **bilinearly interpolates** between surrounding cell centres, so lush patches
+blend into grazed corridors through a soft gradient, the seasonal green→olive pulse ripples
+across the field as a wave, and the herd's grazing pressure carves visible gradients into the
+grass rather than toggling individual squares on/off. The discrete 64×36 ecology grid is
+untouched — only the draw path changed.
+
+Before that: **the wariness axis has a history now.** The `social` gene — the strongest-drifting
 gene in the world — joins the trait chart as a fourth grazer line (cool blue, normalized over
 its [−1, 1.2] clamp). A visitor who opens the page can now watch the herd's wariness *evolve*
 as a curve: the line starts near zero with the founding generation, then dives toward −0.5 as
 predation pressure builds and the herd learns to space out, and eases back toward neutral in a
-lull. The chip reads the herd's temperament *now*; the chart reads how it got there. The legend
-adapts: `social` has no hunter counterpart so it shows as `social −0.45` without the
-`·hunter` pair. One new smoke check confirms every history sample carries a finite in-range
-`social` mean (89 total).
+lull. The chip reads the herd's temperament *now*; the chart reads how it got there.
 
 Before that: **the herd's temperament is legible at a glance.** A **`herd` chip** in the HUD
 names the whole herd's mean sociability, worded and colour-matched to the per-mote whiskers —
