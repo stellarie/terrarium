@@ -271,6 +271,18 @@ line(`    mote deaths split: ${totMoteLoss ? Math.round((100 * world.eaten) / to
          `ending ${last == null ? "in a still moment" : pct(last) + " predation"}`);
   }
 }
+// kill-site alarm: how many hot kill zones are carried at the end of the run, how fresh?
+{
+  const alive = world.killLog.filter(s => (world.tick - s.tick) < CONFIG.alarmDuration);
+  if (alive.length > 0) {
+    const ages = alive.map(s => world.tick - s.tick).sort((a, b) => a - b);
+    const freshMax = (1).toFixed(2);
+    const freshMin = (1 - ages[ages.length - 1] / CONFIG.alarmDuration).toFixed(2);
+    line(`    kill alarm      : ${alive.length} sites active (ages ${ages[0]}–${ages[ages.length - 1]}t, freshness ${freshMin}–${freshMax})`);
+  } else {
+    line(`    kill alarm      : no sites active at run end`);
+  }
+}
 
 line("\n[5] AGE  (ticks lived, sampled at the final tick)");
 ageReport("motes", world.motes);

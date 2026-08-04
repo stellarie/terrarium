@@ -165,6 +165,30 @@ check(world.history.length > 10, `history buffer filled for the charts (${world.
   check(!sBad, `social gene mean recorded in every history sample (in [${SOCIAL_LO}, ${SOCIAL_HI}])`);
 }
 
+// kill-site alarm: after a run with predation, the kill log has entries; each entry
+// has finite, in-canvas-bounds coords and a valid tick; log never exceeds its cap.
+{
+  check(world.killLog.length > 0,
+    `kill log populated after a run with predation (${world.killLog.length} sites)`);
+  check(world.killLog.length <= CONFIG.alarmSites,
+    `kill log stays within its cap (${world.killLog.length} ≤ ${CONFIG.alarmSites})`);
+  const W = 960, H = 540;
+  let kBad = false;
+  for (const s of world.killLog) {
+    if (!finite(s.x) || !finite(s.y) || !finite(s.tick)) { kBad = true; break; }
+    if (s.x < 0 || s.x >= W || s.y < 0 || s.y >= H)     { kBad = true; break; }
+    if (s.tick < 0 || s.tick > world.tick)                { kBad = true; break; }
+  }
+  check(!kBad, "kill log entries have valid, in-bounds coords and ticks");
+  // every active site has a freshness strictly in (0,1] — no stale or future sites leaked through
+  const stale = world.killLog.filter(s => {
+    const age = world.tick - s.tick;
+    return age >= CONFIG.alarmDuration || age < 0;
+  });
+  check(stale.length === 0,
+    `kill log has no stale or future-dated sites (${stale.length} bad of ${world.killLog.length})`);
+}
+
 // concealment (Arc III): a mote hides from hunters only when it is small AND slow AND
 // standing on dense vegetation — the trade-off that lets predation split the herd into
 // hiders and fleers. Test the mechanic deterministically by planting motes on a cell
