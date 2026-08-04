@@ -298,6 +298,18 @@
                               // local centre of mass (cluster), <0 pushes away from it (keep distance)
     socialSeparation: 1.4,    // gene-independent close-range spacing, so even a clusterer never piles up
 
+    // Kill-site alarm — spatial memory of predation events.
+    // When a mote is eaten its location stays "hot" for alarmDuration ticks. Motes
+    // within alarmRadius that aren't already fleeing an active hunter steer away from
+    // those sites, weighted by how fresh the kill was. This gives the herd collective
+    // spatial memory: a hunting ground clears out while the alarm is hot and slowly
+    // refills as the fear fades. Effect is intentionally soft so it bends, not
+    // overrides, the food-driven heading; the kill log is kept small so it's cheap.
+    alarmSites: 12,           // kill locations remembered (ring buffer)
+    alarmDuration: 600,       // ticks a site stays hot (one full bloom-bust period ≈ 1500t)
+    alarmRadius: 90,          // px: how far a mote can sense a kill site (vs sense gene ~40px)
+    alarmWeight: 0.30,        // how strongly the avoidance bends the heading vs food pull
+
     // Hunger-driven boldness — the recovery valve for a collapsing predator tier.
     // (Historically ~half of seeds fell into a "grazer haven" where hunters bled to a
     // handful, motes overpopulated, and the meadow was grazed bare — a prey-quality
@@ -787,6 +799,7 @@
     world.motes = [];
     world.hunters = [];
     world.sparks = [];
+    world.killLog = [];   // [{x, y, tick}] ring buffer of recent kill sites
     world.tick = 0;
     world.born = 0;
     world.died = 0;
@@ -1335,6 +1348,32 @@
           const dx = Math.cos(m.dir) + fl.sx, dy = Math.sin(m.dir) + fl.sy;
           if (dx !== 0 || dy !== 0) m.dir = Math.atan2(dy, dx);
         }
+        // steer away from recent kill sites — places where a mote was eaten stay hot
+        // for alarmDuration ticks; motes within alarmRadius feel a soft push away from
+        // each hot site, weighted by freshness. This gives the herd spatial memory:
+        // a hunting ground clears out while alarm is hot, then slowly refills as fear fades.
+        if (world.killLog.length > 0) {
+          const aR2 = CONFIG.alarmRadius * CONFIG.alarmRadius;
+          let kx = 0, ky = 0;
+          for (const site of world.killLog) {
+            const age = world.tick - site.tick;
+            if (age >= CONFIG.alarmDuration) continue;
+            let dx = m.x - site.x; if (dx > HW) dx -= W; else if (dx < -HW) dx += W;
+            let dy = m.y - site.y; if (dy > HH) dy -= H; else if (dy < -HH) dy += H;
+            const d2 = dx * dx + dy * dy;
+            if (d2 > aR2 || d2 < 1) continue;
+            const freshness = 1 - age / CONFIG.alarmDuration;
+            const d = Math.sqrt(d2);
+            kx += (dx / d) * freshness;
+            ky += (dy / d) * freshness;
+          }
+          if (kx !== 0 || ky !== 0) {
+            const mag = Math.sqrt(kx * kx + ky * ky);
+            const dx = Math.cos(m.dir) + (kx / mag) * CONFIG.alarmWeight;
+            const dy = Math.sin(m.dir) + (ky / mag) * CONFIG.alarmWeight;
+            if (dx !== 0 || dy !== 0) m.dir = Math.atan2(dy, dx);
+          }
+        }
       }
 
       // move — a bolting mote sprints (and pays for it in the burn below); a hiding
@@ -1492,6 +1531,9 @@
           world.motes.splice(best, 1);
           world.eaten++;
           if (world.sparks.length < 240) world.sparks.push({ x: prey.x, y: prey.y, life: 1 });
+          // log the kill site so motes can steer away from recent hunting grounds
+          if (world.killLog.length >= CONFIG.alarmSites) world.killLog.shift();
+          world.killLog.push({ x: prey.x, y: prey.y, tick: world.tick });
         }
       }
 
@@ -1625,6 +1667,20 @@
 
     // an optional lens on the hidden landscape, painted over the meadow
     drawOverlay();
+
+    // kill-site danger auras — each recently hot kill zone glows faintly warm, fading over
+    // alarmDuration ticks. Motes actively steer away from these zones (when not fleeing a
+    // live hunter); the glow makes that spatial memory visible as the ground itself —
+    // a hunter's patrol ground warms to a dull ember that cools as the fear subsides.
+    for (const site of world.killLog) {
+      const age = world.tick - site.tick;
+      if (age >= CONFIG.alarmDuration) continue;
+      const freshness = 1 - age / CONFIG.alarmDuration;
+      ctx.beginPath();
+      ctx.arc(site.x, site.y, CONFIG.alarmRadius * 0.9, 0, TAU);
+      ctx.fillStyle = `rgba(210,65,35,${(0.055 * freshness).toFixed(3)})`;
+      ctx.fill();
+    }
 
     // motes — each ringed by its lifestyle so the two anti-predator strategies are
     // visible at a glance: a committed hider (small, slow) wears a cool leaf-green halo
