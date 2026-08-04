@@ -232,7 +232,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 89 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 93 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -359,7 +359,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 89 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 93 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -377,12 +377,21 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, an 89-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 93-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is.
 
-Newest: **the meadow is smooth.** The living ground used to render as a hard-edged 15px tile
+Newest: **the hunting grounds have a memory.** When a hunter catches a mote, the kill site is logged
+in a rolling ring buffer (`world.killLog`). For the next several hundred ticks, grazers steer *away*
+from those coordinates — a collective, heritable spatial memory of danger. The field also glows: each
+active kill site emits a faint warm-red aura that fades over time, so the meadow itself shows which
+ground has been hot lately, cooling slowly from ember-red to invisible as the fear subsides. Hunting
+grounds warm where hunters are active and cool where the herd has pushed them away. The observatory
+reports the alarm field in its flow section; four new smoke checks confirm the ring buffer prunes
+correctly and no stale sites survive their window.
+
+Before that: **the meadow is smooth.** The living ground used to render as a hard-edged 15px tile
 mosaic — solid green squares beside sharp black barrens. The vegetation draw path now samples
 every 5px and **bilinearly interpolates** between surrounding cell centres, so lush patches
 blend into grazed corridors through a soft gradient, the seasonal green→olive pulse ripples
