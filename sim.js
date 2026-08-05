@@ -305,10 +305,33 @@
     // spatial memory: a hunting ground clears out while the alarm is hot and slowly
     // refills as the fear fades. Effect is intentionally soft so it bends, not
     // overrides, the food-driven heading; the kill log is kept small so it's cheap.
-    alarmSites: 12,           // kill locations remembered (ring buffer)
+    alarmSites: 96,           // kill locations remembered (ring buffer). Raised 12→96 so the
+                              // field accumulates ~50 ticks of kill history instead of ~6,
+                              // giving the alarm glow a real spatial footprint — territory
+                              // cores glow while refugia stay dark.
     alarmDuration: 600,       // ticks a site stays hot (one full bloom-bust period ≈ 1500t)
     alarmRadius: 90,          // px: how far a mote can sense a kill site (vs sense gene ~40px)
     alarmWeight: 0.30,        // how strongly the avoidance bends the heading vs food pull
+
+    // Hunter home ranges — each hunter tracks a kill centroid (an exponential moving
+    // average of its recent kill sites) and leans its direction toward it while prowling
+    // and even while chasing. Over many kills a hunter gravitates back to where it hunts
+    // most, carving the map into personal territory corridors. Coupled with the widened
+    // kill-site alarm (above), this creates spatially structured predation: hot zones at
+    // territory cores (grazers get eaten there, alarm sites cluster, glow accumulates)
+    // and genuine refugia in the gaps between them. This is the spatial heterogeneity
+    // Arc III has been trying to manufacture — a world where hiding is locally optimal
+    // somewhere even while fleeing is locally optimal somewhere else, at the same time.
+    hunterHomeShift: 0.08,    // fraction each kill pulls the centroid toward the kill site
+                              // (exponential moving average weight — ~0.08 ≈ last ~12 kills
+                              // dominate the centroid, so territories can shift over weeks)
+    hunterHomePull: 0.20,     // per-tick angular lean toward the centroid (0=none, 1=snap).
+                              // Applied even while chasing, so a hunter subtly prefers prey
+                              // near its territory; strong enough to build habitat-use
+                              // patterns without overriding the hunt's primary direction.
+    hunterHomeRange: 220,     // px: pull scales from 0 at home to full at this distance.
+                              // At ~2.4 px/tick, a hunter >220px away turns ~0.2 rad/tick
+                              // toward home, drifting homeward in a few hundred ticks.
 
     // Hunger-driven boldness — the recovery valve for a collapsing predator tier.
     // (Historically ~half of seeds fell into a "grazer haven" where hunters bled to a
@@ -740,6 +763,7 @@
       matter: CONFIG.bodyMatter,   // predators carry a body on the same ledger
       age: 0,
       cool: 0,               // digestion timer; >0 means sated and not hunting
+      homeX: x, homeY: y,   // kill centroid — starts at spawn, drifts toward kills
       g: genome || makeHunterGenome(null),
     };
   }
@@ -1489,6 +1513,23 @@
         h.dir += rand(-0.5, 0.5); // prowl
       }
 
+      // home-range pull: a gentle angular lean toward the kill centroid, applied every tick —
+      // even while chasing, so the hunter subtly prefers prey near its territory. Between
+      // kills (during the digestion cooldown) the pull builds a habitat-use pattern: the
+      // hunter circles back toward where it has killed most, gradually carving a personal
+      // patrol corridor out of the shared landscape.
+      {
+        const homeD2 = torusD2(h.x, h.y, h.homeX, h.homeY);
+        if (homeD2 > 100) {
+          const homeAngle = torusAngle(h.x, h.y, h.homeX, h.homeY);
+          const pull = CONFIG.hunterHomePull * Math.min(1, Math.sqrt(homeD2) / CONFIG.hunterHomeRange);
+          let diff = homeAngle - h.dir;
+          while (diff > Math.PI) diff -= TAU;
+          while (diff < -Math.PI) diff += TAU;
+          h.dir += diff * pull;
+        }
+      }
+
       // move — a starving hunter puts on a closing sprint (which costs more energy
       // below, via v: reckless is expensive, so a bold hunter that misses dies faster)
       const v = h.g.speed * (1 + CONFIG.hunterBoldSprint * bold);
@@ -1534,6 +1575,16 @@
           // log the kill site so motes can steer away from recent hunting grounds
           if (world.killLog.length >= CONFIG.alarmSites) world.killLog.shift();
           world.killLog.push({ x: prey.x, y: prey.y, tick: world.tick });
+          // home centroid: shift toward this kill — an exponential moving average of kill
+          // sites that anchors the hunter's territory. Each kill nudges the centroid
+          // hunterHomeShift fraction closer to where the prey just fell, so a corridor
+          // where this hunter kills often becomes the centroid of its home range.
+          {
+            let kdx = prey.x - h.homeX; if (kdx > HW) kdx -= W; else if (kdx < -HW) kdx += W;
+            let kdy = prey.y - h.homeY; if (kdy > HH) kdy -= H; else if (kdy < -HH) kdy += H;
+            h.homeX = wrap(h.homeX + kdx * CONFIG.hunterHomeShift, W);
+            h.homeY = wrap(h.homeY + kdy * CONFIG.hunterHomeShift, H);
+          }
         }
       }
 
@@ -1730,6 +1781,18 @@
       ctx.beginPath();
       ctx.moveTo(m.x, m.y);
       ctx.lineTo(m.x + Math.cos(m.dir) * whLen, m.y + Math.sin(m.dir) * whLen);
+      ctx.stroke();
+    }
+
+    // territory markers — a faint cross at each hunter's kill centroid shows where it
+    // gravitates; as territories form the markers cluster into visible hot zones
+    for (const h of world.hunters) {
+      const hx = h.homeX, hy = h.homeY;
+      ctx.strokeStyle = `hsl(${h.g.hue.toFixed(0)} 55% 68% / 0.20)`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(hx - 5, hy); ctx.lineTo(hx + 5, hy);
+      ctx.moveTo(hx, hy - 5); ctx.lineTo(hx, hy + 5);
       ctx.stroke();
     }
 

@@ -189,6 +189,26 @@ check(world.history.length > 10, `history buffer filled for the charts (${world.
     `kill log has no stale or future-dated sites (${stale.length} bad of ${world.killLog.length})`);
 }
 
+// hunter home ranges: every hunter must have a finite, in-bounds kill centroid
+{
+  let homeBad = null;
+  for (const h of world.hunters) {
+    if (!finite(h.homeX) || !finite(h.homeY))
+      { homeBad = `homeX=${h.homeX} homeY=${h.homeY}`; break; }
+  }
+  check(!homeBad, homeBad
+    ? `hunter home centroid leaked NaN: ${homeBad}`
+    : `all ${world.hunters.length} hunter home centroids are finite`);
+  let homeBounds = null;
+  for (const h of world.hunters) {
+    if (h.homeX < 0 || h.homeX >= 960 || h.homeY < 0 || h.homeY >= 540)
+      { homeBounds = `homeX=${h.homeX.toFixed(1)} homeY=${h.homeY.toFixed(1)}`; break; }
+  }
+  check(!homeBounds, homeBounds
+    ? `hunter home centroid out of canvas: ${homeBounds}`
+    : `all ${world.hunters.length} hunter home centroids are within canvas bounds`);
+}
+
 // concealment (Arc III): a mote hides from hunters only when it is small AND slow AND
 // standing on dense vegetation — the trade-off that lets predation split the herd into
 // hiders and fleers. Test the mechanic deterministically by planting motes on a cell
@@ -456,6 +476,7 @@ const agedBefore = world.hunterAged;
 world.hunters.push({
   x: 480, y: 270, dir: 0, energy: 200, cool: 0,
   age: CONFIG.hunterSenesceOnset + 10_000_000,   // hazard = rate·Δage ≫ 1 → certain death
+  homeX: 480, homeY: 270,
   g: { speed: 1.5, size: 4, sense: 70, metabo: 1, hue: 20 },
 });
 step();
