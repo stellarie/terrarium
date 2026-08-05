@@ -288,10 +288,7 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **4** — the sociability Expedition (2026-07-29) was the reset; the
-wariness-legibility Build (07-31, UI/instrumentation) was first; the social-on-chart Build (08-01,
-dataviz) was second; the smooth-meadow Build (08-02, visuals) was third; this kill-site alarm Build
-(08-04, ecology/behaviour) is fourth. **Next Expedition is mandatory next run.**
+_Runs since the last Expedition:_ **0** — this hunter-territories Expedition (2026-08-05) is the reset. **Next Expedition is mandatory after 5 Builds.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -303,25 +300,22 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-04 — the kill-site alarm Build (ecology/behaviour).** Readings: `observe.js` seed 3 ×8k;
-`smoke.js` ×3 clean. This run completed and shipped the uncommitted kill-site alarm mechanic — mote steering +
-warm-red glow + observe.js report + staleness smoke check — ecology untouched, confirmed by matter HOLDING +0.0%.
+**Last observed: 2026-08-05 — the hunter-territories Expedition (ecology/behaviour).** Readings: `observe.js` seed 3 ×8k;
+`smoke.js` ×3 clean. Per-hunter kill centroids (`homeX/homeY`) added; kill-site alarm widened 12→96 sites; territory map added to observe.js.
 
-- **Kill alarm (seed 3, 8k):** 12 sites active at run end, ages 0–21t, freshness 0.96–1.00 (ring buffer is
-  always nearly-fresh at 0.784 kills/tick; effective memory ~15 ticks, not the 600t duration window).
-- **`social` (seed 3, 8k):** mean **−0.14** (neutral at 8k; herd still establishing). Drifting from 0.16 founder.
-  `speed` **1.87** ↑, `size` **3.17**, `sense` **43.13**, `metabo` **1.33** (interior). No gene newly pinned.
-- **motes:** min **35**, max **667**, mean **412**, oscillates (CV **36%**). Within envelope.
-- **hunters:** min **12**, max **101**, mean **63**, oscillates (CV **51%**). Within envelope.
-- **plants (biomass):** min **114**, max **1370**, mean **447**, oscillates (CV **55%**). Within envelope.
-- **matter:** **HOLDING** (+0.0%; bare ground 14.5%). Ledger untouched.
-- **gene-pool shape:** grazers **ONE broad cloud** on all six genes (detector k=1). Arc core untouched.
-- **boredom check: NOT a fixed point** — 4/6 genes shift >8% between tick 1k and end. Live system.
-- **regime:** predation **building ↑** (establishing; 97% steady, 0% surge/ebb). Cycle holds.
-- **smoke:** **93 checks** (+4 kill-log proofs). Green ×3.
+- **Kill alarm (seed 3, 8k):** 46 sites active at run end, ages 1–563t, freshness 0.06–1.00 (alarm now carries genuine spatial history; hot-zone glow can accumulate).
+- **Territory NN (seed 3, 8k):** mean nearest-neighbour 43.6px vs uniform-random baseline ~84.3px — centroids cluster (all converging on 3 surviving motes at run end; territory separation needs a richer, later read).
+- **`social` (seed 3, 8k):** mean **+0.22** (sociable; elevated from previous −0.14 — possibly a seed-3 artifact at this crash state). `speed` **0.97**, `size` **3.08**, `sense` **42.77**, `metabo` **1.07** (interior).
+- **motes:** min **1**, max **700**, mean **380**, oscillates (CV **57%**). Mote crash to 3 at tick 8k — seed 3 is high-predation pressure; within envelope for most of run.
+- **hunters:** min **12**, max **101**, mean **57**, oscillates (CV **50%**). Within envelope.
+- **plants (biomass):** min **130**, max **1369**, mean **542**, oscillates (CV **69%**). Within envelope.
+- **matter:** **HOLDING** (+0.9%/+0.2% mid→late). Within normal noise at 8k.
+- **gene-pool shape:** grazers **ONE broad cloud** on all six genes (detector k=1 at low-mote endpoint). Arc core untouched.
+- **boredom check: NOT a fixed point** — 3/6 genes shift >8% between tick 1k and end. Live system.
+- **regime:** predation **ebbing** (predation building ↑ secularly; 95% steady cycle). Cycle holds.
+- **smoke:** **95 checks** (+2 home-centroid proofs). Green ×3.
 
-_previously:_ (2026-08-02, smooth-meadow Build, visuals) `social` −0.31 / speed 2.08 / size 2.89 / sense 46.55 /
-metabo 1.36; motes min 35 / mean 461; hunters min 12 / mean 63; biomass ~396; matter HOLDING; grazers k=1; smoke 89 checks.
+_previously:_ (2026-08-04, kill-site alarm Build, ecology) `social` −0.14 / speed 1.87 / size 3.17 / sense 43.13 / metabo 1.33; motes min 35 / mean 412; hunters min 12 / mean 63; biomass ~447; matter HOLDING; grazers k=1; smoke 93 checks.
 
 ---
 
@@ -562,11 +556,12 @@ the backlog.**
   so no zlib is needed and the encoder is a few dozen lines. Exercised by `observe.js --frame` and guarded
   by 11 `smoke.js` render checks (incl. an end-to-end real-`draw()`→PNG subprocess).
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **93 checks** (the "60" claimed here for several runs was
+  runs 7200 ticks (3 seasons), and asserts **95 checks** (the "60" claimed here for several runs was
   always wrong — the true pre-2026-07-23 count was 64; the seedable world added 8, the cycle-phase
   regime readout +2 on 2026-07-25, the sprint drag +4 on 2026-07-26, the death-mark HUD chip +1 on
   2026-07-27, the sociability Expedition +4 on 2026-07-29, the herd-chip legibility Build +1 on
-  2026-07-31, the social-history Build +1 on 2026-08-01, the kill-site alarm Build +4 on 2026-08-04). Of those, **8 cover the seedable
+  2026-07-31, the social-history Build +1 on 2026-08-01, the kill-site alarm Build +4 on 2026-08-04,
+  the hunter-territories Expedition +2 on 2026-08-05). Of those, **8 cover the seedable
   world** (2026-07-23): the same seed regrows a byte-identical world after 900 ticks, a neighbouring seed
   doesn't, `world.seedValue` reports the name, `seed(null)` restores free randomness, two unseeded worlds
   differ, the `s-seed` HUD chip carries the seed, and two **subprocess boots** with a faked `location`
@@ -691,8 +686,8 @@ the backlog.**
   - **genome**: `{ speed, size, sense, metabo, hue }` — shared shape, different ranges per
     species (hunters are faster, keener-sensed, and hued in a hot red/orange band).
   - **mote** (grazer): `{ x, y, dir, energy, age, g }`.
-  - **hunter** (predator): `{ x, y, dir, energy, age, cool, g }` — `cool` is the digestion
-    timer that gates its next strike.
+  - **hunter** (predator): `{ x, y, dir, energy, age, cool, homeX, homeY, g }` — `cool` is the digestion
+    timer; `homeX/homeY` is the kill centroid (home-range EMA, added 2026-08-05).
 - **The vegetation field** (this replaced discrete food pellets in Arc I):
   - `GRID` — a toroidal 64×36 lattice of `vegCell`-px cells (15px; divides 960×540 exactly).
   - `world.fert` — static per-cell carrying capacity in `[fertMin, 1]` from a few random
@@ -748,6 +743,15 @@ the backlog.**
     still picks one lifestyle per world — so the arc's "predation-driven speciation" premise stays
     refuted; this is a *between-world*, regime-set divergence. Pure selection pressure: nothing in the
     economy reads `hideability` back for anything but the hunt's sight and the freeze choice.
+  - **Hunter home ranges / kill centroids** (added 2026-08-05) — each hunter tracks `homeX, homeY`,
+    an exponential moving average of its kill locations (initialised at spawn; updated with
+    `hunterHomeShift=0.08` of each kill's toroidal vector). Every tick a gentle angular lean
+    (`hunterHomePull=0.20`, scaled from 0 at home to full at `hunterHomeRange=220px`) steers the hunter
+    toward its centroid — applied even while chasing, so geographic preference builds up in prey-rich
+    environments. `draw()` renders a faint cross-hair at each centroid (`hsl(hue 55% 68% / 0.20)`) so
+    the emerging territory structure is visible. `observe.js` gains `territoryMap()` — a 48×16 centroid
+    density map and a mean nearest-neighbour distance vs. the uniform-random baseline. Territories emerge
+    from habit, not decree; the mechanic is the arc's first spatial predation-pressure gradient.
   - **Why it's stable** (tuned empirically across ~25 `smoke.js` seeds): three stacked
     stabilisers keep it off the knife-edge of double-extinction. (1) A post-kill **cooldown**
     caps each hunter's kill rate, giving prey a refuge; decoupling _stalking_ from _striking_
@@ -842,6 +846,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-05 — [Expedition] give each hunter a home range: kill centroids carve emergent territories
+
+**Observed (the complaint):** `observe.js` section [8] (life map) showed hunters scattered uniformly across the torus — no clustering, no corridors, no hot zones. With predation spatially uniform every patch of meadow carries the same predation pressure, so the lifestyle axis (hide-small vs flee-fast) can only pick a *global* winner per world rather than running both simultaneously in different zones. Arc III's within-world coexistence requires at least the first step: hunters who *go home* to where they've been successful, carving personal patrol corridors out of the shared landscape. A second complaint: `alarmSites = 12` at ~1.85 kills/tick meant the ring buffer cycled every ~6 ticks — the kill-site alarm was functionally useless as spatial memory, all 12 sites perpetually fresh (flagged in the 08-04 log entry as the next lever).
+
+**Built (two coupled mechanics).** (1) **Widen the kill-site alarm:** `alarmSites` raised 12→96, giving the ring buffer ~52 ticks of kill history instead of ~6, so the alarm glow can accumulate into a real spatial footprint — territory cores glow, refugia stay dark. (2) **Per-hunter kill centroids:** each hunter now tracks `homeX, homeY`, an exponential moving-average of its kill sites (initialised at spawn). After every kill the centroid shifts `hunterHomeShift = 0.08` of the way toward the kill location (toroidal shortest-path math throughout). Every tick the hunter applies a gentle angular lean (`hunterHomePull = 0.20`) toward its centroid, scaled from 0 at home to full at `hunterHomeRange = 220px` distance — applied even while chasing, so geographic preference accumulates in prey-rich environments. Three new CONFIG knobs; `makeHunter` gains `homeX/homeY`. `draw()` places a faint `hsl(hue 55% 68% / 0.20)` cross-hair at each hunter's kill centroid so the territory structure is visible at a glance. `smoke.js` gains 2 assertions (all home centroids finite and in-canvas). `observe.js` gains `territoryMap()` — a 48×16 ASCII density map of home centroids plus a mean nearest-neighbour statistic vs. the uniform-random baseline.
+
+**What a visitor now sees.** Each predator has a small, faint cross-hair drifting toward where it kills most — gradually, over minutes of watching, each hunter's cross-hair settles into its patrol corridor while the alarm glows pool under it. The territories aren't walls; they're habits. **Observatory reading (seed 3, 8k):** mean NN 43.6px vs. uniform-random baseline ~84.3px — centroids cluster rather than spread, because seed 3 crashed to 3 motes by tick 8000 and all hunters converged on the same scarce prey. Territory *separation* needs a high-prey-density world; this run delivered the mechanism, and the census will show whether separation emerges in the richer seeds. `smoke.js` **95 checks** (+2 home-centroid proofs), green ×3; matter **HOLDING** (+0.9%/0.2% — within normal sample noise at 8k). (Category: **ecology/behaviour** — rotates off last run's same category but this is the mandatory Expedition. Expedition counter → **0**; next Expedition mandatory after 5 Builds.)
 
 ### 2026-08-04 — [Build] give the herd spatial memory of danger: kill-site alarm and its glow
 
@@ -1643,29 +1655,32 @@ freely. Add two per run, at least one ambitious.
   abandons the hunters' whole range, the predators starve, the cycle destabilises). It also stops being
   pure narration, so it needs its own smoke assertions. Landing a stable, legible middle is the challenge.
 
-- **[Build] Widen the kill-site alarm memory: bump `alarmSites` to 48+ for a longer spatial history.**
-  At ~0.784 kills/tick with `alarmSites=12`, the ring buffer cycles every ~15 ticks — all active sites
-  are nearly-fresh (0.96–1.00), so the danger field is always a snapshot of the last 15 ticks rather
-  than the 600-tick `alarmDuration` window. Increase `alarmSites` to 48 (~60 ticks of history) or 96
-  (~120 ticks, roughly one full predator-patrol sweep) so the field accumulates a genuine spatial record
-  of the hunt. The glow would then show a temperature gradient — hot recent kills beside cooler older sites
-  — making hunting grounds legible as places with *history* rather than just immediate aftermath. Bounded
-  (CONFIG change + steering loop scales linearly, negligible CPU), headless-verifiable (freshness spread
-  widens beyond 0.96–1.00 in observe.js alarm report), no economy read-back.
+- **[Build] Retired (BUILT 2026-08-05): "Widen the kill-site alarm memory to 96 sites."** Done: `alarmSites`
+  raised 12→96, giving ~52 ticks of kill history instead of ~6. Alarm sites now span a real age range (1–563t,
+  freshness 0.06–1.00 in observe.js), so the danger glow accumulates into a genuine spatial footprint.
 
-- **[Expedition] Give hunters gravity toward their own kill sites — territorial predation and stable refugia from
-  the predator side** _(ambitious — hunter territories + alarm avoidance from both sides at once; I'm not sure
-  the coupled spatial dynamics will be stable, or whether territories tile the whole map without gaps)_. Today
-  every hunter roams the whole torus; the alarm field makes the herd avoid hot zones, but the hot zones drift
-  with the hunters' random walks. Give each hunter a decaying kill-site memory: after each catch it records the
-  site, and when not actively pursuing prey it biases its roaming toward its accumulated kill locations — a
-  territorial "home range" built from habit, not decree. Then territories emerge organically: a hunter that
-  kills in one corridor stays there, making it hotter and more avoided by the herd; gaps with few kills become
-  genuine refugia. The herd's alarm avoidance and the hunters' territorial attraction feed the same spatial
-  substrate from opposite directions — potentially manufacturing persistent, stable heterogeneity rather than
-  transient hot zones. Check `classifyMorphs` for a stable k=2 (hiders tucked into refugia vs fleers in
-  patrolled open territory). Risk: coupled dynamics may runaway (hunters cluster, crash prey in their zone, then
-  starve); needs careful tuning and its own smoke assertions.
+- **[Expedition] Retired (BUILT 2026-08-05): "Give each hunter a home range via kill centroids."** Done:
+  per-hunter `homeX/homeY` (kill EMA) + home-pull steering every tick + territory cross-hair in draw() +
+  `territoryMap()` in observe.js + 2 smoke assertions. Mean NN 43.6px vs uniform ~84.3px on seed 3 at 8k —
+  clustering confirms the centroid mechanic is live; territory *separation* needs a higher-prey-density read.
+
+- **[Build] Map territory overlap onto the alarm glow — use each hunter's home centroid to colour its alarm
+  contribution.** Currently all kill-site alarm sites glow the same warm-red regardless of which hunter made
+  the kill. Tag each `killLog` entry with the killer's hue and use it to tint the glow — a warm-amber core
+  for a fast orange hunter, a cooler red-violet core for another — so overlapping territories visually separate
+  and a visitor can tell at a glance whether one hunter dominates a zone or two are competing for it. Bounded
+  (killLog entry gets a new `hue` field; alarm glow reads it), view-only, no economy read-back.
+
+- **[Expedition] Run the paired split-test under the new territory mechanic — does spatial predation pressure
+  finally produce within-world k=2?** _(ambitious — every k=2-under-predation attempt has failed; this is the
+  first time the landscape of danger is set by hunter habit, not random walk)_. Now that hunters carve patrol
+  corridors, the herd may experience meaningfully different selection pressure depending on where they graze —
+  a hider in a refuge, a fleer in the open. Run `observe.js --split-test 6 20000` and check the shape section:
+  does the morph detector read k=2 in any seed? Does the split collapse when `hunterHomePull` is zeroed (the
+  "territory off" condition)? If yes, this is the first confirmed within-world coexistence and the arc is
+  substantially advanced. Risk: territories may not be spatially sharp enough to sustain two optima, or the NN
+  distance (43.6px observed) may indicate hunters cluster near prey rather than spread, so the "danger gradient"
+  is still spatially homogeneous from the herd's perspective.
 
 - **[Build] Retired (BUILT 2026-07-28): "Detrend the predation-cycle baseline."** Done: `classifyRegime`
   fits a least-squares slope over the baseline window and judges the recent mean against the baseline

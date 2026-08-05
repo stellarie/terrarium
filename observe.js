@@ -299,6 +299,7 @@ line("\n[8] SPATIAL  (coarse density, 48×16 over the 960×540 torus)");
 vegMap();
 soilMap();
 lifeMap();
+territoryMap();
 
 line("\n[9] GENE-POOL SHAPE  (the mean hides the shape — has the grazer pool SPLIT?)");
 shapeReport();
@@ -427,6 +428,43 @@ function lifeMap() {
     }
     line(s);
   }
+}
+
+function territoryMap() {
+  if (!world.hunters.length) { line("    (no hunters alive to map)"); return; }
+  const home = new Int32Array(MC * MR);
+  for (const h of world.hunters) home[binCell(h.homeX, h.homeY)]++;
+  let mx = 0;
+  for (const v of home) if (v > mx) mx = v;
+  const ramp = " .:-=+*#%@";
+  line(`    hunter territories (home centroid density, max ${mx}/cell)`);
+  for (let y = 0; y < MR; y++) {
+    let s = "    ";
+    for (let x = 0; x < MC; x++) {
+      const i = y * MC + x;
+      const q = mx > 0 ? home[i] / mx : 0;
+      s += ramp[Math.min(ramp.length - 1, Math.ceil(q * (ramp.length - 1)))];
+    }
+    line(s);
+  }
+  const hs = world.hunters, n = hs.length;
+  if (n < 2) { line("    (fewer than 2 hunters — skip nearest-neighbour stat)"); return; }
+  const HW2 = W / 2, HH2 = H / 2;
+  let totalNN = 0;
+  for (let i = 0; i < n; i++) {
+    let minD = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      let dx = hs[i].homeX - hs[j].homeX; if (dx > HW2) dx -= W; else if (dx < -HW2) dx += W;
+      let dy = hs[i].homeY - hs[j].homeY; if (dy > HH2) dy -= H; else if (dy < -HH2) dy += H;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < minD) minD = d;
+    }
+    totalNN += minD;
+  }
+  const meanNN = (totalNN / n).toFixed(1);
+  const uniformNN = Math.sqrt((W * H) / n).toFixed(1);
+  line(`    mean nearest-neighbour distance between home centroids: ${meanNN}px (uniform random ~${uniformNN}px)`);
 }
 
 function binCell(x, y) {
