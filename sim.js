@@ -1574,7 +1574,7 @@
           if (world.sparks.length < 240) world.sparks.push({ x: prey.x, y: prey.y, life: 1 });
           // log the kill site so motes can steer away from recent hunting grounds
           if (world.killLog.length >= CONFIG.alarmSites) world.killLog.shift();
-          world.killLog.push({ x: prey.x, y: prey.y, tick: world.tick });
+          world.killLog.push({ x: prey.x, y: prey.y, tick: world.tick, hue: h.g.hue });
           // home centroid: shift toward this kill — an exponential moving average of kill
           // sites that anchors the hunter's territory. Each kill nudges the centroid
           // hunterHomeShift fraction closer to where the prey just fell, so a corridor
@@ -1641,6 +1641,11 @@
     }
 
     // fade the kill-flashes (view only)
+    // trim alarm sites that have aged past alarmDuration; the ring is insertion-ordered
+    // so all expired entries are at the front — a cheap O(expired) scan per tick.
+    while (world.killLog.length > 0 && world.tick - world.killLog[0].tick >= CONFIG.alarmDuration)
+      world.killLog.shift();
+
     for (let i = world.sparks.length - 1; i >= 0; i--) {
       const s = world.sparks[i];
       s.life -= CONFIG.sparkFade;
@@ -1729,7 +1734,8 @@
       const freshness = 1 - age / CONFIG.alarmDuration;
       ctx.beginPath();
       ctx.arc(site.x, site.y, CONFIG.alarmRadius * 0.9, 0, TAU);
-      ctx.fillStyle = `rgba(210,65,35,${(0.055 * freshness).toFixed(3)})`;
+      const siteHue = site.hue != null ? site.hue : 15;
+      ctx.fillStyle = `hsla(${siteHue},72%,48%,${(0.055 * freshness).toFixed(3)})`;
       ctx.fill();
     }
 

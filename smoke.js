@@ -180,6 +180,10 @@ check(world.history.length > 10, `history buffer filled for the charts (${world.
     if (s.tick < 0 || s.tick > world.tick)                { kBad = true; break; }
   }
   check(!kBad, "kill log entries have valid, in-bounds coords and ticks");
+  // each kill log entry carries the killer's hue — used to tint the alarm glow per-hunter
+  const hueBad = world.killLog.filter(s => !finite(s.hue) || s.hue < 0 || s.hue > 45);
+  check(hueBad.length === 0,
+    `kill log entries carry a valid hunter hue in [0,45] (${hueBad.length} bad of ${world.killLog.length})`);
   // every active site has a freshness strictly in (0,1] — no stale or future sites leaked through
   const stale = world.killLog.filter(s => {
     const age = world.tick - s.tick;
