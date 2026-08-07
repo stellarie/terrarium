@@ -232,7 +232,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 95 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 96 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -384,7 +384,16 @@ herd's alertness tracks how dangerous its world is. Hunters now carry **home ran
 its personal kill centroid and leans toward it, carving emergent patrol corridors out of the shared
 landscape.
 
-Newest: **each hunter has a home range.** Every predator now tracks `homeX, homeY` — an exponential
+Newest: **the alarm glows name their hunter.** Each kill-site danger aura — the faint warm glow marking
+where a mote was recently caught — is now tinted with that **hunter's own hue** (its heritable colour
+gene, always in the warm red-to-amber range). Where one hunter's patrol zone dominates, the alarm
+layer glows that individual's shade; where two hunters' territories overlap, the glow shows a mottled
+mix of both. What used to be a featureless warm wash is now a colour-coded map of which hunter has
+been active where. (Also fixed: after a prey crash, kills slow to near-zero and the alarm ring buffer
+would stop refreshing — entries aged past their expiry but sat in the ring uncleared, caught by the
+smoke test. A per-tick trim now evicts expired entries as they age out, keeping the ring clean.)
+
+Before that: **each hunter has a home range.** Every predator tracks `homeX, homeY` — an exponential
 moving average of where it has made kills. After each catch the centroid shifts toward the kill site,
 and every tick the hunter leans gently back toward it, so a corridor where this hunter kills often
 becomes the core of its personal patrol range. Applied even while chasing, the pull builds a geographic
