@@ -165,6 +165,17 @@ check(world.history.length > 10, `history buffer filled for the charts (${world.
   check(!sBad, `social gene mean recorded in every history sample (in [${SOCIAL_LO}, ${SOCIAL_HI}])`);
 }
 
+// metabo axis on the trait chart: every history sample carries a finite, in-range metabo mean
+{
+  const METABO_LO = 0.60, METABO_HI = 1.80;
+  let mBad = false;
+  for (const s of world.history) {
+    if (!("metabo" in s) || !finite(s.metabo) || s.metabo < METABO_LO || s.metabo > METABO_HI)
+      mBad = true;
+  }
+  check(!mBad, `metabo gene mean recorded in every history sample (in [${METABO_LO}, ${METABO_HI}])`);
+}
+
 // kill-site alarm: after a run with predation, the kill log has entries; each entry
 // has finite, in-canvas-bounds coords and a valid tick; log never exceeds its cap.
 {
