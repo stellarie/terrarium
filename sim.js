@@ -408,6 +408,7 @@
     { key: "speed",  label: "speed",  color: "#f4a259", lo: 0.25, hi: 2.6  },
     { key: "size",   label: "size",   color: "#7fd1c1", lo: 1.6,  hi: 6.5  },
     { key: "sense",  label: "sense",  color: "#a78bfa", lo: 12,   hi: 120  },
+    { key: "metabo", label: "metabo", color: "#e2c840", lo: 0.60, hi: 1.80 },
     { key: "social", label: "social", color: "#60a5fa", lo: -1.0, hi: 1.2  },
   ];
 
@@ -1224,11 +1225,12 @@
   // and the raw population/biomass counts (for the boom-and-bust chart).
   function sample() {
     const n = world.motes.length;
-    let speed = 0, size = 0, sense = 0, social = 0;
+    let speed = 0, size = 0, sense = 0, metabo = 0, social = 0;
     for (const m of world.motes) {
       speed += m.g.speed;
       size += m.g.size;
       sense += m.g.sense;
+      metabo += m.g.metabo;
       social += m.g.social;
     }
     const inv = n > 0 ? 1 / n : 0;
@@ -1253,6 +1255,7 @@
       speed: speed * inv,
       size: size * inv,
       sense: sense * inv,
+      metabo: metabo * inv,   // mean grazer metabolism — thrifty <1 in haven, greedy >1 in arms-race
       social: social * inv,   // mean grazer sociability — <0 wary, >0 sociable
       hspeed: hn > 0 ? hspeed * hinv : null,
       hsize: hn > 0 ? hsize * hinv : null,
@@ -2088,7 +2091,7 @@
     }
     // trailing key so the dashed lines aren't a mystery
     cctx.fillStyle = "#6b7d8f";
-    cctx.fillText(hist.length <= 1 ? "gathering data…" : "grazer·hunter (social: grazer)", lx, padT / 2);
+    cctx.fillText(hist.length <= 1 ? "gathering data…" : "grazer·hunter (metabo, social: grazer only)", lx, padT / 2);
   }
 
   // ---- trophic cascade chart ----------------------------------------------
