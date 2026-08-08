@@ -131,11 +131,14 @@ population to move along.
 
 ## Watch it evolve
 
-- A **live trait chart** plots the population-average speed, size, sense, and **sociability**
-  over time for **both** species — grazers as solid lines, hunters as dashed lines — each
-  normalized to its own genetic range, so the coevolutionary arms race reads on both sides at
-  once. Watch **both** sets of curves climb — as the solid grazer lines escalate speed, the
-  dashed predator lines now chase them, a genuine reciprocal spiral. And now the **social line**
+- A **live trait chart** plots the population-average speed, size, sense, **metabolism**, and
+  **sociability** over time for **both** species — grazers as solid lines, hunters as dashed
+  lines — each normalized to its own genetic range, so the coevolutionary arms race reads on
+  both sides at once. Watch **both** sets of curves climb — as the solid grazer lines escalate
+  speed, the dashed predator lines now chase them, a genuine reciprocal spiral. The **gold
+  metabo line** leans toward greedy (~1.1) in a predator-heavy arms-race and toward thrifty
+  (~0.75) in a grazer-haven — you can now *watch* the herd's metabolic character shift with the
+  predation cycle, not just read it off individual motes. And the **cool blue social line**
   dives as predation pressure builds and relaxes in a lull — you can watch the herd *learn to
   keep its distance* as a curve, not just read it on the HUD chip. (Earlier versions had
   near-immortal hunters whose curves sat frozen; senescence gave the tier turnover, so its
@@ -232,7 +235,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 96 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 97 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -359,7 +362,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 95 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 97 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -377,14 +380,22 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 95-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 97-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is. Hunters now carry **home ranges** — each tracks
 its personal kill centroid and leans toward it, carving emergent patrol corridors out of the shared
 landscape.
 
-Newest: **the alarm glows name their hunter.** Each kill-site danger aura — the faint warm glow marking
+Newest: **metabolism now has a history on the chart.** The `metabo` gene — thrifty in a grazer-haven,
+greedy in an arms-race — joins the trait chart as a fifth grazer line, drawn in warm gold. Before, a
+visitor could read the herd's metabolic character from individual motes (a thrifty mote renders pale,
+a fast-burner vivid) but couldn't watch it *evolve* — couldn't see the line lean toward ~1.1 as
+predation builds and ease back toward ~0.75 as the hunters thin. Now the gold curve traces it across
+the world's history alongside speed, size, sense, and sociability. `smoke.js` gains one new assertion
+(every history sample carries a finite in-range `metabo` mean), bringing the total to **97 checks**.
+
+Before that: **the alarm glows name their hunter.** Each kill-site danger aura — the faint warm glow marking
 where a mote was recently caught — is now tinted with that **hunter's own hue** (its heritable colour
 gene, always in the warm red-to-amber range). Where one hunter's patrol zone dominates, the alarm
 layer glows that individual's shade; where two hunters' territories overlap, the glow shows a mottled

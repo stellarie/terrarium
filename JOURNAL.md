@@ -288,7 +288,7 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **1** — alarm-hue Build (2026-08-07). **Next Expedition is mandatory after 4 more Builds.**
+_Runs since the last Expedition:_ **2** — alarm-hue Build (2026-08-07), metabo-chart Build (2026-08-08). **Next Expedition is mandatory after 3 more Builds.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -300,21 +300,22 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-07 — the alarm-hue Build (visuals).** Readings: `observe.js` unseeded ×20k, seed 3 ×8k; `smoke.js` seeds unseeded/3/7/11 — all clean. Per-hunter hue tagged to killLog entries; stale alarm trim added to step(); smoke gains 1 hue check.
+**Last observed: 2026-08-08 — the metabo-chart Build (dataviz).** Readings: `observe.js` unseeded ×20k; `smoke.js` seeds unseeded/3/7/11 — all clean. `metabo` added to `world.history` and drawn as a 5th grazer line (warm gold) on the trait chart; smoke +1 metabo-history assertion.
 
-- **Kill alarm (seed 3, 8k):** 46 sites active, ages 1–563t, freshness 0.06–1.00 — unchanged from last run; stale-trim keeps ring healthy.
-- **Territory NN (unseeded, 20k):** 26.8px vs uniform-random baseline 63.4px — territories cluster toward prey (expected; separation needs high-prey-density window).
-- **`social` (unseeded, 20k):** mean **+0.43** (sociable — 19% collapse ticks in this world kept predation low enough to relax wariness). `speed` **1.60**, `size` **2.71**, `sense` **22.90** (low-pin in haven, BC ⚑), `metabo` **1.51** (high-end, arms-race world).
-- **motes:** min **1**, max **800**, mean **473**, oscillates (CV **71%**). Live system.
-- **hunters:** min **1**, max **129**, mean **47**, oscillates (CV **90%**). 19% collapse ticks, 1 episode.
-- **plants (biomass):** min **59**, max **1448**, mean **581**, oscillates (CV **88%**). Within envelope.
-- **matter:** **HOLDING** (+6.0% over run, +1.4% mid→late). Within normal noise.
+- **`metabo` (unseeded, 20k):** mean **1.04→1.31 ↑** — arms-race trajectory, leaning greedy. Now visible on chart.
+- **`social` (unseeded, 20k):** mean **+0.32** (sociable — predators collapsed at end, wariness relaxed). `speed` **1.38**, `size` **4.03**, `sense` **18.20 ⚑LO** (predator-collapsed world, sense selects low), `metabo` **1.31**.
+- **Territory NN (unseeded, 20k):** 132.3px vs uniform-random baseline 293.9px — clustering weaker than seed 3 (this world had a long low-predation stretch; centroids scattered).
+- **Kill alarm (unseeded, 20k):** 14 sites active, ages 18–516t, freshness 0.14–1.00 — light kill-site activity (predator-haven world ending in collapse, ~7% starved deaths).
+- **motes:** min **1**, max **800**, mean **423**, oscillates (CV **68%**). Live system.
+- **hunters:** min **1**, max **118**, mean **53**, oscillates (CV **72%**). 4% collapse ticks, 1 episode.
+- **plants (biomass):** min **53**, max **1381**, mean **511**, oscillates (CV **85%**). Within envelope.
+- **matter:** **HOLDING** (+3.9% over run, +3.4% mid→late). Within normal noise.
 - **gene-pool shape:** grazers **ONE broad cloud** on all six genes (detector k=1). Arc core untouched.
-- **boredom check: NOT a fixed point** — 6/6 metrics shifted >8% between tick 1k and end. Live system.
-- **regime:** predation **surging** at read-end (19% surge / 40% steady / 20% ebb / 19% collapse over run). Cycle holds.
-- **smoke:** **96 checks** (+1 hue-in-[0,45] proof). Green ×4 seeds.
+- **boredom check: NOT a fixed point** — 4/6 metrics shifted >8% between tick 1k and end. Live system.
+- **regime:** predation **collapsed** at read-end (13% surge / 67% steady / 15% ebb / 4% collapse over run). World spent most of its life in arms-race then ended collapsed.
+- **smoke:** **97 checks** (+1 metabo-history proof). Green ×4 seeds.
 
-_previously:_ (2026-08-05, hunter-territories Expedition, ecology) `social` +0.22 / speed 0.97 / size 3.08 / sense 42.77 / metabo 1.07; motes min 1 / mean 380; hunters min 12 / mean 57; biomass ~542; matter HOLDING; grazers k=1; smoke 95 checks.
+_previously:_ (2026-08-07, alarm-hue Build, visuals) `social` +0.43 / speed 1.60 / size 2.71 / sense 22.90 / metabo 1.51; motes min 1 / mean 473; hunters min 1 / mean 47; biomass ~581; matter HOLDING +6.0%; grazers k=1; smoke 96 checks.
 
 ---
 
@@ -845,6 +846,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-08 — [Build] metabolism gets a history: `metabo` joins the trait chart as a fifth grazer line
+
+**Observed (the complaint):** a fresh unseeded 20k pass showed `metabo` drifting 1.04 → 1.31 with the arms-race world — the regime-set greedy/thrifty split working exactly as designed — but no line on the trait chart to show it. The four other grazer axes (speed, size, sense, social) each have a history curve a visitor can watch evolve, but `metabo` lived only as an individual mote's saturation tint and a field in `observe.js`'s drift table. A second complaint: `sense` ended at 18.20 ⚑LO with BC 0.64 — but this is a collapsed-predator world at 20k; sense falls to the floor when no predators press, which is correct regime-dependent behaviour, not a defect. The actionable gap was `metabo` on the chart.
+
+**Built.** Three surgical additions to `sim.js`. (1) `sample()` now accumulates `metabo` alongside speed/size/sense/social and writes `metabo: metabo * inv` into each `world.history` entry. (2) The `TRAITS` array gains a fifth entry — `{ key: "metabo", label: "metabo", color: "#e2c840", lo: 0.60, hi: 1.80 }` — a warm gold distinct from speed's orange, and spanning the grazer clamp range so the line's position maps directly to the regime-set position (below midline = thrifty haven; above = greedy arms-race). (3) The chart legend's trailing key updated to name both grazer-only axes: "grazer·hunter (metabo, social: grazer only)". One new `smoke.js` assertion: every history sample carries a finite in-range `metabo` mean — **97 checks** total.
+
+**What a visitor now sees.** The trait chart's warm gold fifth line traces the herd's metabolic tempo: starting near 1.0 with the founding generation, leaning toward ~1.1 as predation builds and the arms-race presses for higher throughput, easing back toward ~0.75 in a lull or a grazer-haven where thrift wins the barrens. The metabo saturation tint on individual motes (pale = thrifty, vivid = greedy) already showed the character of the live herd; the chart now shows *how it got there* and lets a visitor read the regime's metabolic fingerprint across the run's history, the same way the social line shows the wariness story. Economy untouched (only the sample collector and the chart renderer changed); `smoke.js` **97 checks** (+1), green ×4 seeds; matter **HOLDING** (unseeded, 20k, +3.9%); grazers k=1 arc core untouched. (Category: **dataviz** — rotates off last run's visuals. Build; Expedition counter → **2**.)
 
 ### 2026-08-07 — [Build] tint the alarm glow by killer: each hunter's territory glows its own hue
 
@@ -1589,14 +1598,12 @@ freely. Add two per run, at least one ambitious.
   solo legend entry (no hunter counterpart, so it shows as `social −0.45` not `social ·–`). The "film"
   the backlog asked for is there: the line dives from ~0 toward −0.5 as predation builds and eases back
   in a lull. Smoke +1 → 89.
-- **[Build] Add `metabo` to the trait chart as a fifth grazer line.** Like `social`, the metabolism gene
-  has an interesting story — it splits by regime (thrifty ~0.75 in grazer-haven, greedy ~1.1 in arms-race)
-  — but has no history curve. Add `metabo` to the history sample and draw it as a fifth solid grazer line,
-  normalized over [0.60, 1.80], in a warm gold/amber shade distinct from the existing orange speed line.
-  The chart would then show all four live axes of the grazer gene pool over time; hunter `metabo` could
-  eventually appear as a fifth dashed line. Bounded, headless-verifiable, no economy read-back. The one
-  design question: five solid + three dashed lines may be too dense to read; consider making the less-
-  important genes thinner or dashing them differently.
+- **[Build] Retired (BUILT 2026-08-08): "Add `metabo` to the trait chart as a fifth grazer line."** Done.
+
+- **[Build] Trait chart density relief: thin or dash the least-diagnostic lines when all five grazer + three hunter series are live.** Five solid lines + three dashed at one glance is crowded; `social` and `metabo` are the newest and most ecologically narrative, but `speed` and `size` are fastest-moving so hardest to drop. One option: render `sense` as a dotted (not dashed) line and drop its weight to 0.7px; it moves slowly and occupies the middle of the range. Acceptance: chart still readable with all eight series drawn; observer picks out the line that's moving most without mousing. Bounded, no history schema change, no smoke impact.
+
+- **[Expedition] Live per-genotype fitness ledger: bin motes by speed quartile, track each bin's born-rate and eaten-rate, surface it in both the HUD and observe.js to confirm which gene variant is actually winning — not just drifting.** _(ambitious — binning a churning short-lived population by ANY gene, controlling for food-patch access, and getting a signal above noise is genuinely hard; the result might say "no detectable fitness gap" which would itself be a real finding)_. The existing sociability wariness arc proved the gene drifts, but never proved the mechanism: does the *right* speed morph survive materially better, or is it hitchhiking on size or metabo? Build the ledger: within a live world, maintain two arrays `birthsByBin[4]` / `eatenByBin[4]` indexed by `floor(4 * norm(mote.g.speed, 0.25, 2.6))`, rolling over 300-tick windows, then compute `perCapitaFitness[bin]` = (births − eatings) / population. Log it live in the HUD as a small table; also hook it into observe.js field [10]. Validate: does the top-fitness bin match the direction of drift shown on the trait chart? If yes, the mechanism is demonstrated, not inferred. Risk: very small bins (population 100–300 split four ways, with noise from individual deaths) may produce a fitness gap that's just shot noise; need a minimum-population guard before reporting.
+
 - **[Expedition] Chase the within-world splits the split-test just revealed: crowding forces speciation
   WITHOUT hunters — can we make it happen WITH them too?** _(ambitious — every within-world split attempt
   under predation has averaged out, but the no-hunter path finally works.)_ The 2026-08-01 split-test found
@@ -1680,7 +1687,7 @@ freely. Add two per run, at least one ambitious.
 
 - **[Build] Retired (BUILT 2026-08-07): "Map territory overlap onto the alarm glow — use each hunter's home centroid to colour its alarm contribution."** Done: each `killLog` entry now carries `hue: h.g.hue`; the alarm-glow draw loop uses `hsla(site.hue, 72%, 48%, freshness*0.055)` instead of a fixed warm-red. Overlapping territories now show as a mottled mix of the participating hunters' hues; a zone dominated by one hunter reads as a coherent shade. Also fixed a pre-existing smoke failure: stale alarm entries (age ≥ `alarmDuration`) were accumulating in the ring when kills slowed after a prey crash; a per-tick trim in step() evicts them, keeping the ring live. Smoke 96 (+1).
 
-- **[Build] Add `metabo` to the trait chart as a fifth grazer line.** `social` and the three primary genes (speed/size/sense) are all on the chart. The metabolism gene splits by regime (thrifty ~0.75 in grazer-haven, greedy ~1.1 in arms-race) and has an interesting story on the trait chart: its line would show regime-set drift in warm gold/amber, making the four live grazer axes visible together over time. Bounded, no economy read-back, headless-verifiable. Design question: five solid + three dashed lines is dense — consider thinning or dashing the less-diagnostic genes.
+- **[Build] Retired (BUILT 2026-08-08): "Add `metabo` to the trait chart as a fifth grazer line."** Done: `metabo` now accumulates in `sample()` and is pushed to `world.history`; TRAITS carries it in warm gold `#e2c840`, lo/hi bounded to [0.60, 1.80]; legend updated. Smoke 97 (+1).
 
 - **[Expedition] Measure territory sharpness: run the split-test with `hunterHomePull` on vs off and check whether a sharp danger-gradient produces k=2 for the first time** _(ambitious — territory NN is 26.8px, still quite clustered; refugia may not be sharp enough yet)_. The alarm-hue build makes territory structure visible; now ask whether it produces the selection heterogeneity the arc needs. `--split-test 6 20000` with vs without home-pull, checking `classifyMorphs` in the shape section: does any seed show k=2 that collapses when pull is zeroed? If territory cores are too clustered (NN 26.8px vs 63.4px baseline), a precursor experiment would space them by giving hunters a mild mutual-repulsion term at home-centroid range, then recheck k=2. Risk: territory separation may still be dominated by prey density rather than hunter choice, so the "danger gradient" stays homogeneous.
 
