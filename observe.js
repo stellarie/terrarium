@@ -152,7 +152,7 @@ seed(SEED == null ? undefined : SEED);
 const founders = { mote: geneAverages(world.motes, MOTE_GENES), hunter: geneAverages(world.hunters) };
 
 const mPop = meter(), hPop = meter(), bio = meter();
-let moteZeroTicks = 0, hunterEmptyTicks = 0;
+let moteZeroTicks = 0, moteNearTicks = 0, hunterEmptyTicks = 0;
 let hunterEpisodes = 0, curEmpty = 0, longestEmpty = 0;   // hunter extinction stretches
 let prevHunters = world.hunters.length;
 let earlySnap = null;           // boredom check: a window around tick ~1000
@@ -183,7 +183,8 @@ try {
     step();
     const p = world.motes.length, hn = world.hunters.length, b = biomass();
     mPop.push(p); hPop.push(hn); bio.push(b);
-    if (p <= 6) moteZeroTicks++;                 // the mote reseed net fires from 0→6
+    if (p <= 6)  moteZeroTicks++;                 // the mote reseed net fires from 0→6
+    if (p <= CONFIG.moteNearExtinctFloor) moteNearTicks++;  // near-extinction net threshold
     if (hn === 0) { hunterEmptyTicks++; curEmpty++; }
     else { if (curEmpty > longestEmpty) longestEmpty = curEmpty; curEmpty = 0; }
     if (prevHunters > 0 && hn === 0) hunterEpisodes++;   // a fresh extinction stretch begins
@@ -239,8 +240,9 @@ line("    (plants = total vegetation biomass; motes/hunters = head counts)");
 
 line("\n[3] SAFETY NETS  (how often the world had to be rescued)");
 line(`    mote reseed floor : min pop ${mPop.min}, ${moteZeroTicks} tick(s) at/under the 0→6 net`);
+line(`    near-extinction   : ${moteNearTicks} tick(s) at/under floor (≤${CONFIG.moteNearExtinctFloor}), ${world.nearExtinctEvents} top-up event(s) fired`);
 line(`    hunter extinction : ${hunterEpisodes} episode(s), ${hunterEmptyTicks} empty tick(s), longest ${longestEmpty}`);
-line(`    reseed thresholds : hunters re-drift when motes ≥ ${CONFIG.hunterReseedPrey}; motes reseed 6 from 0`);
+line(`    reseed thresholds : hunters re-drift when motes ≥ ${CONFIG.hunterReseedPrey}; motes reseed 6 from 0; top-up ${CONFIG.moteNearExtinctAdd} after ${CONFIG.moteNearExtinctTicks} ticks ≤ ${CONFIG.moteNearExtinctFloor}`);
 
 const per1k = (x) => ((x / TICKS) * 1000).toFixed(1);
 line("\n[4] FLOW  (per 1000 ticks · totals in parens)");

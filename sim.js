@@ -243,6 +243,15 @@
     huntMetaboAssimExp: 0.5,  // concavity of that gain (0.5 = sqrt: strong diminishing returns)
     hunterReseedPrey: 55,     // predators only wander back in when this many motes exist
     hunterReseedCount: 6,     // how many drift in when they'd otherwise be extinct
+    // Sustained near-extinction net: the 0→6 reseed fires only at exact 0, but the
+    // world can sit at 1–10 motes for hundreds of ticks as hunters immediately eat every
+    // reseed — a degenerate stalemate where the prey can't escape the floor. After
+    // moteNearExtinctTicks consecutive ticks at or below moteNearExtinctFloor, add a
+    // small cohort. The 400-tick delay distinguishes a genuine degenerate stalemate from
+    // the normal deep troughs the limit cycle is supposed to have.
+    moteNearExtinctFloor: 10,   // if mote pop stays at/below this for N consecutive ticks…
+    moteNearExtinctTicks: 400,  // …this many ticks in a row at/below the floor fires the top-up
+    moteNearExtinctAdd:   8,    // motes added per top-up event
     fearFloor: 22,            // close-range startle reflex: the *minimum* radius at which any
                               // mote notices a hunter, however dull-sensed. Above this the
                               // fear radius IS the mote's `sense` gene, so keen motes flee
@@ -834,6 +843,8 @@
     world.hunterBorn = 0;
     world.hunterDied = 0;
     world.hunterAged = 0;
+    world.lowPopTicks = 0;       // consecutive ticks at/below moteNearExtinctFloor
+    world.nearExtinctEvents = 0; // times the sustained near-extinction top-up fired
     world.history = [];
     world.morphs = { k: 1, n: 0, gene: null, n0: 0, n1: 0, sep: 0 };
     world._morphPendK = 1;
@@ -1641,6 +1652,22 @@
     // if everyone dies, gently reseed a few so the world never stays empty
     if (world.motes.length === 0) {
       for (let i = 0; i < 6; i++) world.motes.push(makeMote(rand(0, W), rand(0, H)));
+    }
+
+    // sustained near-extinction: if the herd stays at or below moteNearExtinctFloor for
+    // moteNearExtinctTicks consecutive ticks, add a small cohort. The 0→6 net above fires
+    // only at exact zero and cannot prevent the stalemate where hunters eat every reseed
+    // before prey recover — a long degenerate stretch at 1-10 motes that's boring to watch.
+    if (world.motes.length <= CONFIG.moteNearExtinctFloor) {
+      world.lowPopTicks++;
+      if (world.lowPopTicks >= CONFIG.moteNearExtinctTicks) {
+        for (let i = 0; i < CONFIG.moteNearExtinctAdd; i++)
+          world.motes.push(makeMote(rand(0, W), rand(0, H)));
+        world.nearExtinctEvents++;
+        world.lowPopTicks = 0;
+      }
+    } else {
+      world.lowPopTicks = 0;
     }
 
     // fade the kill-flashes (view only)
