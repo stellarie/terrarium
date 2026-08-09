@@ -288,7 +288,7 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **2** — alarm-hue Build (2026-08-07), metabo-chart Build (2026-08-08). **Next Expedition is mandatory after 3 more Builds.**
+_Runs since the last Expedition:_ **3** — alarm-hue Build (2026-08-07), metabo-chart Build (2026-08-08), near-extinction-net Build (2026-08-09). **Next Expedition is mandatory after 2 more Builds.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -300,22 +300,22 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-08 — the metabo-chart Build (dataviz).** Readings: `observe.js` unseeded ×20k; `smoke.js` seeds unseeded/3/7/11 — all clean. `metabo` added to `world.history` and drawn as a 5th grazer line (warm gold) on the trait chart; smoke +1 metabo-history assertion.
+**Last observed: 2026-08-09 — the near-extinction-net Build (ecology/mechanics).** Readings: `observe.js` unseeded ×20k; `smoke.js` unseeded — 99 checks green. Added sustained near-extinction top-up net; smoke +2 deterministic trigger proofs.
 
-- **`metabo` (unseeded, 20k):** mean **1.04→1.31 ↑** — arms-race trajectory, leaning greedy. Now visible on chart.
-- **`social` (unseeded, 20k):** mean **+0.32** (sociable — predators collapsed at end, wariness relaxed). `speed` **1.38**, `size` **4.03**, `sense` **18.20 ⚑LO** (predator-collapsed world, sense selects low), `metabo` **1.31**.
-- **Territory NN (unseeded, 20k):** 132.3px vs uniform-random baseline 293.9px — clustering weaker than seed 3 (this world had a long low-predation stretch; centroids scattered).
-- **Kill alarm (unseeded, 20k):** 14 sites active, ages 18–516t, freshness 0.14–1.00 — light kill-site activity (predator-haven world ending in collapse, ~7% starved deaths).
-- **motes:** min **1**, max **800**, mean **423**, oscillates (CV **68%**). Live system.
-- **hunters:** min **1**, max **118**, mean **53**, oscillates (CV **72%**). 4% collapse ticks, 1 episode.
-- **plants (biomass):** min **53**, max **1381**, mean **511**, oscillates (CV **85%**). Within envelope.
-- **matter:** **HOLDING** (+3.9% over run, +3.4% mid→late). Within normal noise.
+- **`social` (unseeded, 20k):** mean **−0.07** (neutral — high-predation world ending surging). `speed` **1.24**, `size` **4.28**, `sense` **30.72**, `metabo` **1.22**.
+- **Territory NN (unseeded, 20k):** 43.2px vs uniform-random baseline ~80.0px — centroids clustered (heavy predation world; all hunters converging on scarce prey).
+- **Kill alarm (unseeded, 20k):** 81 sites active, ages 14–581t, freshness 0.03–1.00 — heavy kill-site activity (predation 92% of deaths throughout).
+- **motes:** min **1**, max **800**, mean **361**, oscillates (CV **83%**). Live system (world ended at 1 mote, heavy-predation trough at final tick).
+- **hunters:** min **5**, max **106**, mean **48**, oscillates (CV **73%**). 10% collapse ticks, 1 episode.
+- **plants (biomass):** min **88**, max **1405**, mean **661**, oscillates (CV **71%**). Within envelope.
+- **safety nets:** 4750 ticks at/under 0→6 floor (was 6800 pre-change); 5031 ticks at/under near-extinction floor (≤10); **12 top-up events fired**.
+- **matter:** **HOLDING** (+9.4% full run, +0.9% mid→late). Improvement on +16.4% pre-change — fewer reseed injections in the latter half.
 - **gene-pool shape:** grazers **ONE broad cloud** on all six genes (detector k=1). Arc core untouched.
-- **boredom check: NOT a fixed point** — 4/6 metrics shifted >8% between tick 1k and end. Live system.
-- **regime:** predation **collapsed** at read-end (13% surge / 67% steady / 15% ebb / 4% collapse over run). World spent most of its life in arms-race then ended collapsed.
-- **smoke:** **97 checks** (+1 metabo-history proof). Green ×4 seeds.
+- **boredom check: NOT a fixed point** — 5/6 metrics shifted >8% between tick 1k and end. Live system.
+- **regime:** predation **surging** at read-end (surge 33% / steady 34% / ebb 21% / settling 1% / collapsed 10%). World built steadily through an arms-race.
+- **smoke:** **99 checks** (+2 near-extinction trigger proofs). Green.
 
-_previously:_ (2026-08-07, alarm-hue Build, visuals) `social` +0.43 / speed 1.60 / size 2.71 / sense 22.90 / metabo 1.51; motes min 1 / mean 473; hunters min 1 / mean 47; biomass ~581; matter HOLDING +6.0%; grazers k=1; smoke 96 checks.
+_previously:_ (2026-08-08, metabo-chart Build, dataviz) `social` +0.32 / speed 1.38 / size 4.03 / sense 18.20 ⚑LO / metabo 1.31; motes min 1 / mean 423; hunters min 1 / mean 53; biomass ~511; matter HOLDING +3.9%; grazers k=1; smoke 97 checks.
 
 ---
 
@@ -846,6 +846,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-09 — [Build] break the predation stalemate: a sustained near-extinction top-up net
+
+**Observed (the complaint):** A fresh unseeded 20k pass spent **6,800 ticks (34%) at or under the 0→6 reseed floor** — with 60+ hunters against 6 motes, the world bounced between 0 and 6 prey for thousands of ticks: hunters consumed all 6 within ~18 ticks, the reseed net fired, pop hit 0, 6 returned, repeat. The prey could never accumulate enough to breed; predation share was frozen at 99–100% and the death-balance chart was a flat warm band carrying zero information about any recovery. The world ended at 2 motes. As a side finding, each reseed injects 6 × bodyMatter from nothing, so heavy-reseed stretches drive matter drift (+16.4% that run) — the nutrient cycle's one remaining leak.
+
+**Built.** A secondary net in `step()`: if mote population stays at or below 10 for 400 consecutive ticks, 8 motes are added. The 400-tick delay is the key — it distinguishes the degenerate stalemate from an ordinary deep trough. Three new `CONFIG` knobs (`moteNearExtinctFloor/Ticks/Add`), two new world state counters (`lowPopTicks`, `nearExtinctEvents`), an updated `observe.js` SAFETY NETS section with near-extinction tick counter and event count, and two deterministic `smoke.js` assertions proving the trigger fires on cue. **Smoke passes at 99 checks** (+2).
+
+**What a visitor now sees.** The sustained stalemate is punctuated: each time the herd stays critically low for 400 ticks, a small fresh cohort appears — enough for the prey to try to breed out of the crisis. Field reading: **12 top-up events** over 20k ticks; ticks at the floor fell from 6,800 to 4,750; matter HOLDING (+9.4% full run, +0.9% mid→late — well below the +16.4% before). The net fires visibly and the world's near-extinction episodes are shorter, though a 80-hunter world will still push the herd hard. (Category: **ecology/mechanics** — rotates off last run's dataviz. Build; Expedition counter → **3**.)
 
 ### 2026-08-08 — [Build] metabolism gets a history: `metabo` joins the trait chart as a fifth grazer line
 
@@ -1972,6 +1980,8 @@ freely. Add two per run, at least one ambitious.
   flee, with speed breaking cover). It made predation *drive the lifestyle axis* clearly and proved it
   headlessly (`--split-test`). What it did **not** do is produce within-world 2-morph coexistence — the
   bistability keeps each world on one lifestyle. That remaining half is now its own item below.
+- **[Build] Make reseeds draw from soil instead of conjuring matter** — when the 0→6 net and the new near-extinction top-up fire, each `makeMote()` call currently injects `bodyMatter: 0.5` from nothing, which is the source of the matter drift that spikes during heavy-reseed stretches (observed +16.4% pre-fix, +9.4% post-fix, and still worst when the near-extinction net fires). Fix: at spawn, debit the reseed mote's `bodyMatter` from the soil at the spawn cell (or distribute the draw across nearby cells if the local soil can't cover it). If soil is insufficient, defer or spawn fewer. Small, targeted; the matter ledger section [11] is the verification instrument.
+- **[Expedition] Per-subspecies gene bank: recovery cohorts carry the herd's own evolved traits** _(ambitious — gene bank may entrench bad local optima or go stale)_. When the near-extinction top-up fires, the 8 added motes are currently `makeMote()` founders — drawn from a random baseline, not from the world's evolved genome. In a world where the herd has spent 10k ticks selecting for concealment-optimized genes, the recovery cohort arrives with alien traits and likely loses the selection battle immediately. Build a **gene bank** — a ring buffer of the last ~50 recently-deceased motes' genomes, refreshed every death. Top-up motes sample from the bank (with mutation), so the recovery cohort arrives pre-adapted. Headless-verifiable: after a near-extinction event, the added cohort's mean gene vector should lie closer to the pre-extinction distribution than to random founders. Risk: if the bank's last entries are the weakest individuals (the ones who died), the cohort inherits maladaptive traits; a "best-of-N" sampling strategy would mitigate this but needs care.
 - **[Expedition] Straddle the bistability → real within-world coexistence** _(ambitious — the arc's
   true, still-open centrepiece; every attempt so far dies on the same rock)_. The concealment run
   proved the mechanic works but the world's arms-race/grazer-haven **bistability** is what forbids two
