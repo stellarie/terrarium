@@ -498,6 +498,28 @@ step();
 check(world.hunterAged > agedBefore,
       `senescence is live — an ancient hunter died of old age on cue (aged toll ${agedBefore}→${world.hunterAged})`);
 
+// the sustained near-extinction net: the 0→6 reseed fires only at exact 0, but the
+// world can sit at 1–10 motes for hundreds of ticks as hunters eat every reseed.
+// After moteNearExtinctTicks consecutive ticks ≤ moteNearExtinctFloor a cohort is added.
+// Prove the mechanism deterministically: prime the counter to one tick below the trigger,
+// ensure pop ≤ floor, call step() — the net must fire and nearExtinctEvents must tick up.
+{
+  const savedMotes   = world.motes;
+  const savedLowTick = world.lowPopTicks;
+  const savedEvents  = world.nearExtinctEvents;
+  world.motes = [];  // will hit 0 → 0→6 net fires first, then near-extinction check sees pop=6 ≤ floor
+  world.lowPopTicks = CONFIG.moteNearExtinctTicks - 1;  // one tick below the trigger
+  const evBefore = world.nearExtinctEvents;
+  step();
+  const fired = world.nearExtinctEvents > evBefore;
+  world.motes = savedMotes;
+  world.lowPopTicks = savedLowTick;
+  world.nearExtinctEvents = savedEvents;
+  check(fired, `near-extinction net fires after ${CONFIG.moteNearExtinctTicks} consecutive ticks ≤ ${CONFIG.moteNearExtinctFloor} (nearExtinctEvents ticked up)`);
+  check(finite(world.nearExtinctEvents) && world.nearExtinctEvents >= 0,
+        `world.nearExtinctEvents is a non-negative finite count (${world.nearExtinctEvents})`);
+}
+
 // ---- the rasterizer (render.js) — the instrument that ended the pixel-blindness ----
 // It must keep working: a future edit that breaks colour parsing, a primitive, or the
 // PNG container would blind every later run again. Test the primitives draw() actually
