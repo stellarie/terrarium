@@ -437,16 +437,29 @@ check(moodWarm > 0.6 && world.mood < -0.6,
 // mode (off / fertility / grazing) against the shimmed canvas
 let renderThrew = null;
 try {
-  // one death mark of EACH cause, so all three render branches run: an untyped mark
-  // (the legacy predation ring), a hunger "starved" dot, and a senescence "aged" ring
-  world.sparks.push({ x: 100, y: 100, life: 0.5 });                        // predation (legacy shape)
-  world.sparks.push({ x: 120, y: 120, life: 0.6, kind: "starved", r: 3 }); // hunger
-  world.sparks.push({ x: 140, y: 140, life: 0.7, kind: "aged", r: 6 });    // senescence
+  // one death mark of EACH cause — predation, starvation, senescence, AND the new soil
+  // bloom — so all four render branches run; soil blooms are drawn first (under marks)
+  world.sparks.push({ x: 100, y: 100, life: 0.5, fade: 0.045 });           // predation
+  world.sparks.push({ x: 120, y: 120, life: 0.6, kind: "starved", r: 3, fade: 0.018 }); // hunger
+  world.sparks.push({ x: 140, y: 140, life: 0.7, kind: "aged", r: 6, fade: 0.025 });    // senescence
+  world.sparks.push({ x: 160, y: 160, life: 0.8, kind: "soil", r: 4, fade: 0.010 });    // soil bloom
   for (const ov of [0, 1, 2]) { world.overlay = ov; draw(); }
   world.overlay = 0;
   drawChart(); drawCountChart(); drawArmsChart(); updateHud();
 } catch (e) { renderThrew = e; }
-check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays + all 3 death-mark causes) / charts / hud render without throwing");
+check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays + all 4 spark kinds incl. soil bloom) / charts / hud render without throwing");
+// per-cause spark fade rates: a soil bloom (CONFIG.sparkFadeSoil) decays slower than a
+// kill-flash (CONFIG.sparkFade), which decays slower than nothing new. The decay uses
+// s.fade ?? CONFIG.sparkFade so an old-style spark (no fade field) still works.
+{
+  const lifetimePred    = 1 / CONFIG.sparkFade;        // ~22 ticks
+  const lifetimeSoil    = 1 / CONFIG.sparkFadeSoil;    // ~100 ticks
+  const lifetimeStarved = 1 / CONFIG.sparkFadeStarved; // ~55 ticks
+  check(lifetimeSoil > lifetimePred * 3,
+        `soil bloom lifetime (${lifetimeSoil.toFixed(0)}t) is at least 3× kill-flash lifetime (${lifetimePred.toFixed(0)}t)`);
+  check(lifetimeStarved > lifetimePred && lifetimeStarved < lifetimeSoil,
+        `starvation mark lifetime (${lifetimeStarved.toFixed(0)}t) lies between kill-flash and soil bloom`);
+}
 // the HUD gained an `aged` chip so hunter senescence (the tier turning over) is counted,
 // not just marked. The shim invents a stub for any id, so presence proves nothing —
 // assert sim.js actually WROTE world.hunterAged into it on the updateHud() just above.

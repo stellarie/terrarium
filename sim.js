@@ -379,7 +379,10 @@
     hunterSenesceVis: 3600,   // ticks past onset over which a hunter visibly "weathers"
                               // (a darkening rim in draw()) — view only, reads as age
 
-    sparkFade: 0.045,         // per-tick fade of a kill-flash marker (view only)
+    sparkFade: 0.045,         // per-tick fade of a kill-flash (predation) marker (view only)
+    sparkFadeStarved: 0.018,  // starvation mark — a quiet death lingers longer (~55t)
+    sparkFadeAged: 0.025,     // aged-hunter mark — medium duration (~40t)
+    sparkFadeSoil: 0.010,     // soil bloom — the ground stays warm where the dead returned (~100t)
 
     // Regime readout — naming, live, where the world sits in its predator–prey CYCLE.
     // (History: this began as a two-attractor lottery — "arms-race" vs "grazer-haven" —
@@ -1482,7 +1485,9 @@
         // a cool dot winks out where hunger took it — the quiet death, told apart from
         // the hunter's warm flash. View-only: no rng() here, so the economy is untouched.
         if (world.sparks.length < 240)
-          world.sparks.push({ x: m.x, y: m.y, life: 1, kind: "starved", r: m.g.size });
+          world.sparks.push({ x: m.x, y: m.y, life: 1, kind: "starved", r: m.g.size, fade: CONFIG.sparkFadeStarved });
+        if (world.sparks.length < 240)
+          world.sparks.push({ x: m.x, y: m.y, life: 1, kind: "soil", r: m.g.size, fade: CONFIG.sparkFadeSoil });
       }
     }
 
@@ -1585,7 +1590,8 @@
           enrich(cellIndex(prey.x, prey.y), offal + spill);
           world.motes.splice(best, 1);
           world.eaten++;
-          if (world.sparks.length < 240) world.sparks.push({ x: prey.x, y: prey.y, life: 1 });
+          if (world.sparks.length < 240) world.sparks.push({ x: prey.x, y: prey.y, life: 1, fade: CONFIG.sparkFade });
+          if (world.sparks.length < 240) world.sparks.push({ x: prey.x, y: prey.y, life: 1, kind: "soil", r: prey.g.size, fade: CONFIG.sparkFadeSoil });
           // log the kill site so motes can steer away from recent hunting grounds
           if (world.killLog.length >= CONFIG.alarmSites) world.killLog.shift();
           world.killLog.push({ x: prey.x, y: prey.y, tick: world.tick, hue: h.g.hue });
@@ -1636,7 +1642,10 @@
         // thing the trait chart only inferred), a cool one for the rare starved hunter —
         // the same hunger-colour a starved mote gets. View-only, no rng().
         if (world.sparks.length < 240)
-          world.sparks.push({ x: h.x, y: h.y, life: 1, kind: aged ? "aged" : "starved", r: h.g.size });
+          world.sparks.push({ x: h.x, y: h.y, life: 1, kind: aged ? "aged" : "starved", r: h.g.size,
+                              fade: aged ? CONFIG.sparkFadeAged : CONFIG.sparkFadeStarved });
+        if (world.sparks.length < 240)
+          world.sparks.push({ x: h.x, y: h.y, life: 1, kind: "soil", r: h.g.size * 1.5, fade: CONFIG.sparkFadeSoil });
       }
     }
     for (const c of newHunters) world.hunters.push(c);
@@ -1678,7 +1687,7 @@
 
     for (let i = world.sparks.length - 1; i >= 0; i--) {
       const s = world.sparks[i];
-      s.life -= CONFIG.sparkFade;
+      s.life -= s.fade ?? CONFIG.sparkFade;
       if (s.life <= 0) world.sparks.splice(i, 1);
     }
 
@@ -1864,6 +1873,22 @@
       ctx.restore();
     }
 
+    // soil blooms — drawn first (under the creature marks) so they read as ground, not
+    // overlay. Each death pulses a brief warm-loam disc at the death location: the body
+    // has just been returned to the soil, so the ground brightens there and slowly cools.
+    // The soil palette: t=1 is rich loam (warm amber-brown), t→0 is spent violet; here we
+    // start near loam and fade to transparent so the bloom reads as enrichment, not decay.
+    for (const sp of world.sparks) {
+      if (sp.kind !== "soil") continue;
+      const t = sp.life;
+      const r = (sp.r || 6) * (1.2 + (1 - t) * 1.0);  // expands gently as it fades
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, r, 0, TAU);
+      const soil = 0.30 + 0.70 * t;  // starts at loam, never reaches full spent-violet
+      ctx.fillStyle = `rgba(${55 + 145 * soil | 0},${38 + 92 * soil | 0},${92 - 42 * soil | 0},${(t * 0.30).toFixed(3)})`;
+      ctx.fill();
+    }
+
     // death marks — every death now leaves a fading sign, coloured by its CAUSE, so the
     // whole mortality of the food web reads at a glance without opening a chart: a warm
     // ring bursts where a hunter CAUGHT a mote (predation, sudden and violent), a cool dot
@@ -1872,6 +1897,7 @@
     // over, made visible where the chart only inferred it). View-only, like the old flash.
     for (const sp of world.sparks) {
       const t = sp.life;
+      if (sp.kind === "soil") continue;  // already drawn in the soil-bloom pass above
       if (sp.kind === "starved") {
         // hunger: a soft cool disc that shrinks as it fades — a body giving out, not a strike
         const r = (sp.r || 3) * (0.4 + 0.9 * t);
