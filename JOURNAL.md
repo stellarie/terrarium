@@ -288,7 +288,7 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **3** — alarm-hue Build (2026-08-07), metabo-chart Build (2026-08-08), near-extinction-net Build (2026-08-09). **Next Expedition is mandatory after 2 more Builds.**
+_Runs since the last Expedition:_ **4** — alarm-hue Build (2026-08-07), metabo-chart Build (2026-08-08), near-extinction-net Build (2026-08-09), soil-bloom Build (2026-08-10). **Next Expedition is mandatory after 1 more Build.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -300,22 +300,22 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-09 — the near-extinction-net Build (ecology/mechanics).** Readings: `observe.js` unseeded ×20k; `smoke.js` unseeded — 99 checks green. Added sustained near-extinction top-up net; smoke +2 deterministic trigger proofs.
+**Last observed: 2026-08-10 — the soil-bloom Build (visuals).** Readings: `observe.js` unseeded ×20k; `smoke.js` unseeded — 101 checks green. Added soil bloom pulse at each death + per-cause spark fade rates; smoke +2 lifetime proofs.
 
-- **`social` (unseeded, 20k):** mean **−0.07** (neutral — high-predation world ending surging). `speed` **1.24**, `size` **4.28**, `sense` **30.72**, `metabo` **1.22**.
-- **Territory NN (unseeded, 20k):** 43.2px vs uniform-random baseline ~80.0px — centroids clustered (heavy predation world; all hunters converging on scarce prey).
-- **Kill alarm (unseeded, 20k):** 81 sites active, ages 14–581t, freshness 0.03–1.00 — heavy kill-site activity (predation 92% of deaths throughout).
-- **motes:** min **1**, max **800**, mean **361**, oscillates (CV **83%**). Live system (world ended at 1 mote, heavy-predation trough at final tick).
-- **hunters:** min **5**, max **106**, mean **48**, oscillates (CV **73%**). 10% collapse ticks, 1 episode.
-- **plants (biomass):** min **88**, max **1405**, mean **661**, oscillates (CV **71%**). Within envelope.
-- **safety nets:** 4750 ticks at/under 0→6 floor (was 6800 pre-change); 5031 ticks at/under near-extinction floor (≤10); **12 top-up events fired**.
-- **matter:** **HOLDING** (+9.4% full run, +0.9% mid→late). Improvement on +16.4% pre-change — fewer reseed injections in the latter half.
-- **gene-pool shape:** grazers **ONE broad cloud** on all six genes (detector k=1). Arc core untouched.
-- **boredom check: NOT a fixed point** — 5/6 metrics shifted >8% between tick 1k and end. Live system.
-- **regime:** predation **surging** at read-end (surge 33% / steady 34% / ebb 21% / settling 1% / collapsed 10%). World built steadily through an arms-race.
-- **smoke:** **99 checks** (+2 near-extinction trigger proofs). Green.
+- **`social` (unseeded, 20k):** mean **+0.14** (neutral — predator-collapsed world at end). `speed` **1.47**, `size` **3.71**, `sense` **40.86**, `metabo` **1.27**.
+- **Territory NN (unseeded, 20k):** 186.6px vs uniform-random baseline ~272.1px — clustered (collapsed world, 7 hunters all converging on same depleted prey zone).
+- **Kill alarm (unseeded, 20k):** 12 sites active (pre-change world also low — collapsed predator tier at final tick, few recent kills).
+- **motes:** min **1**, max **800**, mean **401**, oscillates (CV **70%**). Live system.
+- **hunters:** min **7**, max **116**, mean **47**, oscillates (CV **77%**). Collapsed at end (18% collapse ticks, 1 episode).
+- **plants (biomass):** min **68**, max **1349**, mean **523**, oscillates (CV **78%**). Within envelope.
+- **safety nets:** 3073 ticks at/under 0→6 floor; 3396 at/under near-extinction floor (≤10); **8 top-up events fired**.
+- **matter:** **HOLDING** (+6.3% full run, +3.6% mid→late — improvement over pre-change +5.3% mid→late; change is view-only, variance from RNG).
+- **gene-pool shape:** grazers **ONE broad cloud** on all five main genes (detector k=1 on main run; a separate run found **k=2 along sense** in a low-predation world — crowding-driven speciation, seen before in predator-absent conditions). Arc core untouched on the k=1 run.
+- **boredom check: NOT a fixed point** — 6/6 metrics shifted >8% between tick 1k and end. Live system.
+- **regime:** predation **collapsed** at read-end (surge 13% / steady 51% / ebb 17% / settling 1% / collapsed 18%). Low-predation world.
+- **smoke:** **101 checks** (+2 soil-bloom lifetime proofs). Green ×4 seeds.
 
-_previously:_ (2026-08-08, metabo-chart Build, dataviz) `social` +0.32 / speed 1.38 / size 4.03 / sense 18.20 ⚑LO / metabo 1.31; motes min 1 / mean 423; hunters min 1 / mean 53; biomass ~511; matter HOLDING +3.9%; grazers k=1; smoke 97 checks.
+_previously:_ (2026-08-09, near-extinction-net Build, ecology/mechanics) `social` −0.07 / speed 1.24 / size 4.28 / sense 30.72 / metabo 1.22; motes min 1 / mean 361; hunters min 5 / mean 48; biomass ~661; matter HOLDING +9.4%; grazers k=1; smoke 99 checks.
 
 ---
 
@@ -846,6 +846,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-10 — [Build] the dead feed the ground and now you can see it: a soil bloom pulse at each death
+
+**Observed (the complaint):** A fresh unseeded 20k pass showed the kill-flash, starvation dot, and aged-hunter ring all fading at the same uniform rate (~22 ticks), so there was no reading of *how much* each death mattered — a quiet starvation and a violent predation kill looked equally momentary. More broadly, `enrich()` is called at every death — the body matter returns to the soil, the nutrient cycle's whole promise — but that was invisible unless you toggled the soil overlay. A second complaint: the matter total jumped +73 units between ticks 11k and 13k, confirming the near-extinction top-up net injects matter from nothing (~8 events × 8 motes × bodyMatterMax per event). Verdict HOLDING but the leak source is now precisely located.
+
+**Built.** Three coupled changes, all view-only. (1) **Per-cause fade rates:** sparks now carry a `fade` field used by the decay loop (`s.fade ?? CONFIG.sparkFade`). Predation stays ~22t (CONFIG.sparkFade 0.045); starvation now lingers ~55t (CONFIG.sparkFadeStarved 0.018 — "a quiet giving-out"); aged-hunter rings ~40t (CONFIG.sparkFadeAged 0.025 — medium). (2) **Soil bloom at each death:** every death pushes a second `kind: "soil"` spark at the same location — a soft, slow-fading (~100t, CONFIG.sparkFadeSoil 0.010) disc drawn in the soil palette (rich amber-loam starting warm, expanding gently as it fades). Hunter deaths get a slightly wider bloom (r × 1.5) matching their larger body. (3) **Two-pass draw:** soil blooms render first (under the creature marks), then the regular death signs on top — so the bloom reads as *ground* enriching rather than as another death mark. Two new smoke assertions: soil bloom lifetime ≥ 3× kill-flash lifetime; starvation mark lifetime lies between the two. **101 checks** (+2).
+
+**What a visitor now sees.** Watching the field after a burst of predation: a warm kill-ring expands and goes in ~22 ticks, but beneath it the ground briefly warms amber-loam and fades slowly — the body returning. In a starvation die-off the cool blue dots linger longer (~55t) and their loamy blooms persist under them, so bare corridors after an overgraze carry a gentle warm wash, then cool. The steady sprinkle of aged-hunter rings each leave a slightly wider loam pulse — hunters have larger bodies to return. The soil overlay still exists for the full spatial picture, but the default view now tells you *where nutrients just returned* without touching any control. Economy byte-identical (no `rng()` in any spark push; reproducibility smoke checks still pass). Matter HOLDING (pre-change +5.3% mid→late, post-change +3.6% mid→late — no meaningful difference, pure RNG variance for an unseeded run). (Category: **visuals** — rotates off last run's ecology/mechanics. Build; Expedition counter → **4**.)
 
 ### 2026-08-09 — [Build] break the predation stalemate: a sustained near-extinction top-up net
 
@@ -1607,6 +1615,12 @@ freely. Add two per run, at least one ambitious.
   the backlog asked for is there: the line dives from ~0 toward −0.5 as predation builds and eases back
   in a lull. Smoke +1 → 89.
 - **[Build] Retired (BUILT 2026-08-08): "Add `metabo` to the trait chart as a fifth grazer line."** Done.
+
+- **[Build] Retired (BUILT 2026-08-10): "Show the nutrient return at each death — a soil-bloom pulse where a body falls."** Done: per-cause spark fades (pred 22t / starved 55t / aged 40t / soil bloom 100t), soil blooms drawn under death marks in a first pass using the soil palette, expanding gently as they fade. Smoke +2 → 101.
+
+- **[Expedition] Fix the matter leak in safety nets by drawing new motes from soil** _(ambitious — the top-up net and 0→6 floor both create motes from nothing; the fix is to have them absorb their body matter from the soil instead, but if soil is near-empty the world can't afford the reseed, which means the fix changes the safety net's effectiveness in exactly the crisis it's meant to address)_. The matter table shows +73-unit jumps each time the near-extinction net fires — exactly 8 motes × ~9 bodyMatterMax. Fix: in `makeMote()` calls from the reseed nets, instead of starting with `energy = 0` and a fresh body, pull body matter from the soil at the cell where the mote is spawned (i.e. drain soil by the mote's starting body matter). If the soil can't afford it, use whatever is there (floored at 1), so the net still fires but may spawn weaker motes — a more ecologically honest reseed. This would seal the last non-trivial matter source. Risk: a world with a deep prey crash has little body-matter locked up and much of it in soil, so the drain should be affordable, but a completely barren scenario might starve the reseed before the mote can breed — needs careful verification across the worst-case seeds.
+
+- **[Build] Give the soil bloom a gentle per-cause tint: predation-site blooms slightly redder (the offal was richer), starvation-site blooms slightly cooler violet (little matter returned — a thin mote gave out).** Currently all soil blooms use the same loam palette regardless of cause. Tagging the bloom with the cause allows a tiny colour variation — predation sites leave richer offal (from the eating hunter's spill and the full prey body), starvation sites give out a thin, depleted body. It'd be subtle — the loam palette from `rgb(55+145t, 38+92t, 92-42t)` stays the basis, but a redder push for predation blooms vs a violet push for starvation would make the two kinds of bloom subtly distinguishable. Bounded, view-only, no smoke impact beyond the existing "soil bloom draws without throwing" assertion.
 
 - **[Build] Trait chart density relief: thin or dash the least-diagnostic lines when all five grazer + three hunter series are live.** Five solid lines + three dashed at one glance is crowded; `social` and `metabo` are the newest and most ecologically narrative, but `speed` and `size` are fastest-moving so hardest to drop. One option: render `sense` as a dotted (not dashed) line and drop its weight to 0.7px; it moves slowly and occupies the middle of the range. Acceptance: chart still readable with all eight series drawn; observer picks out the line that's moving most without mousing. Bounded, no history schema change, no smoke impact.
 

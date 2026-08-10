@@ -154,9 +154,12 @@ population to move along.
   chain reads on the meadow itself — not just in a chart. A **warm ring** bursts where a hunter
   *caught* a mote (predation, sudden); a **cool dot** softly winks out where one *starved*
   (hunger, a quiet giving-out); and a **grey ring** dissipates where an old hunter finally
-  *made way* (senescence). Predation is by far the loudest — but in an overgrazed die-off the
-  cool starvation dots swell, and the steady grey sprinkle of aging hunters is the predator
-  tier visibly **turning over**, the thing the trait chart could only infer.
+  *made way* (senescence). Under each mark, a **warm-loam bloom** briefly brightens the ground —
+  the body returning to the soil — then fades slowly over the next hundred ticks. Predation is
+  by far the loudest, but in an overgrazed die-off the cool starvation dots swell with their loamy
+  soil blooms, the steady grey sprinkle of aging hunters is the predator tier visibly **turning
+  over**, and in both cases the ground briefly warms where the dead returned, the nutrient cycle
+  made visible at a glance without toggling any overlay.
 - Every mote is **ringed by its lifestyle** — leaf-green for a committed hider (small, slow),
   amber for a committed fleer (fast), fading toward the ambiguous middle — so the hider/fleer
   divergence predation drives is visible on the field, in every world, at a glance.
@@ -235,7 +238,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 99 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 101 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -362,7 +365,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 99 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 101 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -380,23 +383,35 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 99-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 101-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is. Hunters now carry **home ranges** — each tracks
 its personal kill centroid and leans toward it, carving emergent patrol corridors out of the shared
 landscape.
 
-Newest: **the predation stalemate has a circuit-breaker.** When the hunter population is large and
+Newest: **the dead feed the ground, and now you can see it.** Each death always called `enrich()` to
+return body matter to the soil — the nutrient cycle's conservation law, invisible unless you toggled the
+soil overlay. Now every death simultaneously pushes a **warm-loam bloom** under its cause-coded mark:
+a soft expanding disc in the soil palette (rich amber-brown, the colour of the soil overlay at its
+fullest) that expands gently and fades over ~100 ticks, persisting long after the death mark above it
+has gone. Three deaths, three paces:
+a predation kill-flash fades in ~22 ticks (violent, brief); a starvation dot lingers ~55 ticks
+(a quiet giving-out); a senescence ring ~40 ticks. In each case the warm-loam bloom beneath outlasts
+the mark, so the ground brightens where something died and slowly returns to neutral — the nutrient
+return visible without any overlay. **101 checks** (+2: soil bloom lifetime ≥ 3× kill-flash; starvation
+mark lifetime between the two).
+
+Before that: **the predation stalemate has a circuit-breaker.** When the hunter population is large and
 the mote population tiny, the world could get stuck in a degenerate loop: hunters ate every prey
 cohort within ~18 ticks, the 0→6 reseed net fired, the prey hit 0, 6 motes returned, and the cycle
 repeated for thousands of ticks. A secondary safety net now breaks this stalemate — if mote
 population stays at or below 10 for **400 consecutive ticks**, 8 motes are added. The delay
 distinguishes a genuine crisis from an ordinary deep trough. Two new counters (`world.lowPopTicks`,
 `world.nearExtinctEvents`) track when it fires; `observe.js` SAFETY NETS reports them; and two
-deterministic `smoke.js` assertions prove the trigger works. **99 checks** total (+2).
+deterministic `smoke.js` assertions prove the trigger works.
 
-Before that: **metabolism now has a history on the chart.** The `metabo` gene — thrifty in a grazer-haven,
+Before that (two runs back): **metabolism now has a history on the chart.** The `metabo` gene — thrifty in a grazer-haven,
 greedy in an arms-race — joins the trait chart as a fifth grazer line, drawn in warm gold. Before, a
 visitor could read the herd's metabolic character from individual motes (a thrifty mote renders pale,
 a fast-burner vivid) but couldn't watch it *evolve* — couldn't see the line lean toward ~1.1 as
