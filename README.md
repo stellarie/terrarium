@@ -14,10 +14,11 @@ rise and fall against one another.
 ## The living ground
 
 Food isn't handed out at random anymore — it **grows**. The field is a meadow of
-vegetation laid over a fixed **fertility map**, so some regions are naturally lush and
-others stubbornly barren. Plants regrow logistically toward each patch's carrying
-capacity, **spread** into neighbouring bare cells, and get **grazed down** by the motes
-that roam them. Where herds linger, they carve the meadow into bare corridors and patches.
+vegetation laid over a fixed **fertility map**: seven lush **island refugia** (dense, tall grass —
+a small slow mote can vanish there) surrounded by sparse inter-island **barrens** (low cover —
+a hider is exposed, a fleer's legs are its only defence). Plants regrow logistically toward each
+patch's carrying capacity, **spread** into neighbouring bare cells, and get **grazed down** by
+the motes that roam them. Where herds linger, they carve the meadow into bare corridors and patches.
 
 ### Nothing grows out of nothing
 
@@ -238,7 +239,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 101 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 106 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -365,8 +366,8 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 101 assertions over thousands of real ticks |
-| `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG |
+| `smoke.js` | headless smoke test — 106 assertions over thousands of real ticks |
+| `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG; section [12] reports habitat biome structure |
 | `JOURNAL.md` | the project's memory and roadmap |
 
 ## How it's built
@@ -383,14 +384,16 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 101-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 106-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is. Hunters now carry **home ranges** — each tracks
 its personal kill centroid and leans toward it, carving emergent patrol corridors out of the shared
 landscape.
 
-Newest: **the dead feed the ground, and now you can see it.** Each death always called `enrich()` to
+Newest: **the ground itself took sides.** The fertility map — the permanent bedrock carrying capacity underneath the meadow — has been rewritten. It used to be three overlapping sine gratings, smoothly varying and spatially uniform: every patch of meadow had roughly the same potential for richness, so the herd's lifestyle (flee vs hide) was a global decision set by the predation regime, not a local one set by terrain. Now the map places **seven Gaussian island cores** (each a bell-curve peak four times the height of the grating range, σ ≈ 7.5 cells) atop the grating base, toroidally wrapped, normalized to [0.12, 1.0]. The result: seven dense, lush **island refugia** where a small slow mote can vanish into tall grass (cover ≈ 0.77 for a perfect hider), surrounded by sparse inter-island **barrens** where hiding is nearly useless (cover ≈ 0.24). The 3.2× cover gradient is the landscape's permanent opinion — it holds whether the predation regime is fierce or lax. The first paired split-test under this terrain found **k=2 along body size** in one of four seeds with hunters present — the first within-world morph coexistence under predation detected in the project's history. The observatory gained a **biome section** [12] reporting zone fractions, a fertility histogram, and a concealment preview per zone. **106 checks** (+5: map peak normalises to 1.0, floor to fertMin, std > 0.15, ≥4% lush island cells, ≥10% low-fertility barrens).
+
+Before that: **the dead feed the ground, and now you can see it.** Each death always called `enrich()` to
 return body matter to the soil — the nutrient cycle's conservation law, invisible unless you toggled the
 soil overlay. Now every death simultaneously pushes a **warm-loam bloom** under its cause-coded mark:
 a soft expanding disc in the soil palette (rich amber-brown, the colour of the soil overlay at its
@@ -406,7 +409,7 @@ Before that: **the predation stalemate has a circuit-breaker.** When the hunter 
 the mote population tiny, the world could get stuck in a degenerate loop: hunters ate every prey
 cohort within ~18 ticks, the 0→6 reseed net fired, the prey hit 0, 6 motes returned, and the cycle
 repeated for thousands of ticks. A secondary safety net now breaks this stalemate — if mote
-population stays at or below 10 for **400 consecutive ticks**, 8 motes are added. The delay
+population stays at or below 10 for **200 consecutive ticks**, 8 motes are added. The delay
 distinguishes a genuine crisis from an ordinary deep trough. Two new counters (`world.lowPopTicks`,
 `world.nearExtinctEvents`) track when it fires; `observe.js` SAFETY NETS reports them; and two
 deterministic `smoke.js` assertions prove the trigger works.

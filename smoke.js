@@ -654,6 +654,45 @@ check(document.getElementById("s-seed").textContent === "4242",
         "a first visit mints a world and publishes its name into the URL hash");
 }
 
+// ---- habitat mosaic: the fertility map must have the bimodal structure the
+// Expedition introduced — genuine lush island cores and genuine sparse barrens,
+// not a flat or slightly bumpy field. Using seed 20260723 (already loaded above)
+// so the check is deterministic and doesn't re-seed the live world.
+// We reseed here because the reproducibility block above called seed(null) and
+// then seed() (random), leaving the world in an unknown state.
+{
+  seed(20260723);
+  const fert = world.fert;
+  const n = fert.length;
+  let fMin = Infinity, fMax = -Infinity, fSum = 0, fSumSq = 0;
+  for (let i = 0; i < n; i++) {
+    if (fert[i] < fMin) fMin = fert[i];
+    if (fert[i] > fMax) fMax = fert[i];
+    fSum += fert[i];
+    fSumSq += fert[i] * fert[i];
+  }
+  const fMean = fSum / n;
+  const fStd = Math.sqrt(Math.max(0, fSumSq / n - fMean * fMean));
+  let richCells = 0, barrenCells = 0;
+  for (let i = 0; i < n; i++) {
+    if (fert[i] >= 0.75) richCells++;
+    if (fert[i] <= CONFIG.fertMin + 0.23) barrenCells++;  // 0.12+0.23=0.35 — the genuine low-fertility inter-island zone
+  }
+  const pctRich   = (100 * richCells   / n).toFixed(1);
+  const pctBarren = (100 * barrenCells / n).toFixed(1);
+  check(Math.abs(fMax - 1.0) < 1e-9,
+        `fertility map peak normalises to exactly 1.0 (got ${fMax.toFixed(6)})`);
+  check(Math.abs(fMin - CONFIG.fertMin) < 1e-9,
+        `fertility map floor normalises to exactly fertMin=${CONFIG.fertMin} (got ${fMin.toFixed(6)})`);
+  check(fStd > 0.15,
+        `fertility map has genuine spatial variance (std ${fStd.toFixed(3)} > 0.15 — not a flat field)`);
+  check(richCells / n > 0.04,
+        `at least 4 % of cells are lush island cores (≥0.75 fertility) — got ${pctRich}%`);
+  check(barrenCells / n > 0.10,
+        `at least 10 % of cells are low-fertility barrens (≤fertMin+0.23) — got ${pctBarren}%`);
+  seed(null);   // hand the world back to free randomness for whatever follows
+}
+
 // ---- verdict ----------------------------------------------------------------
 if (failures) {
   console.error(`\nSMOKE TEST FAILED — ${failures} check(s) failed.`);

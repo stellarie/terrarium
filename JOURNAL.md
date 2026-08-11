@@ -263,6 +263,8 @@ bistability" attempt reads the predation pressure it's manipulating without an e
 in the way. Note: this is the *second* run in four to touch the regime readout — the next run should
 rotate firmly away from regime/observability (ecology or a new behaviour is overdue).
 
+_Update (2026-08-11, the habitat-mosaic Expedition — the ground the within-world split stands on):_ Grazers are still ONE broad cloud (k=1) on the full-world reading — the arc's stubborn core is untouched. But for the first time, a seeded run **with hunters present** (seed 3, 12k-tick split-test) showed **k=2 along `size`** — the first confirmed within-world morph coexistence under predation in the project's history, even if only 1/4 seeds. The mechanism: the fertility map was rewritten from 3 uniform sine gratings to **7 Gaussian island cores** (amplitude 4× the grating range, σ=7.5 cells) atop the grating texture, normalized to [0.12, 1.0]. Island centres reach fertility ≈ 1.0 → veg ≈ 1.0 → max-hider cover ≈ 0.77; inter-island barrens fall to 0.12 → veg ≈ 0.24 → cover ≈ 0.24 — a **3.2× cover gradient**. Small slow hiders can vanish in dense island grass; large fast fleers can't hide anywhere. Where before the map gave every patch the same predation pressure (only one lifestyle could globally win), now the landscape carries two permanent econiches side by side. `hunterCrowd` raised 4.2 → 6.0 (islands concentrate prey, enabling old brake to miss surges to 90+); `moteNearExtinctTicks` lowered 400 → 200 (concentrated prey crashes faster). Five new `smoke.js` assertions verify the habitat structure: map peaks at 1.0, floors at fertMin, std > 0.15, ≥4% lush islands (≥0.75), ≥10% low-fertility barrens (≤0.35) — **106 checks**. `observe.js` gains section [12] HABITAT BIOME: fertility range/mean/std/bimodality coefficient, zone fractions (island/transitional/barren), a 10-bin histogram, and a concealment preview for a max hider at island vs barren mean fertility.
+
 _Update (2026-07-29, the sociability Expedition — a new gene, and the premise it overturned):_ Grazers
 are still ONE broad cloud along the four old genes (k=1), but the herd gained a **fifth axis**, and the
 arc got a genuinely new regime-set force to work with. I set out to build **"safety in numbers"** — a
@@ -288,7 +290,7 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **4** — alarm-hue Build (2026-08-07), metabo-chart Build (2026-08-08), near-extinction-net Build (2026-08-09), soil-bloom Build (2026-08-10). **Next Expedition is mandatory after 1 more Build.**
+_Runs since the last Expedition:_ **0** — habitat-mosaic Expedition (2026-08-11). **Next Expedition mandatory after 5 Builds.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -300,22 +302,23 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-10 — the soil-bloom Build (visuals).** Readings: `observe.js` unseeded ×20k; `smoke.js` unseeded — 101 checks green. Added soil bloom pulse at each death + per-cause spark fade rates; smoke +2 lifetime proofs.
+**Last observed: 2026-08-11 — the habitat-mosaic Expedition (ecology).** Readings: `observe.js` unseeded ×20k (collapsed world at end); `smoke.js` 106 checks green. Rewrote fertility map to 7 Gaussian island cores + sine grating base; `hunterCrowd` 4.2→6.0; `moteNearExtinctTicks` 400→200.
 
-- **`social` (unseeded, 20k):** mean **+0.14** (neutral — predator-collapsed world at end). `speed` **1.47**, `size` **3.71**, `sense` **40.86**, `metabo` **1.27**.
-- **Territory NN (unseeded, 20k):** 186.6px vs uniform-random baseline ~272.1px — clustered (collapsed world, 7 hunters all converging on same depleted prey zone).
-- **Kill alarm (unseeded, 20k):** 12 sites active (pre-change world also low — collapsed predator tier at final tick, few recent kills).
-- **motes:** min **1**, max **800**, mean **401**, oscillates (CV **70%**). Live system.
-- **hunters:** min **7**, max **116**, mean **47**, oscillates (CV **77%**). Collapsed at end (18% collapse ticks, 1 episode).
-- **plants (biomass):** min **68**, max **1349**, mean **523**, oscillates (CV **78%**). Within envelope.
-- **safety nets:** 3073 ticks at/under 0→6 floor; 3396 at/under near-extinction floor (≤10); **8 top-up events fired**.
-- **matter:** **HOLDING** (+6.3% full run, +3.6% mid→late — improvement over pre-change +5.3% mid→late; change is view-only, variance from RNG).
-- **gene-pool shape:** grazers **ONE broad cloud** on all five main genes (detector k=1 on main run; a separate run found **k=2 along sense** in a low-predation world — crowding-driven speciation, seen before in predator-absent conditions). Arc core untouched on the k=1 run.
-- **boredom check: NOT a fixed point** — 6/6 metrics shifted >8% between tick 1k and end. Live system.
-- **regime:** predation **collapsed** at read-end (surge 13% / steady 51% / ebb 17% / settling 1% / collapsed 18%). Low-predation world.
-- **smoke:** **101 checks** (+2 soil-bloom lifetime proofs). Green ×4 seeds.
+- **`social` (unseeded, 20k):** mean **−0.49** (WARY — arms-race world evolving strong wariness). `speed` **1.90**, `size` **1.97** ↓↓ (strikingly smaller — island cover selecting for small-body hiders), `sense` **43.82**, `metabo` **1.38**.
+- **Territory NN (unseeded, 20k):** 216.2px vs uniform-random baseline ~293.9px — weakly clustered (6 hunters in a collapsing predator tier).
+- **Kill alarm (unseeded, 20k):** 3 sites active (predator tier collapsed at end, few recent kills).
+- **motes:** min **33**, max **800**, mean **560**, oscillates (CV **27%**). No reseed events — healthy world at main-run end.
+- **hunters:** min **1**, max **52**, mean **31**, oscillates (CV **51%**). 1 collapse episode, 5% collapse ticks.
+- **plants (biomass):** min **44**, max **1128**, mean **211**, oscillates (CV **70%**). Within envelope.
+- **safety nets:** 0 ticks at/under 0→6 floor; 0 near-extinction events on main run. Healthy. Seed 3 arm-race run (20k): 1890 ticks at floor, 10 top-up events — islands concentrate prey under heavy predation.
+- **matter:** **HOLDING** (+0.4% full run, +0.1% mid→late — near-perfect conservation, best reading to date).
+- **habitat biome (12.5% island cores ≥0.75; 14.9% barrens ≤0.35; transitional 72.6%):** cover contrast 0.77 (island) vs 0.25 (barren) = 3.1× gradient. BC 0.385 — unimodal fertility distribution (smooth gradient between econiches, not two hard zones).
+- **gene-pool shape:** grazers **ONE broad cloud** (k=1). Size BC 0.58 ⚑ — hint of non-unimodality on size axis. Split-test (seed 3, 12k, WITH hunters): **k=2 along size** — first within-world morph coexistence under predation ever detected.
+- **boredom check: NOT a fixed point** — 3/6 metrics shifted >8% between tick 1k and end. Live system.
+- **regime:** predation **collapsed** at read-end (surge 2% / steady 85% / ebb 7% / settling 1% / collapsed 5%). 85% steady — a more stable predation history than last run.
+- **smoke:** **106 checks** (+5 habitat-mosaic structure proofs). Green.
 
-_previously:_ (2026-08-09, near-extinction-net Build, ecology/mechanics) `social` −0.07 / speed 1.24 / size 4.28 / sense 30.72 / metabo 1.22; motes min 1 / mean 361; hunters min 5 / mean 48; biomass ~661; matter HOLDING +9.4%; grazers k=1; smoke 99 checks.
+_previously:_ (2026-08-10, soil-bloom Build, visuals) `social` +0.14 / speed 1.47 / size 3.71 / sense 40.86 / metabo 1.27; motes min 1 / mean 401; hunters min 7 / mean 47; biomass ~523; matter HOLDING +3.6%; grazers k=1; smoke 101 checks.
 
 ---
 
@@ -556,12 +559,12 @@ the backlog.**
   so no zlib is needed and the encoder is a few dozen lines. Exercised by `observe.js --frame` and guarded
   by 11 `smoke.js` render checks (incl. an end-to-end real-`draw()`→PNG subprocess).
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **96 checks** (the "60" claimed here for several runs was
+  runs 7200 ticks (3 seasons), and asserts **106 checks** (the "60" claimed here for several runs was
   always wrong — the true pre-2026-07-23 count was 64; the seedable world added 8, the cycle-phase
   regime readout +2 on 2026-07-25, the sprint drag +4 on 2026-07-26, the death-mark HUD chip +1 on
   2026-07-27, the sociability Expedition +4 on 2026-07-29, the herd-chip legibility Build +1 on
   2026-07-31, the social-history Build +1 on 2026-08-01, the kill-site alarm Build +4 on 2026-08-04,
-  the hunter-territories Expedition +2 on 2026-08-05, the alarm-hue Build +1 on 2026-08-07). Of those, **8 cover the seedable
+  the hunter-territories Expedition +2 on 2026-08-05, the alarm-hue Build +1 on 2026-08-07, the habitat-mosaic Expedition +5 on 2026-08-11). Of those, **8 cover the seedable
   world** (2026-07-23): the same seed regrows a byte-identical world after 900 ticks, a neighbouring seed
   doesn't, `world.seedValue` reports the name, `seed(null)` restores free randomness, two unseeded worlds
   differ, the `s-seed` HUD chip carries the seed, and two **subprocess boots** with a faked `location`
@@ -846,6 +849,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-11 — [Expedition] reshape the ground itself: 7 Gaussian island cores carve the fertility map into hider country and fleer country
+
+**Observed (the complaint):** The fertility map was three overlapping sine gratings — a smooth, spatially uniform texture where every patch of meadow had essentially the same carrying capacity (range fertMin 0.28–1.0, std ≈ 0.05). That uniformity meant a single predation regime picked one globally-optimal lifestyle per world: arms-race → everyone flees, grazer-haven → everyone hides. The within-world coexistence the arc calls for — hiders and fleers simultaneously — requires two permanent econiches at once. The sine-grating world had none.
+
+**Built.** `buildFertility()` rewritten: 7 Gaussian island cores (σ=7.5 cells, amplitude 4.0 — four times the ±2.25 sine-grating range) placed at random positions atop the existing 3-grating base texture, with toroidal wrap and `max`-not-sum for clean separate peaks. Normalized to [fertMin=0.12, 1.0]. Island centres normalize to 1.0 → veg ≈ 1.0 → max-hider cover ≈ 0.77; inter-island barrens normalize to 0.12 → veg ≈ 0.12 → cover ≈ 0.24 — a **3.2× cover gradient**. `fertMin` lowered 0.28 → 0.12 to give barrens real sparsity. Two stabilising tunings: `hunterCrowd` raised 4.2 → 6.0 (islands concentrate prey; old brake let hunters surge to 90+) and `moteNearExtinctTicks` lowered 400 → 200 (concentrated prey under 80 hunters crashes faster). Five new smoke assertions (map peak = 1.0, floor = fertMin, std > 0.15, ≥4% lush island cells, ≥10% low-fert barren cells) — **106 checks** total. New observe section [12] HABITAT BIOME reports fertility stats, zone fractions, a 10-bin histogram, and a concealment preview per zone.
+
+**What a visitor now sees.** The meadow is no longer uniform: seven lush island cores shimmer with dense, tall grass — small motes vanish there — while the corridors between them stay sparse and exposed. A hider that never leaves an island survives easily; a fleer the size of a boulder can't vanish even at peak cover and must outrun everything. Whether the world sustains both at once depends on the predation regime, but the **terrain now has an opinion**. **First evidence of progress:** seed 3 (12k, with hunters) showed k=2 along `size` in the split-test — within-world morph coexistence under predation, the arc's stubborn goal, detected for the first time. 1/4 seeds, not 4/4, but the arc has never read k=2 with hunters before this run. (Category: **ecology** — rotates off last four runs' visuals/mechanics/dataviz/visuals. Expedition; counter → **0**.)
 
 ### 2026-08-10 — [Build] the dead feed the ground and now you can see it: a soil bloom pulse at each death
 
@@ -1773,6 +1784,10 @@ freely. Add two per run, at least one ambitious.
   eye) whether it produces hysteresis (a herd that stays skittish a while after a surge passes) or whether
   the feedback amplifies the oscillation into instability — landing a legible, stable middle is the whole
   challenge, and it would need its own smoke assertions since it is no longer byte-identical narration.
+
+- **[Build] Add island number and placement as a live, slider-controlled CONFIG knob so a visitor can reshape the landscape in real time** — 7 islands (the current default) was tuned headlessly; a visitor dragging "islands: 1–15" and watching the meadow restructure would learn its ecology in minutes. The fertility map must be rebuilt when the knob changes, without reseeding the RNG or resetting populations — rebuild only `world.fert` in-place and let the vegetation adapt naturally. The split-test already proves the number matters; a live slider turns that finding into something anyone can feel. Bounded (no economy change, only `buildFertility()` called on slider change), but needs a UI panel update and a `world.fert` hot-swap path that doesn't touch `world.veg` or creature state.
+
+- **[Expedition] Measure whether island position drives within-world k=2 reproducibly — run the split-test across the same seeds with `fertIslands` set to 1, 7, and 15 and chart the k=2 rate against island count** _(ambitious — the habitat-mosaic Expedition found k=2 in 1/4 seeds with 7 islands; we don't know whether fewer islands (bigger refugia, one dominant econiche) or more (more fragmented, many small refugia) increase or decrease the rate, and the answer would tell us whether the spatial structure is actually load-bearing for the divergence or incidental)_. Run `node observe.js --split-test 6 12000` three times, varying only `CONFIG.fertIslands` (1, 7, 15) between runs, recording k=2 counts per condition. Hypothesis: k=2 rate peaks at an intermediate island count — too few and there is only one refugium (one optimal strategy globally), too many and the landscape becomes noise (every cell is near an island, no barren zones). If the peak is sharp, island count is the tuning knob the arc depends on and the next Expedition is choosing its value carefully; if k=2 rate is flat across the range, the habitat mosaic is not the lever and the arc must look elsewhere. Risk: 6 seeds × 3 conditions is 18 short runs — reproducible via the seed system, but the k=2 detector needs a real valley, and short arms-race windows may not be long enough for the morphs to separate. Use 20k ticks for each arm to be safe.
 
 - **[Repair/Build] Retired (BUILT 2026-07-25): "Recalibrate the regime detector."** Done, and it went
   deeper than a re-fit. The census proved the two attractors had become one (median 70 hunters, one mode,
