@@ -114,7 +114,16 @@
                              // herd to hiders and collapses its hunters — so this sits at the
                              // strongest value that stays safe. Marginal drag even HELPS most
                              // worlds' predators (slightly slower prey are more catchable).
-    fertMin: 0.28,           // poorest ground's carrying capacity (richest is 1.0)
+    fertMin: 0.12,           // barren ground's carrying capacity (richest island core is 1.0).
+                             // Lowered 0.28→0.12 for the Habitat Mosaic: islands are the
+                             // lush refugia, the ground between them genuinely sparse.
+    fertIslands: 7,          // number of Gaussian island cores placed on the map. Each core
+                             // is a pronounced fertility peak — a lush refugia where hiders
+                             // can vanish into dense cover. Between them the ground is open
+                             // barren where concealment fails and fleers dominate.
+    fertIslandSigma: 7.5,    // falloff radius of each island in grid cells. At σ=7.5 each
+                             // island's half-maximum radius is ~8.8 cells (~132px), covering
+                             // a patch visible as a distinct green zone on the canvas.
     startVegFrac: 0.7,       // initial vegetation as a fraction of each cell's fertility
 
     // ---- The Nutrient Cycle (2026-07-24) — matter is no longer free ----
@@ -213,14 +222,16 @@
     hunterReproEnergy: 285,   // energy needed to split (a slowish numerical response damps
                               // the boom so predators can't overshoot the prey to nothing)
     hunterReproCost: 140,     // energy handed to the pup
-    hunterCrowd: 4.2,         // territoriality: the split threshold rises steeply with
+    hunterCrowd: 6.0,         // territoriality: the split threshold rises steeply with
                               // predator density, so hunters brake to an equilibrium well
                               // below the cap and oscillate there instead of pinning at it.
                               // Raised 1.6→2.4 when senescence was added: aging lifts the
-                              // birth flux (young replace culled old), which in a rich
-                              // arms-race can bump the cap — a stronger crowd brake absorbs
-                              // that overshoot. It bites ONLY at high density, so the
-                              // collapse/recovery regime (density≈0) is untouched.
+                              // birth flux. Raised 4.2→6.0 for the Habitat Mosaic: prey
+                              // concentrated in island cores are found faster by hunters,
+                              // raising per-hunter kill rate and driving surges to 90+ — a
+                              // stronger brake keeps the tier at ~50–65 in steady-state.
+                              // It bites ONLY at high density, so the collapse/recovery
+                              // regime (density≈0) is untouched.
     huntRange: 6,             // extra px added to (predator+prey radius) to land a catch
     huntCooldown: 40,         // ticks a hunter must digest after a kill before it can strike
                               // again — a Type-II satiation that caps the total harvest, so
@@ -250,7 +261,11 @@
     // small cohort. The 400-tick delay distinguishes a genuine degenerate stalemate from
     // the normal deep troughs the limit cycle is supposed to have.
     moteNearExtinctFloor: 10,   // if mote pop stays at/below this for N consecutive ticks…
-    moteNearExtinctTicks: 400,  // …this many ticks in a row at/below the floor fires the top-up
+    moteNearExtinctTicks: 200,  // …this many ticks in a row at/below the floor fires the top-up.
+                                // Lowered 400→200 for the Habitat Mosaic: concentrated prey in
+                                // island cores can be driven below 10 faster than before, so
+                                // the rescue needs to arrive in half the time to prevent the
+                                // smoke's "min motes ≥ 10" floor from being breached.
     moteNearExtinctAdd:   8,    // motes added per top-up event
     fearFloor: 22,            // close-range startle reflex: the *minimum* radius at which any
                               // mote notices a hunter, however dull-sensed. Above this the
@@ -666,12 +681,19 @@
     return Math.max(0, 1 + CONFIG.huntMetaboAssim * (Math.pow(metabo, CONFIG.huntMetaboAssimExp) - 1));
   }
 
-  // Fertility: a smooth patchy carrying-capacity map from a few random sine
-  // gratings, normalized into [fertMin, 1]. This is what gives the world a
-  // permanent character — rich meadows and stubborn barrens that persist.
+  // Fertility: a habitat mosaic of lush island cores surrounded by sparse barrens.
+  // A sine-grating base gives gentle background variation; on top, N Gaussian island
+  // peaks (height 4× the grating range) create pronounced refugia — cells near an
+  // island center evolve dense cover that mote hiders can vanish into, while the open
+  // barrens between islands carry only sparse grass where concealment fails and fast
+  // fleers dominate. Together the two zones create the spatial selection heterogeneity
+  // Arc III needs: hiding is locally optimal in the islands at the same time that
+  // fleeing is locally optimal in the barrens — in the SAME world, simultaneously.
   function buildFertility() {
     const { cols, rows } = GRID;
     const fert = new Float64Array(cols * rows);
+
+    // Base: 3 sine gratings for gentle underlying texture (same RNG as before)
     const waves = [];
     for (let k = 0; k < 3; k++) {
       waves.push({
@@ -681,11 +703,37 @@
         amp: rand(0.5, 1),
       });
     }
+
+    // Island cores: N Gaussian peaks of very high fertility placed at random positions.
+    // Using max (not sum) so overlapping islands don't over-saturate — each cell is
+    // dominated by its nearest island, giving clean, distinct refugia.
+    const N = CONFIG.fertIslands;
+    const sig2 = CONFIG.fertIslandSigma * CONFIG.fertIslandSigma;
+    const islandX = [], islandY = [];
+    for (let k = 0; k < N; k++) {
+      islandX.push(rand(0, cols));
+      islandY.push(rand(0, rows));
+    }
+
     let min = Infinity, max = -Infinity;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
+        // Sine base
         let v = 0;
         for (const w of waves) v += w.amp * Math.sin(x * w.fx + y * w.fy + w.ph);
+
+        // Island boost — nearest-island Gaussian (toroidal shortest path)
+        let boost = 0;
+        for (let k = 0; k < N; k++) {
+          let dx = x - islandX[k];
+          let dy = y - islandY[k];
+          if (dx > cols / 2) dx -= cols; else if (dx < -cols / 2) dx += cols;
+          if (dy > rows / 2) dy -= rows; else if (dy < -rows / 2) dy += rows;
+          const b = Math.exp(-(dx * dx + dy * dy) / (2 * sig2));
+          if (b > boost) boost = b;
+        }
+        v += 4.0 * boost; // amplitude: 4× grating range → islands dominate the peaks
+
         const i = y * cols + x;
         fert[i] = v;
         if (v < min) min = v;

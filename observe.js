@@ -312,6 +312,9 @@ regimeReport();
 line("\n[11] MATTER  (the nutrient cycle's ledger — is the world running down?)");
 matterReport();
 
+line("\n[12] HABITAT BIOME  (fertility mosaic — island cores vs barrens)");
+biomeReport();
+
 line();
 line(threw ? "READING ABORTED — the sim threw (see [1])." :
      nanFlags.length ? "READING SUSPECT — NaN/negative leaked (see [1])." :
@@ -598,6 +601,61 @@ function matterReport() {
   const bare = (() => { let b = 0; for (let i = 0; i < world.veg.length; i++) if (world.veg[i] < 0.005) b++; return b; })();
   line(`    bare ground: ${((100 * bare) / world.veg.length).toFixed(1)}% of cells ` +
        `(a figure that CLIMBS monotonically across horizons is the ratchet returning)`);
+}
+
+function biomeReport() {
+  const fert = world.fert;
+  const n = fert.length;
+  let fMin = Infinity, fMax = -Infinity, fSum = 0, fSumSq = 0;
+  for (let i = 0; i < n; i++) {
+    if (fert[i] < fMin) fMin = fert[i];
+    if (fert[i] > fMax) fMax = fert[i];
+    fSum += fert[i];
+    fSumSq += fert[i] * fert[i];
+  }
+  const fMean = fSum / n;
+  const fStd  = Math.sqrt(Math.max(0, fSumSq / n - fMean * fMean));
+  // bimodality coefficient: BC = (skew²+1) / (excess_kurtosis+3). BC > 0.555 suggests bimodal.
+  let m3 = 0, m4 = 0;
+  for (let i = 0; i < n; i++) {
+    const d = fert[i] - fMean;
+    m3 += d * d * d;
+    m4 += d * d * d * d;
+  }
+  m3 /= n; m4 /= n;
+  const skew = fStd > 0 ? m3 / (fStd * fStd * fStd) : 0;
+  const kurt = fStd > 0 ? m4 / (fStd * fStd * fStd * fStd) - 3 : 0;
+  const bc = (skew * skew + 1) / (kurt + 3);
+  // zone counts (thresholds chosen to match the concealment analysis: island ≥0.75, barren ≤fertMin+0.10)
+  const thresh = { island: 0.75, transitional: 0.40, barren: CONFIG.fertMin + 0.23 }; // 0.35 — genuine low-fert inter-island zone
+  let nIsland = 0, nBarren = 0, nTransitional = 0;
+  const BINS = 10;
+  const hist = new Array(BINS).fill(0);
+  for (let i = 0; i < n; i++) {
+    const f = fert[i];
+    hist[Math.min(BINS - 1, Math.floor(f * BINS))]++;
+    if (f >= thresh.island) nIsland++;
+    else if (f <= thresh.barren) nBarren++;
+    else nTransitional++;
+  }
+  const pct = (k) => (100 * k / n).toFixed(1);
+  line(`    fertility  range ${fMin.toFixed(3)}–${fMax.toFixed(3)}  mean ${fMean.toFixed(3)}  std ${fStd.toFixed(3)}  BC ${bc.toFixed(3)} ${bc > 0.555 ? "(bimodal ✓)" : "(unimodal)"}`);
+  line(`    zones      island ≥${thresh.island}: ${pct(nIsland)}%   barren ≤${thresh.barren.toFixed(2)}: ${pct(nBarren)}%   transitional: ${pct(nTransitional)}%`);
+  // 10-bin histogram (0.0–1.0 in steps of 0.1)
+  const barMax = Math.max(...hist);
+  line("    histogram (0.0 → 1.0 in tenths):");
+  for (let b = 0; b < BINS; b++) {
+    const lo = (b / BINS).toFixed(1), hi = ((b + 1) / BINS).toFixed(1);
+    const barW = barMax > 0 ? Math.round((hist[b] / barMax) * 30) : 0;
+    line(`      ${lo}–${hi}  ${"█".repeat(barW).padEnd(30)} ${pct(hist[b])}%`);
+  }
+  // concealment preview: mean expected concealment for a perfect hider at the avg island cell vs avg barren cell
+  const hiAvgFert = nIsland  > 0 ? (() => { let s = 0, c = 0; for (let i = 0; i < n; i++) if (fert[i] >= thresh.island)  { s += fert[i]; c++; } return s / c; })() : 0;
+  const baAvgFert = nBarren  > 0 ? (() => { let s = 0, c = 0; for (let i = 0; i < n; i++) if (fert[i] <= thresh.barren)  { s += fert[i]; c++; } return s / c; })() : 0;
+  const vegOfFert = (f) => f;  // veg equilibrium ≈ fert (carrying capacity)
+  const hideCon   = (veg) => Math.min(1, 1.0 * veg) * CONFIG.coverStrength;   // hideability 1 (max hider), coverStrength
+  line(`    concealment (max hider): island avg fert ${hiAvgFert.toFixed(2)} → veg~${vegOfFert(hiAvgFert).toFixed(2)} → cover~${hideCon(vegOfFert(hiAvgFert)).toFixed(2)}`);
+  line(`                             barren avg fert ${baAvgFert.toFixed(2)} → veg~${vegOfFert(baAvgFert).toFixed(2)} → cover~${hideCon(vegOfFert(baAvgFert)).toFixed(2)}`);
 }
 
 process.exit(threw || nanFlags.length ? 1 : 0);
