@@ -20,7 +20,7 @@ require("./shim.js");
 const sim = require("./sim.js");
 const { world, step, seed, biomass, CONFIG, GRID,
         draw, drawChart, drawCountChart, drawArmsChart, updateHud,
-        classifyMorphs, classifyRegime, regimeMood, predationShare } = sim;
+        classifyMorphs, classifyRegime, regimeMood, predationShare, rebuildFertility } = sim;
 
 // ---- assertions --------------------------------------------------------------
 let failures = 0;
@@ -691,6 +691,34 @@ check(document.getElementById("s-seed").textContent === "4242",
   check(barrenCells / n > 0.10,
         `at least 10 % of cells are low-fertility barrens (≤fertMin+0.23) — got ${pctBarren}%`);
   seed(null);   // hand the world back to free randomness for whatever follows
+}
+
+// ---- rebuildFertility: slider reshapes the map without NaN or out-of-range values --
+// Uses seed 20260723 so island pool is deterministic; checks that any N ∈ {0..pool}
+// produces a correctly-normalized map (peak exactly 1.0, floor exactly fertMin).
+{
+  seed(20260723);
+  rebuildFertility(3);
+  {
+    const fert = world.fert, n = fert.length;
+    let fMin = Infinity, fMax = -Infinity;
+    for (let i = 0; i < n; i++) { if (fert[i] < fMin) fMin = fert[i]; if (fert[i] > fMax) fMax = fert[i]; }
+    check(Math.abs(fMax - 1.0) < 1e-9,
+          `rebuildFertility(3) peak normalises to 1.0 (got ${fMax.toFixed(6)})`);
+    check(Math.abs(fMin - CONFIG.fertMin) < 1e-9,
+          `rebuildFertility(3) floor is fertMin (got ${fMin.toFixed(6)})`);
+  }
+  rebuildFertility(0);  // sine-grating only — still a valid, normalized map
+  {
+    const fert = world.fert, n = fert.length;
+    let fMin = Infinity, fMax = -Infinity;
+    for (let i = 0; i < n; i++) { if (fert[i] < fMin) fMin = fert[i]; if (fert[i] > fMax) fMax = fert[i]; }
+    check(Math.abs(fMax - 1.0) < 1e-9,
+          `rebuildFertility(0) peak normalises to 1.0 — pure sine grating (got ${fMax.toFixed(6)})`);
+    check(Math.abs(fMin - CONFIG.fertMin) < 1e-9,
+          `rebuildFertility(0) floor is fertMin — no NaN or out-of-range values (got ${fMin.toFixed(6)})`);
+  }
+  seed(null);
 }
 
 // ---- verdict ----------------------------------------------------------------
