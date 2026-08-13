@@ -117,10 +117,14 @@
     fertMin: 0.12,           // barren ground's carrying capacity (richest island core is 1.0).
                              // Lowered 0.28→0.12 for the Habitat Mosaic: islands are the
                              // lush refugia, the ground between them genuinely sparse.
-    fertIslands: 7,          // number of Gaussian island cores placed on the map. Each core
-                             // is a pronounced fertility peak — a lush refugia where hiders
-                             // can vanish into dense cover. Between them the ground is open
-                             // barren where concealment fails and fleers dominate.
+    fertIslands: 7,          // number of Gaussian island cores *active* on the map. Slider
+                             // range: 0 (pure sine grating) to fertIslandsPool (full pool).
+                             // Each active core is a lush refugia where hiders can vanish;
+                             // open ground between is barren fleer country.
+    fertIslandsPool: 15,     // pre-generated island pool size. Always 15 positions are drawn
+                             // from the RNG at world-init; the slider picks how many to use.
+                             // Storing 15 means slider changes never call rand(), keeping the
+                             // world byte-identical between slider moves.
     fertIslandSigma: 7.5,    // falloff radius of each island in grid cells. At σ=7.5 each
                              // island's half-maximum radius is ~8.8 cells (~132px), covering
                              // a patch visible as a distinct green zone on the canvas.
@@ -689,51 +693,27 @@
   // fleers dominate. Together the two zones create the spatial selection heterogeneity
   // Arc III needs: hiding is locally optimal in the islands at the same time that
   // fleeing is locally optimal in the barrens — in the SAME world, simultaneously.
-  function buildFertility() {
+  // Pure worker: fills a pre-allocated fert array from wave params + island pool.
+  // No rand() calls — safe to call from the slider without touching the biology RNG.
+  function _fertMap(fert, waves, poolX, poolY, n) {
     const { cols, rows } = GRID;
-    const fert = new Float64Array(cols * rows);
-
-    // Base: 3 sine gratings for gentle underlying texture (same RNG as before)
-    const waves = [];
-    for (let k = 0; k < 3; k++) {
-      waves.push({
-        fx: (rand(0.5, 2.2) * TAU) / cols,
-        fy: (rand(0.5, 2.2) * TAU) / rows,
-        ph: rand(0, TAU),
-        amp: rand(0.5, 1),
-      });
-    }
-
-    // Island cores: N Gaussian peaks of very high fertility placed at random positions.
-    // Using max (not sum) so overlapping islands don't over-saturate — each cell is
-    // dominated by its nearest island, giving clean, distinct refugia.
-    const N = CONFIG.fertIslands;
     const sig2 = CONFIG.fertIslandSigma * CONFIG.fertIslandSigma;
-    const islandX = [], islandY = [];
-    for (let k = 0; k < N; k++) {
-      islandX.push(rand(0, cols));
-      islandY.push(rand(0, rows));
-    }
-
     let min = Infinity, max = -Infinity;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        // Sine base
         let v = 0;
         for (const w of waves) v += w.amp * Math.sin(x * w.fx + y * w.fy + w.ph);
-
         // Island boost — nearest-island Gaussian (toroidal shortest path)
         let boost = 0;
-        for (let k = 0; k < N; k++) {
-          let dx = x - islandX[k];
-          let dy = y - islandY[k];
+        for (let k = 0; k < n; k++) {
+          let dx = x - poolX[k];
+          let dy = y - poolY[k];
           if (dx > cols / 2) dx -= cols; else if (dx < -cols / 2) dx += cols;
           if (dy > rows / 2) dy -= rows; else if (dy < -rows / 2) dy += rows;
           const b = Math.exp(-(dx * dx + dy * dy) / (2 * sig2));
           if (b > boost) boost = b;
         }
         v += 4.0 * boost; // amplitude: 4× grating range → islands dominate the peaks
-
         const i = y * cols + x;
         fert[i] = v;
         if (v < min) min = v;
@@ -745,7 +725,49 @@
       const t = (fert[i] - min) / span;
       fert[i] = CONFIG.fertMin + (1 - CONFIG.fertMin) * t;
     }
+  }
+
+  function buildFertility() {
+    const { cols, rows } = GRID;
+    const fert = new Float64Array(cols * rows);
+
+    // Base: 3 sine gratings for gentle underlying texture
+    const waves = [];
+    for (let k = 0; k < 3; k++) {
+      waves.push({
+        fx: (rand(0.5, 2.2) * TAU) / cols,
+        fy: (rand(0.5, 2.2) * TAU) / rows,
+        ph: rand(0, TAU),
+        amp: rand(0.5, 1),
+      });
+    }
+
+    // Island pool: always generate fertIslandsPool positions so the slider can later
+    // rebuild the map with any N ≤ pool without making new rand() calls.
+    const POOL = CONFIG.fertIslandsPool;
+    const poolX = new Float64Array(POOL);
+    const poolY = new Float64Array(POOL);
+    for (let k = 0; k < POOL; k++) {
+      poolX[k] = rand(0, cols);
+      poolY[k] = rand(0, rows);
+    }
+
+    // Store so rebuildFertility() can reuse the same geometry without new RNG draws.
+    world.fertWaves = waves;
+    world.fertPoolX = poolX;
+    world.fertPoolY = poolY;
+
+    _fertMap(fert, waves, poolX, poolY, CONFIG.fertIslands);
     return fert;
+  }
+
+  // Reshape the fertility map using a different number of island cores. The vegetation
+  // is NOT reset — it adapts naturally over the next few hundred ticks, so the meadow
+  // visibly restructures toward the new landscape. Safe to call mid-simulation.
+  function rebuildFertility(n) {
+    n = Math.max(0, Math.min(n | 0, CONFIG.fertIslandsPool));
+    CONFIG.fertIslands = n;
+    _fertMap(world.fert, world.fertWaves, world.fertPoolX, world.fertPoolY, n);
   }
 
   function biomass() {
@@ -2486,6 +2508,15 @@
   document.getElementById("speed").addEventListener("input", (e) => {
     world.stepsPerFrame = parseInt(e.target.value, 10);
   });
+  const islandsSlider = document.getElementById("islands");
+  const islandsLabel  = document.getElementById("islands-label");
+  if (islandsSlider) {
+    islandsSlider.addEventListener("input", (e) => {
+      const n = parseInt(e.target.value, 10);
+      rebuildFertility(n);
+      if (islandsLabel) islandsLabel.textContent = n;
+    });
+  }
 
   // cycle the hidden-landscape overlay: off → fertility → grazing → soil → off
   const overlayNames = ["off", "fertility", "grazing", "soil"];
@@ -2548,7 +2579,7 @@
       draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
       concealment, hideability, metaboIntakeMult, huntMetaboMult, sprintDrag, predationShare, cellIndex,
-      rebuildFlock, senseFlock,
+      rebuildFlock, senseFlock, rebuildFertility, _fertMap,
     };
   }
 })();
