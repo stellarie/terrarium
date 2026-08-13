@@ -290,7 +290,7 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **0** — habitat-mosaic Expedition (2026-08-11). **Next Expedition mandatory after 5 Builds.**
+_Runs since the last Expedition:_ **1** — habitat-mosaic Expedition (2026-08-11). **Next Expedition mandatory after 4 more Builds.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -302,23 +302,13 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-11 — the habitat-mosaic Expedition (ecology).** Readings: `observe.js` unseeded ×20k (collapsed world at end); `smoke.js` 106 checks green. Rewrote fertility map to 7 Gaussian island cores + sine grating base; `hunterCrowd` 4.2→6.0; `moteNearExtinctTicks` 400→200.
+**Last observed: 2026-08-13 — the live island-count slider Build (UI/controls).** Readings: `observe.js` unseeded ×20k post-change; `smoke.js` 110 checks green. Change is UI-only (step() untouched); RNG stream shifts by 16 extra pool draws at world-init, so initial mote/hunter placements differ from the 2026-08-11 readings below.
 
-- **`social` (unseeded, 20k):** mean **−0.49** (WARY — arms-race world evolving strong wariness). `speed` **1.90**, `size` **1.97** ↓↓ (strikingly smaller — island cover selecting for small-body hiders), `sense` **43.82**, `metabo` **1.38**.
-- **Territory NN (unseeded, 20k):** 216.2px vs uniform-random baseline ~293.9px — weakly clustered (6 hunters in a collapsing predator tier).
-- **Kill alarm (unseeded, 20k):** 3 sites active (predator tier collapsed at end, few recent kills).
-- **motes:** min **33**, max **800**, mean **560**, oscillates (CV **27%**). No reseed events — healthy world at main-run end.
-- **hunters:** min **1**, max **52**, mean **31**, oscillates (CV **51%**). 1 collapse episode, 5% collapse ticks.
-- **plants (biomass):** min **44**, max **1128**, mean **211**, oscillates (CV **70%**). Within envelope.
-- **safety nets:** 0 ticks at/under 0→6 floor; 0 near-extinction events on main run. Healthy. Seed 3 arm-race run (20k): 1890 ticks at floor, 10 top-up events — islands concentrate prey under heavy predation.
-- **matter:** **HOLDING** (+0.4% full run, +0.1% mid→late — near-perfect conservation, best reading to date).
-- **habitat biome (12.5% island cores ≥0.75; 14.9% barrens ≤0.35; transitional 72.6%):** cover contrast 0.77 (island) vs 0.25 (barren) = 3.1× gradient. BC 0.385 — unimodal fertility distribution (smooth gradient between econiches, not two hard zones).
-- **gene-pool shape:** grazers **ONE broad cloud** (k=1). Size BC 0.58 ⚑ — hint of non-unimodality on size axis. Split-test (seed 3, 12k, WITH hunters): **k=2 along size** — first within-world morph coexistence under predation ever detected.
-- **boredom check: NOT a fixed point** — 3/6 metrics shifted >8% between tick 1k and end. Live system.
-- **regime:** predation **collapsed** at read-end (surge 2% / steady 85% / ebb 7% / settling 1% / collapsed 5%). 85% steady — a more stable predation history than last run.
-- **smoke:** **106 checks** (+5 habitat-mosaic structure proofs). Green.
+- **gene-pool shape (unseeded, 20k post-change):** grazers **k=2 along metabo** — first metabo split the detector has named. One unseeded pass; treat as a lead, not a verdict.
+- **smoke:** **110 checks** (+4 rebuildFertility assertions: n=3 and n=0 each produce peak=1.0 and floor=fertMin). Green.
+- **ecology otherwise:** step() is byte-identical to 2026-08-11; see that entry's full field readings for baseline numbers. Matter conservation, safety nets, regime, and biome structure unchanged.
 
-_previously:_ (2026-08-10, soil-bloom Build, visuals) `social` +0.14 / speed 1.47 / size 3.71 / sense 40.86 / metabo 1.27; motes min 1 / mean 401; hunters min 7 / mean 47; biomass ~523; matter HOLDING +3.6%; grazers k=1; smoke 101 checks.
+_previously:_ (2026-08-11, habitat-mosaic Expedition, ecology) `social` −0.49 / speed 1.90 / size 1.97 ↓↓ / sense 43.82 / metabo 1.38; motes min 33 / mean 560; hunters min 1 / mean 31; biomass mean 211; matter HOLDING +0.4%; grazers k=1 full-world, k=2 along size in seed 3 split-test with hunters; smoke 106 checks.
 
 ---
 
@@ -849,6 +839,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-13 — [Build] live island-count slider: reshape the fertility map in real time
+
+**Observed (the complaint):** The fertility map — now built from 7 Gaussian island cores — was fixed at world-init. A visitor who wanted more island cores (denser cover mosaic) or fewer (a flatter, sine-grating-only world) had to mint a new world and hope the random pool gave what they wanted. `CONFIG.fertIslands` existed but was hardwired to 7 with no live control. The backlog item "add island number as a live slider-controlled CONFIG knob" was the most actionable UI gap. A secondary observation: the overlays (fertility / grazing / soil) still tile as hard 15px squares; the bilinear-interpolation pass that smoothed the meadow was never extended to them.
+
+**Built.** Three linked pieces built around a critical RNG-safety constraint: calling `buildFertility()` during a live simulation would invoke `rand()` and corrupt the biology RNG stream (mote mutations, spawn positions — all downstream draws shift). Fix: generate all 15 pool positions *once* at world-init in `buildFertility()`, stored in `world.fertPoolX` / `world.fertPoolY`. A new `_fertMap(fert, waves, poolX, poolY, n)` pure worker recomputes the map from any prefix of the stored pool with no `rand()` calls. `rebuildFertility(n)` calls it, updates `CONFIG.fertIslands` and `world.fert` in-place, and clamps n to [0, `CONFIG.fertIslandsPool`]. The first 7 pool draws are byte-identical to the old 7-island `buildFertility()`, so existing seeds' maps are unchanged; the 16 extra draws for positions 8–14 shift post-buildFertility RNG (initial mote/hunter placements), which is acceptable. An `<input id="islands">` slider (min=0, max=15, default=7) was added to `index.html` controls with a live label; a `"input"` event listener calls `rebuildFertility(n)`. Four new `smoke.js` assertions: `rebuildFertility(3)` and `rebuildFertility(0)` each produce peak=1.0 and floor=fertMin. **110 checks** (+4). `module.exports` updated to include `rebuildFertility` and `_fertMap`.
+
+**What a visitor now sees.** A new "islands" slider sits beside the speed slider. Drag left and the lush island cores dissolve — the meadow flattens toward a uniform sine-grating landscape; vegetation redistributes, the herd reorganises, and motes that relied on dense island cover find the barrens filling in. Drag right and up to 15 pre-generated cores bloom into the landscape from the stored pool, new refugia pulling the herd's geography apart. At n=0 the world runs pure sine gratings (the pre-mosaic map shape); at n=15 the patchwork is as dense as the pool allows. No creature or nutrient value changes — only the fertility bedrock shifts, and everything above it adapts on its own. **Post-change lead:** the shifted RNG trajectory (16 extra pool draws) produced a **k=2 split along metabo** on the unseeded post-change 20k run — the first time the morph detector has named a metabo split. One pass; flag, watch. (Category: **UI/controls** — rotates off last run's ecology. Build; Expedition counter → **1**.)
 
 ### 2026-08-11 — [Expedition] reshape the ground itself: 7 Gaussian island cores carve the fertility map into hider country and fleer country
 
@@ -2073,6 +2071,8 @@ freely. Add two per run, at least one ambitious.
 - **[Build] Toggle chart series.** Click a legend swatch to hide/show that line on
   either chart, so you can isolate one trait or watch plants-vs-motes alone; keep the on/off
   flags in a tiny UI-state object.
+- **[Build] Smooth the overlays too — bilinear-interpolate fertility, grazing, and soil.** The meadow now draws as continuous organic ground, but the overlay modes (fertility / grazing / soil) still tile as hard 15px squares. Apply the same bilinear pass to each overlay's scalar field (share the palette-building helpers, vary only the colour function). Bounded, view-only, headless-verifiable via `--frame 1` and `--frame 2`. The data lenses should match the ground they're painted on. _(Spotted again 2026-08-13 as second complaint; carries over from backlog entry below which duplicates it — merge when building.)_
+- **[Build] Island sigma slider.** The island pool slider gives the count; a second slider for `fertIslandSigma` (currently hardcoded 7.5 cells) gives the radius — narrow sigma makes tight, dense spires of cover; wide sigma makes broad, gentle meadow plateaus. Pair it with the count slider for a two-knob terrain editor. Sigma slider needs the same pool pattern: `rebuildFertility` already reads `CONFIG.fertIslandSigma` at call time, so the hook exists; add the `<input>` and update `CONFIG.fertIslandSigma` on each event. No new RNG required.
 - **[Repair/Build] Polish.** Better colors, subtle trails, mobile layout, an about panel.
 
 ---

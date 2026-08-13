@@ -227,7 +227,10 @@ Each comes with a small labelled gradient key, and neither touches the simulatio
 only read the world and paint it.
 
 Controls: pause, sow a burst of seeds, mint a **new world** (a fresh seed, written to the
-URL), cycle the overlay, and a speed slider.
+URL), cycle the overlay, a speed slider, and an **islands slider** — drag it to reshape the
+fertility map live: fewer cores flatten the terrain toward the old uniform sine-grating world,
+more cores add lush refugia from a pre-generated pool, and vegetation adapts naturally over the
+following ticks without touching any creature or nutrient value.
 
 ## Run it
 
@@ -239,7 +242,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 106 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 110 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -384,14 +387,16 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 106-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 110-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is. Hunters now carry **home ranges** — each tracks
 its personal kill centroid and leans toward it, carving emergent patrol corridors out of the shared
 landscape.
 
-Newest: **the ground itself took sides.** The fertility map — the permanent bedrock carrying capacity underneath the meadow — has been rewritten. It used to be three overlapping sine gratings, smoothly varying and spatially uniform: every patch of meadow had roughly the same potential for richness, so the herd's lifestyle (flee vs hide) was a global decision set by the predation regime, not a local one set by terrain. Now the map places **seven Gaussian island cores** (each a bell-curve peak four times the height of the grating range, σ ≈ 7.5 cells) atop the grating base, toroidally wrapped, normalized to [0.12, 1.0]. The result: seven dense, lush **island refugia** where a small slow mote can vanish into tall grass (cover ≈ 0.77 for a perfect hider), surrounded by sparse inter-island **barrens** where hiding is nearly useless (cover ≈ 0.24). The 3.2× cover gradient is the landscape's permanent opinion — it holds whether the predation regime is fierce or lax. The first paired split-test under this terrain found **k=2 along body size** in one of four seeds with hunters present — the first within-world morph coexistence under predation detected in the project's history. The observatory gained a **biome section** [12] reporting zone fractions, a fertility histogram, and a concealment preview per zone. **106 checks** (+5: map peak normalises to 1.0, floor to fertMin, std > 0.15, ≥4% lush island cells, ≥10% low-fertility barrens).
+Newest: **the island landscape is a live control.** The fertility map — seven Gaussian island cores atop a sine-grating base — can now be reshaped in real time with an **islands slider** in the controls. Drag it left and the lush island refugia dissolve toward a flat, uniform sine-grating world; drag right and up to 15 pre-generated cores bloom into the landscape from a stored pool, pulling the vegetation and the herd's geography apart within a few hundred ticks. At n=0 the world runs on bare sine gratings; at n=15 the patchwork is as dense as the pool allows. The slider is RNG-safe by design: all 15 island positions are generated once at world-init and stored in `world.fertPoolX/fertPoolY`; `rebuildFertility(n)` reconstructs the map from any prefix of the pool with no new random calls, so the biology RNG stream (mote mutations, births) is never contaminated. **110 checks** (+4: `rebuildFertility` with n=3 and n=0 each produce a map with peak 1.0 and floor at fertMin).
+
+Before that: **the ground itself took sides.** The fertility map has been rewritten from three overlapping sine gratings (spatially uniform — every patch had the same potential richness) to **seven Gaussian island cores** (each a bell-curve peak four times the height of the grating range, σ ≈ 7.5 cells) atop the grating base, toroidally wrapped, normalized to [0.12, 1.0]. The result: seven dense, lush **island refugia** where a small slow mote can vanish into tall grass (cover ≈ 0.77 for a perfect hider), surrounded by sparse inter-island **barrens** where hiding is nearly useless (cover ≈ 0.24). The 3.2× cover gradient is the landscape's permanent opinion — it holds whether the predation regime is fierce or lax. The first paired split-test under this terrain found **k=2 along body size** in one of four seeds with hunters present — the first within-world morph coexistence under predation detected in the project's history. The observatory gained a **biome section** [12] reporting zone fractions, a fertility histogram, and a concealment preview per zone. **106 checks** (+5: map peak normalises to 1.0, floor to fertMin, std > 0.15, ≥4% lush island cells, ≥10% low-fertility barrens).
 
 Before that: **the dead feed the ground, and now you can see it.** Each death always called `enrich()` to
 return body matter to the soil — the nutrient cycle's conservation law, invisible unless you toggled the
