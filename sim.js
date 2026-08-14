@@ -2046,55 +2046,110 @@
     const mode = world.overlay;
     if (!mode) return;
     const cell = CONFIG.vegCell, cols = GRID.cols, rows = GRID.rows;
+    // bilinear-smooth: sample every 5px, same grid as the meadow pass, so overlays
+    // read as continuous terrain instead of hard 15px tile squares
+    const step = 5, nCols = Math.ceil(W / step), nRows = Math.ceil(H / step);
+    const N = 24;
 
     if (mode === 1) {
+      // fertility — indigo→gold, bilinear-smooth
       const fert = world.fert, lo = CONFIG.fertMin, span = (1 - lo) || 1;
+      const pal = new Array(N + 1);
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        pal[i] = `rgb(${40 + 215 * t | 0},${60 + 140 * t | 0},${120 - 55 * t | 0})`;
+      }
       ctx.globalAlpha = 0.42;
-      for (let y = 0; y < rows; y++) {
-        const row = y * cols;
-        for (let x = 0; x < cols; x++) {
-          const t = clamp((fert[row + x] - lo) / span, 0, 1);
-          ctx.fillStyle = fertColor(t);
-          ctx.fillRect(x * cell, y * cell, cell, cell);
+      let lastQ = -1;
+      for (let sy = 0; sy < nRows; sy++) {
+        const gy = (sy * step + step * 0.5) / cell - 0.5;
+        const iy = Math.floor(gy);
+        const gy0 = ((iy % rows) + rows) % rows, gy1 = (gy0 + 1) % rows;
+        const fy = gy - iy;
+        const r0 = gy0 * cols, r1 = gy1 * cols;
+        for (let sx = 0; sx < nCols; sx++) {
+          const gx = (sx * step + step * 0.5) / cell - 0.5;
+          const ix = Math.floor(gx);
+          const gx0 = ((ix % cols) + cols) % cols, gx1 = (gx0 + 1) % cols;
+          const fx = gx - ix;
+          const v = fert[r0 + gx0] * (1-fx)*(1-fy) + fert[r0 + gx1] * fx*(1-fy)
+                  + fert[r1 + gx0] * (1-fx)*fy     + fert[r1 + gx1] * fx*fy;
+          const t = clamp((v - lo) / span, 0, 1);
+          const qi = (t * N + 0.5) | 0;
+          if (qi !== lastQ) { ctx.fillStyle = pal[qi]; lastQ = qi; }
+          ctx.fillRect(sx * step, sy * step, step, step);
         }
       }
       ctx.globalAlpha = 1;
       overlayKey("fertility — the permanent lush/barren bedrock", "barren", "rich", fertColor);
     } else if (mode === 2) {
+      // grazing pressure — bilinear-smooth; alpha varies with intensity so it is baked
+      // into the rgba palette (globalAlpha stays 1) to avoid per-pixel state changes
       const gz = world.graze;
       let gmax = 0;
       for (let i = 0; i < gz.length; i++) if (gz[i] > gmax) gmax = gz[i];
       if (gmax >= 0.05) {
         const inv = 1 / gmax;
-        for (let y = 0; y < rows; y++) {
-          const row = y * cols;
-          for (let x = 0; x < cols; x++) {
-            const q = gz[row + x] * inv;
+        const pal = new Array(N + 1);
+        for (let i = 0; i <= N; i++) {
+          const q = i / N;
+          pal[i] = `rgba(255,${210 - 150 * q | 0},${70 - 30 * q | 0},${(0.12 + 0.55 * q).toFixed(3)})`;
+        }
+        let lastQ = -1;
+        for (let sy = 0; sy < nRows; sy++) {
+          const gy = (sy * step + step * 0.5) / cell - 0.5;
+          const iy = Math.floor(gy);
+          const gy0 = ((iy % rows) + rows) % rows, gy1 = (gy0 + 1) % rows;
+          const fy = gy - iy;
+          const r0 = gy0 * cols, r1 = gy1 * cols;
+          for (let sx = 0; sx < nCols; sx++) {
+            const gx = (sx * step + step * 0.5) / cell - 0.5;
+            const ix = Math.floor(gx);
+            const gx0 = ((ix % cols) + cols) % cols, gx1 = (gx0 + 1) % cols;
+            const fx = gx - ix;
+            const v = gz[r0 + gx0] * (1-fx)*(1-fy) + gz[r0 + gx1] * fx*(1-fy)
+                    + gz[r1 + gx0] * (1-fx)*fy     + gz[r1 + gx1] * fx*fy;
+            const q = clamp(v * inv, 0, 1);
             if (q < 0.04) continue;
-            ctx.globalAlpha = 0.12 + 0.55 * q;
-            ctx.fillStyle = grazeColor(q);
-            ctx.fillRect(x * cell, y * cell, cell, cell);
+            const qi = (q * N + 0.5) | 0;
+            if (qi !== lastQ) { ctx.fillStyle = pal[qi]; lastQ = qi; }
+            ctx.fillRect(sx * step, sy * step, step, step);
           }
         }
-        ctx.globalAlpha = 1;
       }
       const caption = gmax >= 0.05
         ? "grazing pressure — where motes have eaten lately"
         : "grazing pressure — nobody's grazing yet";
       overlayKey(caption, "cool", "hot", grazeColor);
     } else if (mode === 3) {
-      // the nutrient bank: the ground's memory of everything that has died on it.
-      // Scaled against soilMax rather than the live maximum so the wash means the same
-      // thing from tick to tick — a brightening patch is really enriching, not just
-      // winning a renormalisation against its neighbours.
+      // soil nutrients — bilinear-smooth, spent-violet → rich-loam.
+      // Scaled against soilShow (not the live max) so brightness means the same
+      // thing from tick to tick — a brightening patch is really enriching.
       const soil = world.soil, inv = 1 / CONFIG.soilShow;
+      const pal = new Array(N + 1);
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        pal[i] = `rgb(${55 + 145 * t | 0},${38 + 92 * t | 0},${92 - 42 * t | 0})`;
+      }
       ctx.globalAlpha = 0.46;
-      for (let y = 0; y < rows; y++) {
-        const row = y * cols;
-        for (let x = 0; x < cols; x++) {
-          const t = clamp(soil[row + x] * inv, 0, 1);
-          ctx.fillStyle = soilColor(t);
-          ctx.fillRect(x * cell, y * cell, cell, cell);
+      let lastQ = -1;
+      for (let sy = 0; sy < nRows; sy++) {
+        const gy = (sy * step + step * 0.5) / cell - 0.5;
+        const iy = Math.floor(gy);
+        const gy0 = ((iy % rows) + rows) % rows, gy1 = (gy0 + 1) % rows;
+        const fy = gy - iy;
+        const r0 = gy0 * cols, r1 = gy1 * cols;
+        for (let sx = 0; sx < nCols; sx++) {
+          const gx = (sx * step + step * 0.5) / cell - 0.5;
+          const ix = Math.floor(gx);
+          const gx0 = ((ix % cols) + cols) % cols, gx1 = (gx0 + 1) % cols;
+          const fx = gx - ix;
+          const v = soil[r0 + gx0] * (1-fx)*(1-fy) + soil[r0 + gx1] * fx*(1-fy)
+                  + soil[r1 + gx0] * (1-fx)*fy     + soil[r1 + gx1] * fx*fy;
+          const t = clamp(v * inv, 0, 1);
+          const qi = (t * N + 0.5) | 0;
+          if (qi !== lastQ) { ctx.fillStyle = pal[qi]; lastQ = qi; }
+          ctx.fillRect(sx * step, sy * step, step, step);
         }
       }
       ctx.globalAlpha = 1;
