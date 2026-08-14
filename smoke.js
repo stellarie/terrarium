@@ -434,7 +434,7 @@ check(moodWarm > 0.6 && world.mood < -0.6,
       `mood eases toward the live cycle phase (surge → ${moodWarm.toFixed(2)}, then collapsed → ${world.mood.toFixed(2)})`);
 
 // the render path (unexercised by step()) doesn't throw — including every overlay
-// mode (off / fertility / grazing) against the shimmed canvas
+// mode (off / fertility / grazing / soil) against the shimmed canvas
 let renderThrew = null;
 try {
   // one death mark of EACH cause — predation, starvation, senescence, AND the new soil
@@ -443,11 +443,11 @@ try {
   world.sparks.push({ x: 120, y: 120, life: 0.6, kind: "starved", r: 3, fade: 0.018 }); // hunger
   world.sparks.push({ x: 140, y: 140, life: 0.7, kind: "aged", r: 6, fade: 0.025 });    // senescence
   world.sparks.push({ x: 160, y: 160, life: 0.8, kind: "soil", r: 4, fade: 0.010 });    // soil bloom
-  for (const ov of [0, 1, 2]) { world.overlay = ov; draw(); }
+  for (const ov of [0, 1, 2, 3]) { world.overlay = ov; draw(); }
   world.overlay = 0;
   drawChart(); drawCountChart(); drawArmsChart(); updateHud();
 } catch (e) { renderThrew = e; }
-check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all overlays + all 4 spark kinds incl. soil bloom) / charts / hud render without throwing");
+check(!renderThrew, renderThrew ? `render threw: ${renderThrew && renderThrew.stack}` : "draw (all 4 overlay modes incl. soil + all 4 spark kinds incl. soil bloom) / charts / hud render without throwing");
 // per-cause spark fade rates: a soil bloom (CONFIG.sparkFadeSoil) decays slower than a
 // kill-flash (CONFIG.sparkFade), which decays slower than nothing new. The decay uses
 // s.fade ?? CONFIG.sparkFade so an old-style spark (no fade field) still works.
