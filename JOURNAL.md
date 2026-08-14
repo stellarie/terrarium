@@ -290,7 +290,7 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **1** — habitat-mosaic Expedition (2026-08-11). **Next Expedition mandatory after 4 more Builds.**
+_Runs since the last Expedition:_ **2** — habitat-mosaic Expedition (2026-08-11). **Next Expedition mandatory after 3 more Builds.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -302,13 +302,17 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-13 — the live island-count slider Build (UI/controls).** Readings: `observe.js` unseeded ×20k post-change; `smoke.js` 110 checks green. Change is UI-only (step() untouched); RNG stream shifts by 16 extra pool draws at world-init, so initial mote/hunter placements differ from the 2026-08-11 readings below.
+**Last observed: 2026-08-14 — the smooth-overlay Build (visuals).** Readings: `observe.js` unseeded ×20k pre-change (draw-only change; step() untouched, so ecology figures are pre-change baseline); `smoke.js` 110 checks green.
 
-- **gene-pool shape (unseeded, 20k post-change):** grazers **k=2 along metabo** — first metabo split the detector has named. One unseeded pass; treat as a lead, not a verdict.
-- **smoke:** **110 checks** (+4 rebuildFertility assertions: n=3 and n=0 each produce peak=1.0 and floor=fertMin). Green.
-- **ecology otherwise:** step() is byte-identical to 2026-08-11; see that entry's full field readings for baseline numbers. Matter conservation, safety nets, regime, and biome structure unchanged.
+- **gene-pool shape (unseeded, 20k pre-change):** grazers **k=1** (one broad cloud); size BC 0.62 ⚑ (mode at floor, small hiders dominating); speed 0.99→2.15; metabo 1.01→1.65 ↑; social 0.10→−0.33 (evolving wary).
+- **populations:** plants 60–1213; motes 37–737; hunters 9–92; all oscillating.
+- **matter:** HOLDING +0.0%.
+- **safety nets:** 0 near-extinction events.
+- **regime:** thinning (recent 34.4 vs baseline 50.0).
+- **biome:** 18.4% island (≥0.75 fert), 16.1% barren (≤0.35), std 0.197.
+- **smoke:** **110 checks** (unchanged — draw-only change; soil overlay mode now included in render-coverage sweep).
 
-_previously:_ (2026-08-11, habitat-mosaic Expedition, ecology) `social` −0.49 / speed 1.90 / size 1.97 ↓↓ / sense 43.82 / metabo 1.38; motes min 33 / mean 560; hunters min 1 / mean 31; biomass mean 211; matter HOLDING +0.4%; grazers k=1 full-world, k=2 along size in seed 3 split-test with hunters; smoke 106 checks.
+_previously:_ (2026-08-13, island-slider Build, UI/controls) k=2 along metabo on unseeded 20k post-change (first metabo split the detector named — one pass, treat as lead); smoke 110 checks; step() byte-identical to 2026-08-11; for baseline ecology numbers see 2026-08-11 entry.
 
 ---
 
@@ -839,6 +843,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-14 — [Build] smooth the overlays: bilinear-interpolate fertility, grazing, and soil
+
+**Observed (the complaint):** The fertility, grazing, and soil overlays still rendered as hard 15px tile grids — the same mosaic the meadow draw path shed on 2026-08-02. With 7 Gaussian island cores reshaping the fertility map into a genuine spatial terrain, the overlay's job is to make that topology legible: the indigo→gold heatmap should read as flowing island contours, not as blocky 15-pixel steps. The bilinear-interpolation technique that smoothed the meadow was never applied to any of the three overlay modes, and the soil overlay had never even been exercise in the smoke render-coverage loop (`[0,1,2]`, no 3).
+
+**Built.** `drawOverlay()` rewritten across all three modes. Each now samples every 5px across the canvas, computes fractional grid coordinates with a −0.5 offset so samples centre on cell midpoints, looks up the four surrounding cell centres with full toroidal wrapping, bilinearly interpolates, and indexes into an N=24 palette pre-built once per draw call with a `lastQ` guard to skip repeated `fillStyle` sets — identical technique to the meadow. The grazing overlay's previously per-pixel `globalAlpha` changes could not use `lastQ` (globalAlpha changed every cell), so alpha was baked into the rgba() palette strings (`rgba(r,g,b,alpha)` per quantisation step); `globalAlpha` now stays 1.0 for the entire mode-2 loop and the guard works cleanly. `smoke.js` render loop extended: `[0, 1, 2]` → `[0, 1, 2, 3]`, and the assertion string updated to name all four modes; soil overlay is now inside the render-coverage sweep. **110 checks** (count unchanged — draw-only change adds no new invariant; only the coverage sweep is wider).
+
+**What a visitor now sees.** Press O: the fertility heatmap reads as smooth organic terrain — the 7 island cores glow as warm amber pools bleeding through soft gradients into cool indigo barrens, the spatial structure of the 2026-08-11 Expedition finally legible at a glance without the grid. Grazing and soil match: the herd's pressure gradient fades continuously across the grass and the soil nutrient bank reads as a rolling landscape of richness rather than toggling individual squares. No ecology changed; step() is byte-identical and the overlay still cannot perturb the simulation. (Category: **visuals** — rotates off last run's UI/controls. Build; Expedition counter → **2**.)
 
 ### 2026-08-13 — [Build] live island-count slider: reshape the fertility map in real time
 
@@ -1628,6 +1640,10 @@ freely. Add two per run, at least one ambitious.
 - **[Build] Retired (BUILT 2026-08-10): "Show the nutrient return at each death — a soil-bloom pulse where a body falls."** Done: per-cause spark fades (pred 22t / starved 55t / aged 40t / soil bloom 100t), soil blooms drawn under death marks in a first pass using the soil palette, expanding gently as they fade. Smoke +2 → 101.
 
 - **[Expedition] Fix the matter leak in safety nets by drawing new motes from soil** _(ambitious — the top-up net and 0→6 floor both create motes from nothing; the fix is to have them absorb their body matter from the soil instead, but if soil is near-empty the world can't afford the reseed, which means the fix changes the safety net's effectiveness in exactly the crisis it's meant to address)_. The matter table shows +73-unit jumps each time the near-extinction net fires — exactly 8 motes × ~9 bodyMatterMax. Fix: in `makeMote()` calls from the reseed nets, instead of starting with `energy = 0` and a fresh body, pull body matter from the soil at the cell where the mote is spawned (i.e. drain soil by the mote's starting body matter). If the soil can't afford it, use whatever is there (floored at 1), so the net still fires but may spawn weaker motes — a more ecologically honest reseed. This would seal the last non-trivial matter source. Risk: a world with a deep prey crash has little body-matter locked up and much of it in soil, so the drain should be affordable, but a completely barren scenario might starve the reseed before the mote can breed — needs careful verification across the worst-case seeds.
+
+- **[Build] Smooth the overlay gradient keys to match the bilinear overlay.** The labelled gradient strip at the bottom of each overlay mode is still rendered as N=24 discrete `fillRect` steps — visible as a staircase on a retina screen. Replace with `createLinearGradient` + `addColorStop` for a continuous ramp, using the same palette anchor points already computed per-draw. The shim's gradient stub already exists (added 2026-07-22 for the vignette) and `render.js`'s gradient path is already exercised, so headless testing is in place. Bounded and view-only; the only smoke impact is confirming the overlay key draws without throwing, which the existing render-coverage loop already checks.
+
+- **[Expedition] Seasonal fertility — island cores that pulse with the season** _(ambitious — I'm not sure the tuned limit cycle survives a time-varying fertility map, and the smoothing required to avoid abrupt jumps may be tricky)_. Right now `world.fert` is static: it is computed once at `buildFertility()` and never changes. Make island-core amplitude scale with the season (summer: amplitude ≈ 4.0, current value; winter: amplitude ≈ 1.5, barely above the sine-grating base), so the lush refugia seasonally contract and expand. In winter the island strongholds thin, hiders lose their cover advantage, and the world must temporarily lean toward fleeing; in summer the cores bloom and hiding pays again. This could produce the first **transient within-world lifestyle switching** — not two morphs simultaneously, but the same population tipping between them as the season turns. Mechanism: `rebuildFertility(n)` already knows how to reconstruct the map from the pool; extend it to accept an amplitude override and call it each seasonal tick (or once per seasonal phase) with the current amplitude. Risk: rebuilding `world.fert` mid-run does not touch `world.veg` or creature state, but vegetation adapts within ~200 ticks, so the transition is visible as a bloom-or-fade; the limit cycle must be re-verified on several seeds; the `smoke.js` habitat-structure assertions (peak = 1.0, std > 0.15, ≥4% lush) will need seasonal guards.
 
 - **[Build] Give the soil bloom a gentle per-cause tint: predation-site blooms slightly redder (the offal was richer), starvation-site blooms slightly cooler violet (little matter returned — a thin mote gave out).** Currently all soil blooms use the same loam palette regardless of cause. Tagging the bloom with the cause allows a tiny colour variation — predation sites leave richer offal (from the eating hunter's spill and the full prey body), starvation sites give out a thin, depleted body. It'd be subtle — the loam palette from `rgb(55+145t, 38+92t, 92-42t)` stays the basis, but a redder push for predation blooms vs a violet push for starvation would make the two kinds of bloom subtly distinguishable. Bounded, view-only, no smoke impact beyond the existing "soil bloom draws without throwing" assertion.
 
