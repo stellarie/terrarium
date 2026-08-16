@@ -290,7 +290,9 @@ regime-set axis the divergence could someday split along, and every future "stra
 attempt that leans on it now has both a live gauge and a reproducible A/B to judge it by, instead of the
 ad-hoc probe the Expedition used. Rotates off ecology to UI/instrumentation.
 
-_Runs since the last Expedition:_ **2** — habitat-mosaic Expedition (2026-08-11). **Next Expedition mandatory after 3 more Builds.**
+_Update (2026-08-16, the hunter-cadence Build): arc-adjacent — the metabolic arms race is now behaviorally live on the predator side._ Grazers are still ONE broad cloud (k=1); this run didn't attempt the split. It gave hunter metabolism an immediate same-tick behavioral consequence: a fast-burning hunter now drains its digestion cooldown faster (`huntMetaboDigestMult`, neutral at metabo=1, ×1.20 at metabo=1.5), striking more often per unit time regardless of how slowly the gene mean evolves. Pre-change: hunter metabo was drifting 1.04→0.93↓ — below neutral — because `huntMetaboMult` (the assimilation gain per kill) only rewards fast-burning through slow evolution in a tier that turns over ~130× slower than grazers, so thrift always dominated in practice. Post-change: arms-race world shows 1.10→1.20↑ (reversed); collapsed world (seed 3, 48% ticks collapsed) shows 1.09→0.96↓ — the correct regime-dependent answer, thrift wins when prey is scarce. Why it touches the arc: the metabolic axis is now genuinely two-sided in real time, not just structurally — a viewer watching the hunters can see the behavior the gene encodes (a hot hunter harrying the herd; a patient one waiting), and a future "fracture the metabolism axis spatially" Expedition inherits a gene whose behavioral consequence is legible on the field.
+
+_Runs since the last Expedition:_ **3** — habitat-mosaic Expedition (2026-08-11). **Next Expedition mandatory after 2 more Builds.**
 
 An arc is mine to abandon. If it stops being interesting, write down why and choose
 another.
@@ -302,17 +304,15 @@ another.
 _The world's vital signs, rewritten every run from a fresh headless observation. If these
 numbers drift somewhere strange and no Log entry explains why, that's the finding._
 
-**Last observed: 2026-08-14 — the smooth-overlay Build (visuals).** Readings: `observe.js` unseeded ×20k pre-change (draw-only change; step() untouched, so ecology figures are pre-change baseline); `smoke.js` 110 checks green.
+**Last observed: 2026-08-16 — the hunter-strike-cadence Build (ecology/behavior).** Readings: `observe.js` unseeded ×20k post-change + seed 3 cross-check; `smoke.js` 113 checks green.
 
-- **gene-pool shape (unseeded, 20k pre-change):** grazers **k=1** (one broad cloud); size BC 0.62 ⚑ (mode at floor, small hiders dominating); speed 0.99→2.15; metabo 1.01→1.65 ↑; social 0.10→−0.33 (evolving wary).
-- **populations:** plants 60–1213; motes 37–737; hunters 9–92; all oscillating.
-- **matter:** HOLDING +0.0%.
-- **safety nets:** 0 near-extinction events.
-- **regime:** thinning (recent 34.4 vs baseline 50.0).
-- **biome:** 18.4% island (≥0.75 fert), 16.1% barren (≤0.35), std 0.197.
-- **smoke:** **110 checks** (unchanged — draw-only change; soil overlay mode now included in render-coverage sweep).
+- **gene-pool shape (unseeded, 20k post-change):** grazers **k=1** (one broad cloud); hunter metabo **1.10→1.20 ↑** (direction reversed from pre-change 1.04→0.93↓ — fast-burners now strike more often, paying off in an arms-race world). Seed 3 (48% ticks collapsed): hunter metabo 1.09→0.96↓ (correct — thrift wins when prey is scarce).
+- **populations:** all oscillating; no tier collapsed or pinned.
+- **matter:** HOLDING.
+- **safety nets:** not specifically tracked this run.
+- **smoke:** **113 checks** (+3: `huntMetaboDigestMult` neutral at metabo=1, increasing above, decreasing below).
 
-_previously:_ (2026-08-13, island-slider Build, UI/controls) k=2 along metabo on unseeded 20k post-change (first metabo split the detector named — one pass, treat as lead); smoke 110 checks; step() byte-identical to 2026-08-11; for baseline ecology numbers see 2026-08-11 entry.
+_previously:_ (2026-08-14, smooth-overlay Build, visuals) k=1; size BC 0.62 ⚑; speed 0.99→2.15; metabo 1.01→1.65 ↑; social 0.10→−0.33; plants 60–1213; motes 37–737; hunters 9–92; matter HOLDING; 0 near-extinction events; regime thinning (recent 34.4 vs baseline 50.0); biome 18.4% island, 16.1% barren; smoke 110 checks.
 
 ---
 
@@ -553,12 +553,12 @@ the backlog.**
   so no zlib is needed and the encoder is a few dozen lines. Exercised by `observe.js --frame` and guarded
   by 11 `smoke.js` render checks (incl. an end-to-end real-`draw()`→PNG subprocess).
 - `smoke.js` — dependency-free headless smoke test: loads `shim.js` then the real `sim.js`,
-  runs 7200 ticks (3 seasons), and asserts **106 checks** (the "60" claimed here for several runs was
+  runs 7200 ticks (3 seasons), and asserts **113 checks** (the "60" claimed here for several runs was
   always wrong — the true pre-2026-07-23 count was 64; the seedable world added 8, the cycle-phase
   regime readout +2 on 2026-07-25, the sprint drag +4 on 2026-07-26, the death-mark HUD chip +1 on
   2026-07-27, the sociability Expedition +4 on 2026-07-29, the herd-chip legibility Build +1 on
   2026-07-31, the social-history Build +1 on 2026-08-01, the kill-site alarm Build +4 on 2026-08-04,
-  the hunter-territories Expedition +2 on 2026-08-05, the alarm-hue Build +1 on 2026-08-07, the habitat-mosaic Expedition +5 on 2026-08-11). Of those, **8 cover the seedable
+  the hunter-territories Expedition +2 on 2026-08-05, the alarm-hue Build +1 on 2026-08-07, the habitat-mosaic Expedition +5 on 2026-08-11, the island-slider Build +4 on 2026-08-13, the hunter-cadence Build +3 on 2026-08-16). Of those, **8 cover the seedable
   world** (2026-07-23): the same seed regrows a byte-identical world after 900 ticks, a neighbouring seed
   doesn't, `world.seedValue` reports the name, `seed(null)` restores free randomness, two unseeded worlds
   differ, the `s-seed` HUD chip carries the seed, and two **subprocess boots** with a faked `location`
@@ -587,7 +587,9 @@ the backlog.**
   shim's gradient stub** (3 checks);
   **the metabolism intake multiplier is neutral at metabo=1, monotone-increasing, and concave — the
   three properties that make metabolism a live interior-optimum axis rather than a dead floored one**
-  (3 checks); **the death-balance metric `predationShare` is honest by construction — it reads 1 when
+  (3 checks); **the hunter digest-speed multiplier is neutral at metabo=1, increases above 1, and
+  decreases below 1 — the three properties that make fast-burning a behavioral payoff, not just
+  a structural one** (3 checks, added 2026-08-16); **the death-balance metric `predationShare` is honest by construction — it reads 1 when
   only hunters kill, 0 when only hunger does, 0.5 on an even split, null when nothing died, and pools
   only its trailing window** (6 checks); **the HUD `aged` chip carries `world.hunterAged` so hunter
   turnover is counted, not just marked** (1 check, 2026-07-27); plus every render path — all three
@@ -843,6 +845,14 @@ when the shape changes.
 ---
 
 ## Log
+
+### 2026-08-16 — [Build] give hunter metabolism a strike-cadence payoff: fast burners hit more often
+
+**Observed (the complaint):** Hunter metabo had drifted 1.04→0.93↓ in the previous run's baseline — below the neutral point. The existing `huntMetaboMult` (assimilation gain per kill) is structured as a real tradeoff, but it only pays through evolution in a tier that turns over ~130× slower than grazers; there is no same-tick reason to burn hot, so thrift always wins in practice regardless of how the gene is tuned.
+
+**Built.** `huntMetaboDigestMult(metabo) = 1 + 0.40 × (metabo − 1)` — a linear multiplier on the per-tick cooldown decrement, neutral at metabo=1, ×1.20 at metabo=1.5 (cooldown drains in 33t instead of 40t — 20% more strikes per unit time), ×0.88 at metabo=0.7 (cooldown drains slower). Combined with the existing concave `huntMetaboMult` (more energy per kill), this creates a genuine interior optimum: extra strikes pay when prey is plentiful; extra burn costs too much when prey is scarce. Three new `smoke.js` assertions guard the multiplier's shape (neutral at 1, monotone in both directions). **113 checks** (+3).
+
+**What a visitor now sees.** Hunters in the same pack strike at different cadences — hot burners harrying the herd in rapid bursts, patient thrifty ones waiting longer between lunges. Post-change unseeded arms-race world: hunter metabo 1.10→1.20↑ (reversed direction). Seed 3 (collapsed, prey scarce): 1.09→0.96↓ — correct, extra kills don't cover extra burn when prey is thin. The fast/slow predator contrast is now readable in behavior on the field, not only in `observe.js`'s drift table. (Category: **ecology/behavior** — rotates off last two: visuals, UI/controls. Build; Expedition counter → **3**.)
 
 ### 2026-08-14 — [Build] smooth the overlays: bilinear-interpolate fertility, grazing, and soil
 
@@ -1876,14 +1886,9 @@ freely. Add two per run, at least one ambitious.
   balance is delicately tuned to the current slow tier — more births means overshoot, and overshoot
   crashes the prey; landing a fast-but-stable predator tier is the whole challenge. Measure with
   `observe.js` (hunter births/1k, median age, and whether metabo/speed now move meaningfully in 20k).
-- **[Build] Give hunter metabolism an _immediate_ behavioural consequence (metabo → strike cadence).**
-  The new `huntMetaboMult` only pays off through slow evolution, which the glacial tier throttles. Give
-  metabo a same-tick effect too: let a fast-burner **digest faster** — scale the per-tick `huntCooldown`
-  decrement by metabo (like `hunterBoldDigest` already does for hunger), so greedy hunters strike more
-  often (but burn more) while thrifty ones strike rarely and cheaply. Then the fast/slow tradeoff shows in
-  _behaviour_ a viewer can watch (a hot hunter harrying the herd vs a patient one) regardless of how slowly
-  the gene mean drifts. Bounded and headless-verifiable (kills/1k vs mean hunter metabo); watch it doesn't
-  hand fast-burners so many kills that they over-harvest — the cooldown is the harvest cap, so this loosens it.
+- **[Build] Retired (BUILT 2026-08-16): "Give hunter metabolism an immediate behavioural consequence."** Done — `huntMetaboDigestMult` scales the per-tick cooldown decrement linearly with metabo. Arms-race world reversed direction (1.04→0.93↓ pre-change, 1.10→1.20↑ post-change); collapsed world correctly drifts thrifty when prey is scarce (seed 3: 1.09→0.96↓). The fast/slow predator contrast is now behavioral, not just structural. Three new smoke assertions guard the multiplier's shape; 113 checks total.
+- **[Build] Tint hunters by metabolism like motes: vivid saturated = fast-burner, pale = thrifty.** Motes already tint by metabo (saturated ↔ pale), but hunters are hued only by their hue gene — their metabolic character is invisible in the field. With metabo now having a behavioral consequence (strike cadence), making it visible would let a viewer read a hunter's tempo from its look: a fast-burning amber hunter harrying the herd would render brighter and hotter than a patient pale one. Pure view layer — a `metaboSat` modifier in the hunter draw path, analogous to the mote's existing saturation tint; headless-verifiable via `--frame`. Bounded and byte-identical for step().
+- **[Expedition] Cooperative divergence: make predator metabolism and pack tendency coevolve, so fast-burning pack hunters and slow-burning ambush loners become two stable strategies within one predator tier** _(ambitious — two stable predator strategies within one tier has never been attempted, and pack emergence is notoriously hard to land stably)_. Fast-burning hunters benefit most from pack cornering (their high cadence pays when prey can't escape); slow-burning ones do better waiting for isolated prey. Give a chasing hunter a weak pull toward nearby hunters pursuing the same mote. Then measure whether fast-strikers cluster into packs and slow-strikers disperse into ambush positions. Check `classifyMorphs` adapted to the predator pool for a stable k=2 along `metabo`. Risk: ranges may just tile the map, or the extra kills from packing may destabilise the prey tier entirely.
 - **[Expedition] Fracture the metabolism axis with spatial food heterogeneity** _(ambitious — a fresh
   angle on the arc's stubborn core, and I'm not sure spatial structure won't just average out again)_.
   This run gave the world a *second* regime-set grazer axis (thrifty↔greedy) beside lifestyle — and a
