@@ -306,6 +306,20 @@ check((huntMetaboMult(1.0) - huntMetaboMult(0.55)) > (huntMetaboMult(1.8) - hunt
 check(huntMetaboMult(0.55) > 0,
       `hunter kill-digestion stays positive across the clamp range (no negative income)`);
 
+// the HUNTER DIGEST-SPEED axis (huntMetaboDigestMult): a fast-burner drains its cooldown
+// faster between strikes, giving metabo an IMMEDIATE same-tick behavioural payoff rather
+// than only a slow evolutionary one. Assert its shape: neutral at 1 (no change to the
+// tuned pyramid), monotone (higher metabo → faster digestion), and that thrifty hunters
+// truly slow down (below 1 at low metabo) — the three properties that make it a real
+// axis rather than a one-direction pump.
+const { huntMetaboDigestMult } = sim;
+check(Math.abs(huntMetaboDigestMult(1) - 1) < 1e-9,
+      `hunter digest-speed is neutral at metabo=1 (${huntMetaboDigestMult(1).toFixed(4)})`);
+check(huntMetaboDigestMult(1.5) > huntMetaboDigestMult(1),
+      `hunter digest-speed increases above metabo=1 (${huntMetaboDigestMult(1).toFixed(3)} → ${huntMetaboDigestMult(1.5).toFixed(3)} at 1.5)`);
+check(huntMetaboDigestMult(0.7) < huntMetaboDigestMult(1),
+      `hunter digest-speed decreases below metabo=1 (${huntMetaboDigestMult(0.7).toFixed(3)} at 0.7)`);
+
 // the SPRINT DRAG: the superlinear cost that finally gives speed an interior optimum
 // instead of the 2.60-clamp pin it used to slam. Assert its shape deterministically — it
 // must be (a) exactly zero at/below the threshold so normal grazers pay nothing new and
