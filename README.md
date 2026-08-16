@@ -81,7 +81,8 @@ close the gap; a catch leaves a brief expanding **kill-flash**. After a kill a h
 **digest** before it can strike again, which gives the herd a refuge, and predator
 **territoriality** keeps their numbers from running away. A hunter's **metabolism** is the
 same gamble the grazers run: a fast-burner **digests each kill more thoroughly** (more energy
-per mote) but pays a higher always-on burn, so the predator tier has its own thrifty-vs-greedy
+per mote) *and* **strikes more often** — its digestion cooldown drains faster, so it can lunge
+again sooner — but pays a higher always-on burn, so the predator tier has its own thrifty-vs-greedy
 optimum instead of a gene that only ever decays — though because hunters turn over slowly, that
 metabolism drifts far more sluggishly than the grazers' fast, visible split. A well-fed hunter is patient, but a
 **starving** one turns reckless — it flushes pale and white-hot, lunges from farther, digests
@@ -245,7 +246,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 110 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 113 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -372,7 +373,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 106 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 113 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG; section [12] reports habitat biome structure |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -390,14 +391,16 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 110-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 113-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is. Hunters now carry **home ranges** — each tracks
 its personal kill centroid and leans toward it, carving emergent patrol corridors out of the shared
 landscape.
 
-Newest: **the overlays are as smooth as the meadow.** The fertility, grazing, and soil overlay lenses now use the same bilinear-interpolation technique as the living ground — sampling every 5px, interpolating between cell centres with full toroidal wrapping, indexing a pre-built 24-level palette with a `lastQ` guard. The 7 Gaussian island cores read as flowing warm amber terrain against cool indigo barrens when the overlay is on, not as a 15px tile mosaic. The `smoke.js` render-coverage sweep now exercises all four overlay modes including soil.
+Newest: **fast-burning hunters now hit more often.** `huntMetaboDigestMult` — a linear multiplier on the per-tick digestion cooldown drain, neutral at metabo=1, ×1.20 at metabo=1.5 — gives a greedy hunter a same-tick behavioral payoff: it can strike more often per unit time (33 ticks between strikes instead of 40 at metabo=1.5), harrying the herd in rapid bursts while a thrifty hunter waits longer between lunges. Combined with the existing concave kill-energy gain, this creates a genuine interior optimum: extra strikes pay in a prey-rich arms-race world, but extra burn kills in a scarce one. Post-change, an unseeded arms-race world reversed the predator metabo trend (1.04→0.93↓ before, 1.10→1.20↑ after); a collapsed prey-scarce world (seed 3) correctly drifted thrifty (1.09→0.96↓). Three new `smoke.js` assertions guard the multiplier's shape — **113 checks** total.
+
+Before that: **the overlays are as smooth as the meadow.** The fertility, grazing, and soil overlay lenses now use the same bilinear-interpolation technique as the living ground — sampling every 5px, interpolating between cell centres with full toroidal wrapping, indexing a pre-built 24-level palette with a `lastQ` guard. The 7 Gaussian island cores read as flowing warm amber terrain against cool indigo barrens when the overlay is on, not as a 15px tile mosaic. The `smoke.js` render-coverage sweep now exercises all four overlay modes including soil.
 
 Before that: **the island landscape is a live control.** The fertility map — seven Gaussian island cores atop a sine-grating base — can now be reshaped in real time with an **islands slider** in the controls. Drag it left and the lush island refugia dissolve toward a flat, uniform sine-grating world; drag right and up to 15 pre-generated cores bloom into the landscape from a stored pool, pulling the vegetation and the herd's geography apart within a few hundred ticks. At n=0 the world runs on bare sine gratings; at n=15 the patchwork is as dense as the pool allows. The slider is RNG-safe by design: all 15 island positions are generated once at world-init and stored in `world.fertPoolX/fertPoolY`; `rebuildFertility(n)` reconstructs the map from any prefix of the pool with no new random calls, so the biology RNG stream (mote mutations, births) is never contaminated. **110 checks** (+4: `rebuildFertility` with n=3 and n=0 each produce a map with peak 1.0 and floor at fertMin).
 
