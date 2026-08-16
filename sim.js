@@ -256,6 +256,17 @@
     // should reward thrift — a regime split mirroring the grazers'. Tuned via observe.js.
     huntMetaboAssim: 1.3,     // strength of metabolism's digestive gain on energy per kill
     huntMetaboAssimExp: 0.5,  // concavity of that gain (0.5 = sqrt: strong diminishing returns)
+    // A fast-burner doesn't just absorb more energy per kill — it also digests FASTER,
+    // so its next strike comes sooner. This gives metabo an immediate same-tick behavioural
+    // payoff rather than only a slow evolutionary one (the assimilation gain alone pays back
+    // through 130× slower hunter turnover, barely visible in one run). A hunter at metabo=1.5
+    // drains its cooldown 20% faster and can strike ~20% more often; a thrifty metabo=0.7
+    // hunter digests slowly and strikes 12% less often — but burns less between kills. The
+    // multiplier is neutral at metabo=1 so the tuned pyramid at the current operating point
+    // is unchanged; it is linear (not concave) so it pairs with the concave assimilation gain
+    // to produce an interior optimum via their interaction with the linear burn cost.
+    huntMetaboDigest: 0.40,   // per-unit slope of the digest-speed gain above/below metabo=1;
+                              // at metabo=1.5 → ×1.20 cooldown drain, at 0.7 → ×0.88
     hunterReseedPrey: 55,     // predators only wander back in when this many motes exist
     hunterReseedCount: 6,     // how many drift in when they'd otherwise be extinct
     // Sustained near-extinction net: the 0→6 reseed fires only at exact 0, but the
@@ -683,6 +694,13 @@
   // that only ever decays. Exported so smoke.js can assert its shape; only the strike reads it.
   function huntMetaboMult(metabo) {
     return Math.max(0, 1 + CONFIG.huntMetaboAssim * (Math.pow(metabo, CONFIG.huntMetaboAssimExp) - 1));
+  }
+  // Mirror: how much faster a greedy hunter drains its cooldown between strikes.
+  // Linear, neutral at metabo=1: a hot fast-burner digests quicker and strikes more
+  // often; a thrifty one digests slower and stalks patiently. Paired with huntMetaboMult
+  // (concave, more energy per kill) to produce a real interior optimum for hunter metabo.
+  function huntMetaboDigestMult(metabo) {
+    return 1 + CONFIG.huntMetaboDigest * (metabo - 1);
   }
 
   // Fertility: a habitat mosaic of lush island cores surrounded by sparse barrens.
@@ -1575,8 +1593,10 @@
       // energy falls toward death. Squared so only real hunger turns a hunter reckless.
       const hunger = 1 - clamp(h.energy / CONFIG.hunterBoldFull, 0, 1);
       const bold = hunger * hunger;
-      // a starving hunter digests faster, so its next strike comes sooner
-      if (h.cool > 0) h.cool -= 1 + CONFIG.hunterBoldDigest * bold;
+      // a starving hunter digests faster; so does a hot fast-burner (high metabo).
+      // The combined decrement is (hunger effect) × (metabo digest speed): a greedy
+      // hunter burning through kills quickly is also quick to ready the next strike.
+      if (h.cool > 0) h.cool -= (1 + CONFIG.hunterBoldDigest * bold) * huntMetaboDigestMult(h.g.metabo);
 
       // always stalk the nearest VISIBLE mote in sense range — a sated hunter keeps
       // tracking (and scaring) the herd, it simply can't strike again until it has
@@ -2633,7 +2653,7 @@
       world, step, seed, setSeed, randomSeed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
-      concealment, hideability, metaboIntakeMult, huntMetaboMult, sprintDrag, predationShare, cellIndex,
+      concealment, hideability, metaboIntakeMult, huntMetaboMult, huntMetaboDigestMult, sprintDrag, predationShare, cellIndex,
       rebuildFlock, senseFlock, rebuildFertility, _fertMap,
     };
   }
