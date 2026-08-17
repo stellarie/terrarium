@@ -246,7 +246,7 @@ It's a static site with **no build step and no dependencies**. Either:
 ## Test it
 
 A dependency-free headless smoke test drives the real `sim.js` for thousands of ticks
-behind a shared DOM/canvas shim (`shim.js`) and runs 113 assertions — the world never throws
+behind a shared DOM/canvas shim (`shim.js`) and runs 115 assertions — the world never throws
 or empties, plants persist and evolve, the predator–prey layer stays balanced (hunters
 hunt, breed and oscillate without pinning at their cap or wiping the motes out), hunters
 **age and turn over** (senescence stays lethal to the ancient), the
@@ -373,7 +373,7 @@ publishes the site).
 | `sim.js` | the whole simulation (one file, heavily commented) |
 | `shim.js` | shared headless DOM/canvas shim so Node can boot the real `sim.js` |
 | `render.js` | dependency-free raster canvas + PNG encoder — renders the real `draw()` headlessly |
-| `smoke.js` | headless smoke test — 113 assertions over thousands of real ticks |
+| `smoke.js` | headless smoke test — 115 assertions over thousands of real ticks |
 | `observe.js` | the observatory — prints readings; `--census` measures predation across worlds, `--split-test` runs the predation experiment, `--frame` renders a PNG; section [12] reports habitat biome structure |
 | `JOURNAL.md` | the project's memory and roadmap |
 
@@ -391,14 +391,14 @@ vegetation field grown over a fertility map, following the food gradient by sens
 chase and eat the motes; and grazers flee. The two cycles interlock into a phase-lagged
 predator–prey oscillation riding on the grazer–plant boom and bust, all under a seasonal
 breath. Live trait, trophic-cascade and death-balance charts, a toggleable fertility/grazing/soil overlay
-onto the hidden landscape, a conserved **nutrient cycle**, a 113-check headless smoke test, and a headless
+onto the hidden landscape, a conserved **nutrient cycle**, a 115-check headless smoke test, and a headless
 **observatory** (`observe.js`) that reports the world's vital signs. Predation selects on the
 **sense** gene — a mote's fear radius is its own perception, so keen grazers flee sooner and the
 herd's alertness tracks how dangerous its world is. Hunters now carry **home ranges** — each tracks
 its personal kill centroid and leans toward it, carving emergent patrol corridors out of the shared
 landscape.
 
-Newest: **fast-burning hunters now hit more often.** `huntMetaboDigestMult` — a linear multiplier on the per-tick digestion cooldown drain, neutral at metabo=1, ×1.20 at metabo=1.5 — gives a greedy hunter a same-tick behavioral payoff: it can strike more often per unit time (33 ticks between strikes instead of 40 at metabo=1.5), harrying the herd in rapid bursts while a thrifty hunter waits longer between lunges. Combined with the existing concave kill-energy gain, this creates a genuine interior optimum: extra strikes pay in a prey-rich arms-race world, but extra burn kills in a scarce one. Post-change, an unseeded arms-race world reversed the predator metabo trend (1.04→0.93↓ before, 1.10→1.20↑ after); a collapsed prey-scarce world (seed 3) correctly drifted thrifty (1.09→0.96↓). Three new `smoke.js` assertions guard the multiplier's shape — **113 checks** total.
+Newest: **each mote now shows whether it is hiding or fleeing, tick by tick.** The flee/hide decision has always driven selection — the lifestyle rings around each mote show which *strategy* a mote's genome predisposes it to — but the *live choice each tick* was invisible. Now it isn't: `step()` caches two boolean flags per mote (`_threat`: a hunter was within fear range this tick; `_hiding`: the mote froze in cover rather than bolting), and `draw()` reads them. A **white center dot** marks a hiding mote — it froze in dense vegetation, invisible to distant hunters, a small pool of stillness in the herd. A **short red wake trail** (5.5px behind the mote, alpha 0.55) marks a fleeing mote — direction of panic sprint away from the threat, a smear of urgency. In practice the white dot is genuinely rare: in arms-race worlds the herd has evolved mean speed ~2.32, above `coverSpeedSeen = 2.2`, so virtually no mote can hide — speed literally breaks cover, and the flag is honest. The red wakes are common: 6–20% of motes per tick in a typical arms-race herd, a storm of flight responses that fades and rekindles with the hunt. Two new `smoke.js` assertions verify both flags are booleans after ticking — **115 checks** total.
 
 Before that: **the overlays are as smooth as the meadow.** The fertility, grazing, and soil overlay lenses now use the same bilinear-interpolation technique as the living ground — sampling every 5px, interpolating between cell centres with full toroidal wrapping, indexing a pre-built 24-level palette with a `lastQ` guard. The 7 Gaussian island cores read as flowing warm amber terrain against cool indigo barrens when the overlay is on, not as a 15px tile mosaic. The `smoke.js` render-coverage sweep now exercises all four overlay modes including soil.
 
