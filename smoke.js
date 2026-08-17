@@ -735,6 +735,20 @@ check(document.getElementById("s-seed").textContent === "4242",
   seed(null);
 }
 
+// ---- behavioral state flags: step() caches _threat and _hiding on each mote so
+// draw() can show whether a mote is currently fleeing or frozen in cover — the
+// flee/hide decision made visible. Assert the flags are booleans after ticking.
+{
+  // run a short fresh world to ensure motes have been through step() and have the flags
+  seed();
+  for (let t = 0; t < 50; t++) step();
+  const m0 = world.motes[0];
+  check(world.motes.length > 0 && typeof m0._threat === 'boolean',
+        `mote._threat is a boolean after ticking (got type=${typeof (m0 && m0._threat)})`);
+  check(world.motes.length > 0 && typeof m0._hiding === 'boolean',
+        `mote._hiding is a boolean after ticking (got type=${typeof (m0 && m0._hiding)})`);
+}
+
 // ---- verdict ----------------------------------------------------------------
 if (failures) {
   console.error(`\nSMOKE TEST FAILED — ${failures} check(s) failed.`);
