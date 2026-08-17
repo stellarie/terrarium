@@ -1549,6 +1549,9 @@
       // cache how hidden this mote now is (post-move, post-graze) so the hunters can
       // read it without recomputing per predator–prey pair — cover is what the hunt sees
       m._cover = concealment(m);
+      // behavioral state flags — read by draw() to show the flee/hide decision visually
+      m._threat = threat;   // a hunter was within fear range this tick
+      m._hiding = hiding;   // the mote froze in cover rather than bolting
 
       // reproduce
       if (m.energy >= CONFIG.reproEnergy && world.motes.length + newborns.length < CONFIG.maxPop) {
@@ -1917,6 +1920,24 @@
       ctx.moveTo(m.x, m.y);
       ctx.lineTo(m.x + Math.cos(m.dir) * whLen, m.y + Math.sin(m.dir) * whLen);
       ctx.stroke();
+      // behavioral state: make the flee/hide decision visible each tick so a visitor
+      // can watch the two anti-predator strategies play out in real time, not just read
+      // the genome rings. Hiding = frozen in cover (white center dot). Fleeing = panic
+      // sprint away from a hunter (red wake trail behind the mote).
+      if (m._hiding) {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 1.5, 0, TAU);
+        ctx.fillStyle = 'rgba(255,255,255,0.78)';
+        ctx.fill();
+      } else if (m._threat) {
+        ctx.strokeStyle = 'rgba(255,72,18,0.55)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(m.x, m.y);
+        ctx.lineTo(m.x - Math.cos(m.dir) * 5.5, m.y - Math.sin(m.dir) * 5.5);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
     }
 
     // territory markers — a faint cross at each hunter's kill centroid shows where it
