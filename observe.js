@@ -28,7 +28,7 @@ if (ARGS.includes("--frame")) global.__TERRARIUM_RASTER = true;
 
 const shim = require("./shim.js");
 const sim = require("./sim.js");
-const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs, hideability, predationShare } = sim;
+const { world, step, seed, biomass, CONFIG, GRID, classifyMorphs, hideability, predationShare, cellIndex } = sim;
 
 const W = 960, H = 540;
 
@@ -549,6 +549,24 @@ function shapeReport() {
   line(`    sociability: mean ${fmt(soc)}  → ${mood}`);
   line(`                 clumping ${fmt(ci)}× uniform (resource/flee clustering dominates the raw texture;`);
   line(`                 the wary gene only bends it — the signal lives in the gene mean, not the map)`);
+  // Size–habitat split: do large motes disproportionately occupy high-fertility island cores?
+  // If sizeGrazeMult is working, large-body lineages should be attracted to the lush
+  // patches where their bite-rate advantage actually cashes out (avail >= maxBite).
+  // A widening fert gap between Q4 and Q1 motes signals that the two strategies are
+  // sorting onto different landscape zones — a prerequisite for morph coexistence.
+  if (pop.length >= 8) {
+    const sorted = pop.slice().sort((a, b) => a.g.size - b.g.size);
+    const q = Math.floor(sorted.length / 4);
+    const getFert = (m) => world.fert[cellIndex(m.x, m.y)];
+    const meanFert = (arr) => arr.reduce((s, m) => s + getFert(m), 0) / arr.length;
+    const q1fert = meanFert(sorted.slice(0, q));
+    const q4fert = meanFert(sorted.slice(sorted.length - q));
+    const allFert = meanFert(pop);
+    const gap = q4fert - q1fert;
+    const gapFlag = gap > 0.05 ? " ← SORTING" : gap > 0.02 ? " ← hint" : "";
+    line(`    size–habitat: Q1(small) cell fert ${fmt(q1fert)}  Q4(large) ${fmt(q4fert)}  gap ${gap >= 0 ? "+" : ""}${fmt(gap)}${gapFlag}`);
+    line(`                  world mean fert ${fmt(allFert)}  (positive gap = large motes on richer ground)`);
+  }
 }
 
 // Where the world sat in its predator–prey cycle, tallied. The healed world is a SINGLE

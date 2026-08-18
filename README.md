@@ -72,6 +72,18 @@ limit. There's a second edge to it: because slow prey are easier to catch, world
 grazers slowest sometimes tip the whole herd into **hiding** instead of fleeing — the same
 fleer-or-hider choice, decided at the scale of an entire world.
 
+**Body size** is now a genuine income tradeoff, not a pure cost. A large mote takes more energy
+to run — but it also **takes larger bites**: every tick a big body strips 30% more vegetation from
+its cell than a small one does at peak size, and 30% less at minimum. So size finds its own
+interior optimum between the feeding advantage and the metabolic bill — and because the bite bonus
+only pays out on *lush* cells (a depleted cell is eaten to zero regardless of how large the mote
+is), big bodies are drawn toward the **island refugia** where their bonus cashes out. You can read
+the coupling at a glance: a well-fed large mote glows with a **warm golden core** (its body stores
+are full); a thin or small mote is dark and cool at centre. In a world under heavy predation, you
+can watch large and small motes start to **sort spatially** — the big ones drifting toward the
+lush islands to exploit their bite advantage, the small ones scattering through the barrens on
+thinner rations but with the concealment a small body provides.
+
 ## The predators
 
 **Hunters** are a second creature that eats motes instead of plants — the top of the food
