@@ -71,6 +71,14 @@
     vegSeedRate: 0.5,        // avg spontaneous seeds sown per tick (season-scaled)
     vegSeedAmount: 0.35,     // vegetation a fresh seed starts at (× local fertility)
     vegGrazeRate: 0.16,      // max vegetation one mote strips from its cell per tick
+    // Size-food tradeoff (Expedition 2026-08-18) — large bodies earn more per bite,
+    // small bodies earn less. This gives size a GENUINE interior optimum: big motes get
+    // a food-income advantage in lush islands (more bite × same cell) while paying higher
+    // metabolic cost, so neither floor nor ceiling is always best. At strength=0.6 the
+    // multiplier runs 0.70× at min size (1.6) through 1.00× at midpoint to 1.30× at max
+    // (6.5). Without this, the metabolic cost formula `cost ∝ size×0.15` made large bodies
+    // strictly worse — size was sliding to its floor across every seed.
+    sizeGrazeStrength: 0.6,  // scales how much bite rate changes with body size (0=flat)
     vegEnergy: 5,            // energy gained per unit of vegetation eaten (tuned: grazing
                              // income sits near metabolic cost, so scarcity really bites and
                              // the population limit-cycles instead of pinning at maxPop)
@@ -305,11 +313,19 @@
     // the trade-off that forces the herd to CHOOSE — you cannot be both a fast fleer and a
     // hidden hider, so selection splits rather than collapsing to one small-and-fast winner.
     coverSpeedHide: 1.05,     // speed gene at/below which a mote is fully "slow" (still enough)
-    coverSpeedSeen: 2.2,      // speed gene at/above which motion gives it away — no hiding
+    coverSpeedSeen: 3.0,      // speed gene at/above which motion gives it away — no hiding.
+                              // Raised 2.2→3.0 (size-food Expedition, 2026-08-18): mean speed
+                              // had drifted to 2.32, leaving every mote with zero hideability
+                              // and the hider niche structurally dead. At 3.0, a mean-speed
+                              // mote in lush island cover has speedFact≈0.35, concealment≈0.28,
+                              // so below-average-speed lineages can genuinely hide on islands.
     coverVegMin: 0.06,        // veg density below this is bare ground — no cover at all
-    coverFreeze: 0.55,        // concealment at/above which a threatened mote FREEZES in
+    coverFreeze: 0.30,        // concealment at/above which a threatened mote FREEZES in
                               // place (hunkers, no panic sprint) instead of fleeing — the
-                              // visible hider tactic, and it avoids breaking cover
+                              // visible hider tactic, and it avoids breaking cover. Lowered
+                              // 0.55→0.30 so below-average-speed motes in good island cover
+                              // can actually hide (at the old 0.55 the mean-parameter mote
+                              // in the best cell only reached 0.28, so NO motes ever froze)
     coverFreezeSpeed: 0.12,   // speed multiplier while frozen (barely a twitch)
     coverStrikeShield: 0.6,   // how much concealment also shrinks the catch radius (0..1),
                               // so a hidden mote is hard to grab even once a hunter is close
@@ -685,6 +701,15 @@
   function sprintDrag(speed) {
     const over = speed - CONFIG.speedDragFrom;
     return over > 0 ? CONFIG.speedDragCost * over * over : 0;
+  }
+
+  // How much bigger a body's bite rate is vs a smaller one. Linear from 0.70× at the
+  // minimum size gene (1.6) through 1.00× at the midpoint to 1.30× at the maximum (6.5).
+  // Strength=0 → flat bite rate for all sizes (old behaviour); strength=0.6 → current.
+  // Exported so smoke.js can assert the shape without running a full world.
+  function sizeGrazeMult(size) {
+    const t = (size - 1.6) / (6.5 - 1.6);                   // 0 at min, 1 at max
+    return 1 + (t - 0.5) * CONFIG.sizeGrazeStrength;         // 0.70..1.30 at strength 0.6
   }
 
   // The predator side of the same tradeoff: the multiplier on the digested (assimilated)
@@ -1534,7 +1559,8 @@
       enrich(ci, resp);
       const avail = world.veg[ci];
       if (avail > 0) {
-        const bite = avail < CONFIG.vegGrazeRate ? avail : CONFIG.vegGrazeRate;
+        const maxBite = CONFIG.vegGrazeRate * sizeGrazeMult(m.g.size);
+        const bite = avail < maxBite ? avail : maxBite;
         world.veg[ci] = avail - bite;
         // energy income is deliberately unchanged — the tuned limit cycle depends on it
         m.energy += bite * CONFIG.vegEnergy * metaboIntakeMult(m.g.metabo);
@@ -1897,6 +1923,16 @@
       ctx.arc(m.x, m.y, m.g.size, 0, TAU);
       ctx.fillStyle = `hsl(${m.g.hue.toFixed(0)} ${sat.toFixed(0)}% ${(40 + glow * 24).toFixed(0)}%)`;
       ctx.fill();
+      // body-fullness shimmer: a well-bodied mote glows warm gold at its core, making
+      // the size-food tradeoff legible on the field — a large, food-rich mote has a
+      // visible warm centre; an underfed or tiny mote is dark and cool
+      const bfull = clamp(m.matter / (CONFIG.bodyMatterMax * m.g.size), 0, 1);
+      if (bfull > 0.25) {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.g.size * 0.65, 0, TAU);
+        ctx.fillStyle = `hsl(44 88% 68% / ${(bfull * 0.30).toFixed(3)})`;
+        ctx.fill();
+      }
       // lifestyle halo: hue slides leaf-green (hider) → amber (fleer); it fades toward
       // the ambiguous middle so a genuinely split herd shows crisp two-colour rings
       const ringHue = 40 + (135 - 40) * H;
@@ -2674,7 +2710,7 @@
       world, step, seed, setSeed, randomSeed, sample, biomass, CONFIG, GRID,
       draw, drawChart, drawCountChart, drawArmsChart, updateHud,
       classifyMorphs, MORPH_GENES, classifyRegime, regimeMood,
-      concealment, hideability, metaboIntakeMult, huntMetaboMult, huntMetaboDigestMult, sprintDrag, predationShare, cellIndex,
+      concealment, hideability, metaboIntakeMult, huntMetaboMult, huntMetaboDigestMult, sprintDrag, sizeGrazeMult, predationShare, cellIndex,
       rebuildFlock, senseFlock, rebuildFertility, _fertMap,
     };
   }

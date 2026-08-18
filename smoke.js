@@ -338,6 +338,22 @@ check(sprintDrag(df + 0.2) < sprintDrag(df + 0.4) && sprintDrag(df + 0.4) < spri
 check((sprintDrag(df + 0.6) - sprintDrag(df + 0.4)) > (sprintDrag(df + 0.4) - sprintDrag(df + 0.2)),
       `sprint drag is convex — each extra notch of top speed costs more than the last (the interior-optimum guarantee)`);
 
+// ---- sizeGrazeMult: size-scaled bite-rate multiplier (Expedition 2026-08-18) ----
+// Large bodies earn more food per bite; small bodies earn less. The multiplier must
+// be 0.70× at size floor (1.6), 1.00× at the midpoint, 1.30× at size ceiling (6.5),
+// and monotone increasing — verifying the shape before the world runs, so a config
+// change can't silently break the size-food tradeoff.
+const { sizeGrazeMult } = sim;
+const sgMid = 1.6 + (6.5 - 1.6) / 2;                    // midpoint of gene range
+check(Math.abs(sizeGrazeMult(sgMid) - 1.0) < 1e-9,
+      `sizeGrazeMult is neutral (1.0) at the midpoint size ${sgMid.toFixed(2)} (${sizeGrazeMult(sgMid).toFixed(4)})`);
+check(Math.abs(sizeGrazeMult(1.6) - (1 - 0.5 * CONFIG.sizeGrazeStrength)) < 1e-9,
+      `sizeGrazeMult at min size (1.6) is ${(1 - 0.5 * CONFIG.sizeGrazeStrength).toFixed(2)}× (${sizeGrazeMult(1.6).toFixed(4)})`);
+check(Math.abs(sizeGrazeMult(6.5) - (1 + 0.5 * CONFIG.sizeGrazeStrength)) < 1e-9,
+      `sizeGrazeMult at max size (6.5) is ${(1 + 0.5 * CONFIG.sizeGrazeStrength).toFixed(2)}× (${sizeGrazeMult(6.5).toFixed(4)})`);
+check(sizeGrazeMult(1.6) < sizeGrazeMult(3.0) && sizeGrazeMult(3.0) < sizeGrazeMult(5.0) && sizeGrazeMult(5.0) < sizeGrazeMult(6.5),
+      `sizeGrazeMult is monotone increasing (${sizeGrazeMult(1.6).toFixed(2)} < ${sizeGrazeMult(3.0).toFixed(2)} < ${sizeGrazeMult(5.0).toFixed(2)} < ${sizeGrazeMult(6.5).toFixed(2)})`);
+
 // the death-balance chart's metric must be HONEST — it counts the actual deaths, so
 // an all-predation window reads 1, an all-starvation window reads 0, a 50/50 window
 // reads 0.5, an empty window reads null (band breaks, never lies), and it pools ONLY
