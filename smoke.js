@@ -338,11 +338,12 @@ check(sprintDrag(df + 0.2) < sprintDrag(df + 0.4) && sprintDrag(df + 0.4) < spri
 check((sprintDrag(df + 0.6) - sprintDrag(df + 0.4)) > (sprintDrag(df + 0.4) - sprintDrag(df + 0.2)),
       `sprint drag is convex — each extra notch of top speed costs more than the last (the interior-optimum guarantee)`);
 
-// ---- sizeGrazeMult: size-scaled bite-rate multiplier (Expedition 2026-08-18) ----
-// Large bodies earn more food per bite; small bodies earn less. The multiplier must
-// be 0.70× at size floor (1.6), 1.00× at the midpoint, 1.30× at size ceiling (6.5),
-// and monotone increasing — verifying the shape before the world runs, so a config
-// change can't silently break the size-food tradeoff.
+// ---- sizeGrazeMult: size-scaled bite-rate multiplier (Expedition 2026-08-18; strengthened 2026-08-19) ----
+// Large bodies earn more food per bite; small bodies earn less. At strength=0.8 the
+// multiplier runs 0.60× at size floor (1.6), 1.00× at the midpoint, 1.40× at size ceiling (6.5),
+// and must be monotone increasing — verifying the shape before the world runs, so a config
+// change can't silently break the size-food tradeoff. The assertions read CONFIG.sizeGrazeStrength
+// directly, so they self-update when the constant changes.
 const { sizeGrazeMult } = sim;
 const sgMid = 1.6 + (6.5 - 1.6) / 2;                    // midpoint of gene range
 check(Math.abs(sizeGrazeMult(sgMid) - 1.0) < 1e-9,
@@ -764,6 +765,15 @@ check(document.getElementById("s-seed").textContent === "4242",
   check(world.motes.length > 0 && typeof m0._hiding === 'boolean',
         `mote._hiding is a boolean after ticking (got type=${typeof (m0 && m0._hiding)})`);
 }
+
+// ---- world.hidingCount: cumulative mote-ticks spent frozen in cover -----------
+// The counter exists and is non-negative after 7200 ticks.  A world with any island
+// cover and speed < coverSpeedSeen will accumulate some events; the smoke just checks
+// the counter is wired up (shape/nonzero is left to observe.js to judge by seed).
+check(typeof world.hidingCount === 'number',
+      `world.hidingCount exists and is a number (${world.hidingCount} mote-ticks in cover)`);
+check(world.hidingCount >= 0,
+      `world.hidingCount is non-negative after 7200 ticks (${world.hidingCount})`);
 
 // ---- verdict ----------------------------------------------------------------
 if (failures) {

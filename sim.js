@@ -74,11 +74,14 @@
     // Size-food tradeoff (Expedition 2026-08-18) — large bodies earn more per bite,
     // small bodies earn less. This gives size a GENUINE interior optimum: big motes get
     // a food-income advantage in lush islands (more bite × same cell) while paying higher
-    // metabolic cost, so neither floor nor ceiling is always best. At strength=0.6 the
-    // multiplier runs 0.70× at min size (1.6) through 1.00× at midpoint to 1.30× at max
-    // (6.5). Without this, the metabolic cost formula `cost ∝ size×0.15` made large bodies
-    // strictly worse — size was sliding to its floor across every seed.
-    sizeGrazeStrength: 0.6,  // scales how much bite rate changes with body size (0=flat)
+    // metabolic cost, so neither floor nor ceiling is always best. At strength=0.8 the
+    // multiplier runs 0.60× at min size (1.6) through 1.00× at midpoint to 1.40× at max
+    // (6.5). At 0.6, small-mote bite rate (0.112) still exceeded typical sparse-cell
+    // availability (~0.098), so both sizes took the same bite and selection stayed downward.
+    // At 0.8, small-mote bite rate drops to 0.096 — just below sparse-cell availability —
+    // so large motes gain a consistent advantage in typical cells without the larger 0.9
+    // value's prey-destabilising starvation spike (0.088 bit rate was too drastic a cut).
+    sizeGrazeStrength: 0.8,  // scales how much bite rate changes with body size (0=flat)
     vegEnergy: 5,            // energy gained per unit of vegetation eaten (tuned: grazing
                              // income sits near metabolic cost, so scarcity really bites and
                              // the population limit-cycles instead of pinning at maxPop)
@@ -703,13 +706,13 @@
     return over > 0 ? CONFIG.speedDragCost * over * over : 0;
   }
 
-  // How much bigger a body's bite rate is vs a smaller one. Linear from 0.70× at the
-  // minimum size gene (1.6) through 1.00× at the midpoint to 1.30× at the maximum (6.5).
-  // Strength=0 → flat bite rate for all sizes (old behaviour); strength=0.6 → current.
+  // How much bigger a body's bite rate is vs a smaller one. Linear from 0.60× at the
+  // minimum size gene (1.6) through 1.00× at the midpoint to 1.40× at the maximum (6.5).
+  // Strength=0 → flat bite rate for all sizes (old behaviour); strength=0.8 → current.
   // Exported so smoke.js can assert the shape without running a full world.
   function sizeGrazeMult(size) {
     const t = (size - 1.6) / (6.5 - 1.6);                   // 0 at min, 1 at max
-    return 1 + (t - 0.5) * CONFIG.sizeGrazeStrength;         // 0.70..1.30 at strength 0.6
+    return 1 + (t - 0.5) * CONFIG.sizeGrazeStrength;         // 0.60..1.40 at strength 0.8
   }
 
   // The predator side of the same tradeoff: the multiplier on the digested (assimilated)
@@ -959,6 +962,7 @@
     world.hunterBorn = 0;
     world.hunterDied = 0;
     world.hunterAged = 0;
+    world.hidingCount = 0;       // cumulative mote-ticks spent frozen in cover (hid/1k in observe.js)
     world.lowPopTicks = 0;       // consecutive ticks at/below moteNearExtinctFloor
     world.nearExtinctEvents = 0; // times the sustained near-extinction top-up fired
     world.history = [];
@@ -1578,6 +1582,7 @@
       // behavioral state flags — read by draw() to show the flee/hide decision visually
       m._threat = threat;   // a hunter was within fear range this tick
       m._hiding = hiding;   // the mote froze in cover rather than bolting
+      if (hiding) world.hidingCount++;
 
       // reproduce
       if (m.energy >= CONFIG.reproEnergy && world.motes.length + newborns.length < CONFIG.maxPop) {
