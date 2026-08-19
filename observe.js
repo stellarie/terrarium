@@ -254,6 +254,7 @@ line(`    hunter deaths  : ${pad(per1k(world.hunterDied), 6)}  (${world.hunterDi
 line(`    hunter aged-out: ${pad(per1k(world.hunterAged), 6)}  (${world.hunterAged})  ${world.hunterDied ? Math.round((100 * world.hunterAged) / world.hunterDied) : 0}% of hunter deaths were old age`);
 const totMoteLoss = world.died + world.eaten;
 line(`    mote deaths split: ${totMoteLoss ? Math.round((100 * world.eaten) / totMoteLoss) : 0}% predation / ${totMoteLoss ? Math.round((100 * world.died) / totMoteLoss) : 0}% starvation`);
+line(`    motes hid/1k     : ${pad(per1k(world.hidingCount), 6)}  (${world.hidingCount} mote-ticks in cover)`);
 // the death-balance chart's live signal: the windowed predation share across the
 // recent history buffer — does the top-down/bottom-up balance actually swing, and
 // which force is doing the killing at the end? (0 = all hunger, 1 = all hunters)
